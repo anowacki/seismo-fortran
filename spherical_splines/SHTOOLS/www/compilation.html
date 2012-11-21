@@ -1,0 +1,153 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+        "http://www.w3.org/TR/html4/strict.dtd">
+        
+<html>
+
+<head>
+	<title>SHTOOLS - Compilation Instructions</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<link rel="stylesheet" type="text/css" href="CSS/sh.css">
+	<link rel="shortcut icon" type="image/vnd.microsoft.icon" href="Figures/favicon.ico">
+	<link rel="icon" type="image/vnd.microsoft.icon" href="Figures/favicon.ico">
+	<meta name="description" content="Instructions on how to compile the SHTOOLS fortran 95 software archive.">
+</head>
+<body>
+
+<div class="main">
+
+	<p class="centeredimage"><img src="Figures/logo.jpg" width=694 height=115 alt="SHTOOLS --- Tools for working with spherical harmonics"></p>
+    	
+	<table class="menu">
+		<tbody>
+			<tr>
+				<td><a href="http://www.ipgp.fr/~wieczor/SHTOOLS/SHTOOLS.html">HOME</a></td>	
+				<td><a href="download.html">DOWNLOAD</a></td>
+				<td class="selected"><a href="documentation.html">DOCUMENTATION</a></td>
+				<td><a href="http://groups.google.com/group/SHTOOLS">FORUM</a></td>
+				<td><a href="faq.html">FAQ</a> </td>
+			</tr>
+		</tbody>
+	</table>
+		
+	<p class="dir">
+>  <a href="../SHTOOLS.html" class="dir">Home</a> > <a href="documentation.html" class="dir">Documentation</a>
+	</p>
+
+	<h1>Compilation Instructions</h1>
+
+	<p>In order to compile the SHTOOLS archive into a static library, it is generally only necessary to type the command</p>
+	
+	<blockquote class="small">
+		<p><tt>make all F95="MyCompiler" F95FLAGS="MyCompilerFlags"</tt></p>
+	</blockquote>
+	
+	<p>in the directory <tt>SHTOOLS</tt> where "<tt>MyCompiler</tt>" and "<tt>MyCompilerFlags</tt>" are the compiler name and compiler options, respectively. If the compiler name is not specified, the default compiler will be assumed to be "<tt>f95</tt>" (two free Fortran 90/95 compilers are <a href="http://g95.sourceforge.net/">gfortran</a> and <a href="http://g95.sourceforge.net/">g95</a>). Furthermore, if the compiler flags are not specified, default values will be guessed that may or may not be appropriate for your system (see below for more details). </p>
+	
+	<p>Successful compilation will create the library file <tt>libSHTOOLS2.5.a</tt> in the directory <tt>lib</tt> and will place a few compiled module files in the directory <tt>modules</tt>. The resulting output should look something like <a href="makeout.html">this</a>. Following the compilation of the archive it is recommended, though not necessary, to move this directory to <tt>/usr/local</tt>, which can be achieved by typing</p>
+
+	<blockquote class="small">
+		<p><tt>make install</tt></p>
+	</blockquote>
+
+	<p>(this will require administrator privileges). The man and html web pages are included <span class="underline">pre-built</span> in the SHTOOLS directory (if it is necessary to rebuild these, use <tt>make doc</tt>). However, in order to access the unix man pages, it will be necessary to add <tt>"shtoolslocation"/man</tt> to you man path, where <tt>"shtoolslocation"</tt> is the path of the root directory of <tt>SHTOOLS</tt>. The link to the local html web page is <tt>"shtoolslocation"/SHTOOLS.html</tt></p>
+
+	<p class="indent">SHTOOLS by default excludes the Condon-Shortley phase factor of <tt>(-1)<sup>m</sup></tt> when calculating the spherical harmonic and Legendre functions (though this can be changed in each routine by use of the optional argument <tt>csphase</tt>). To globally change the default (but not the documentation!) such that this phase is appended to each Lengendre function, it is only necessary to set the parameter</p>
+
+	<blockquote class="small">
+		<p><tt>CSPHASE_DEFAULT = -1</tt></p>
+	</blockquote>
+	
+	<p>in the file <tt>src/SHTOOLS.f95</tt> before compiling. Note, however, that the gravity and magnetics routines will still explicitly exclude this phase factor, irregardless of this default.</p>
+
+	<h2>Compiler Flags</h2>
+	
+	<p>One should always use some form of optimization when compiling SHTOOLS, such as by specifying the option <tt>-O3</tt> or <tt>-O2</tt>.</p>
+	
+	<p>The biggest difficulty in compiling SHTOOLS is setting the compiler flags so that the external subroutine names are in a format that is compatible with the FFTW and LAPACK libraries. In general, it is necessary to ensure that the SHTOOLS subroutine names are in lower case and have the right number of underscores appended to them.</p>
+	
+	<p>For Absoft ProFortran, it will most likely be necessary to use both</p>
+
+	<blockquote class="small">
+		<p><tt>-YEXT_NAMES=LCS</tt></p>
+	</blockquote>
+	
+	<p>and</p>
+	
+	<blockquote class="small">
+		<p><tt>-YEXT_SFX=_</tt></p>
+	</blockquote>
+	
+	<p>For <tt>g95</tt>, it will either be necessary to use</p>
+
+	<blockquote class="small">
+		<p><tt>-fno-second-underscore</tt> (most likely)</p>
+	</blockquote>
+	
+	<p>or </p>
+	
+	<blockquote class="small">
+		<p><tt>-fno-underscoring</tt></p>
+	</blockquote>
+	
+	<p>For <tt>gfortran</tt>, it is generally not necessary to use any special flags, though it could arise that either </p>
+	
+	<blockquote class="small">
+		<p><tt>-fno-underscoring</tt></p>
+	</blockquote>
+	
+	<p>or</p>
+	
+	<blockquote class="small">
+		<p><tt>-fsecond-underscore</tt></p>
+	</blockquote>
+	
+	<p>might be necessary.</p>
+	
+	<p>For the Intel Fortran compiler <tt>ifort</tt>, it will be necessary to use</p>
+
+	<blockquote class="small">
+		<p><tt>-free -Tf</tt></p>
+	</blockquote>
+	
+	<p>in order that the compiler recognizes files with the extension .f95 as fortran 95 files. In this case, the compiled file name should come directly after the option <tt>-Tf</tt>.</p>
+
+	<p>Setting the right compiler flags is more complicated when the FFTW and LAPACK libraries have different naming conventions. In order to accommodate this case, underscores have been explicitly added to LAPACK and FFTW subroutine names in an alternative set of source files. In order to compile SHTOOLS with underscores explicitly appended to LAPACK routine names, use</p>
+
+	<blockquote class="small">
+		<p><tt>make all2</tt></p>
+	</blockquote>
+
+	<p>In order to compile SHTOOLS with underscores explicitly appended to FFTW routine names, use</p>
+	
+	<blockquote class="small">
+		<p><tt>make all3</tt></p>
+	</blockquote>
+	
+	<p>For both cases, compiler flags should be set so that underscores are not appended to routine names. See the <a href="faq.html">FAQ</a> for further information.</p>
+	
+	<p>To generate 64 bit code, use the compiler option</p>
+	
+	<blockquote class="small">
+		<p><tt>-m64</tt></p>
+	</blockquote>
+	
+	<p>For this case, it will be necessary to use 64-bit compiled FFTW and LAPACK libraries.</p>
+
+	<p class="dir">
+>  <a href="../SHTOOLS.html" class="dir">Home</a> > <a href="documentation.html" class="dir">Documentation</a>
+	</p>
+	
+	<table class="footer2" summary = "Mark Wieczorek">
+	<tbody>
+		<tr>
+			<td class="c1"><a href="http://www.cnrs.fr/">Centre National de la Recherche Scientifique</a></td>
+			<td class="c2"><a href="http://www.ipgp.fr/">Institut de Physique du Globe de Paris</a></td>
+			<td class="c3">&copy; 2011 <a href="http://www.ipgp.fr/~wieczor">Mark Wieczorek</a></td>
+		</tr>
+	</tbody>
+	</table>
+	
+</div>
+
+</body>
+</html>

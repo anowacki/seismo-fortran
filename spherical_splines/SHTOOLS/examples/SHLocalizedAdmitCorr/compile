@@ -1,0 +1,3 @@
+#g95 -I../../modules/  LocalizedAdmitCorr.f95 -fno-second-underscore -L../../lib -lSHTOOLS2.5 -lfftw3 -lm -llapack -lblas -O3 -s -o LocalizedAdmitCorr
+
+f95 -p ../../modules/ LocalizedAdmitCorr.f95 -YEXT_NAMES=LCS -YEXT_SFX=_ -L../../lib -lSHTOOLS2.5 -lfftw3 -lm -llapack -lblas -O3 -s -o LocalizedAdmitCorr

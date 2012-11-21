@@ -1,0 +1,4 @@
+#g95 -I../../modules/  SHMag.f95 -fno-second-underscore -L../../lib -lSHTOOLS2.5 -O3 -s -o SHMag
+
+f95 -p ../../modules/ SHMag.f95 -YEXT_NAMES=LCS  -YEXT_SFX=_ -L../../lib -lSHTOOLS2.5 -O3 -s -m64 -o SHMag
+

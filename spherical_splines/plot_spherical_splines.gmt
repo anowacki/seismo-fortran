@@ -1,0 +1,70 @@
+#!/bin/bash
+
+KERNEL=B  # Default to B-spline kernel
+
+# Get kernel name from command line
+if [ $# -gt 0 ]; then
+	KERNEL=$1
+	if [[ "$KERNEL" != "B" && "$KERNEL" != "AP" && "$KERNEL" != "SH" ]]; then
+		echo "Kernel '$1' not supported"
+		exit 1
+	fi
+fi
+
+lmax=$[360/5]
+
+if [[ "$KERNEL" == "SH" && "$#" == "2" ]]; then
+	lmax=$2
+elif [[ "$KERNEL" == "AP" && "$#" == "2" ]]; then
+	width=$2
+fi
+
+if ! [ -e out_$KERNEL.xy ]; then
+	if [[ "$KERNEL" != "SH" ]]; then
+		./test_spherical_splines $KERNEL $width > out_$KERNEL.xy ||\
+			{ echo "Problem evaluating spline interpolation" ; exit 1; }
+	else
+		./test_SHTOOLS $lmax | awk 'NR>1' > out_$KERNEL.xy ||\
+			{ echo "Problem evaluating SH interpolation:"; exit 1; }
+		
+	fi
+else
+	echo "Plotting existing out_$KERNEL.xy file.  Remove to re-calculate values"
+fi
+
+# Make colour palette; defaults to range [0,1], which is what we want.
+makecpt -Cgray -I -Z > cpt
+
+FIG=out_$KERNEL.ps
+
+# Get spacing from file
+I=`awk 'NR==1{x1=$1; x2=$1} \
+	 NR==2{if ($1!=x1) x=sqrt(($1-x1)**2); else x=sqrt(($2-x2)**2)} \
+	 END {printf("%d",x)}' out_$KERNEL.xy`
+
+# Plot surface
+xyz2grd out_$KERNEL.xy -R-45/45/-45/45 -Gout_$KERNEL.grd -I$I
+grdimage out_$KERNEL.grd -JX15c/15c -R-45/45/-45/45 -B15:."$KERNEL kernel":nSeW -Ccpt -P -K > $FIG
+
+# Plot outline of true surface function, a circle of radius ~10deg at (0,0)
+# exp{ (-x**2 -y**2)/sigma**2 } = 0.5
+#                         -r**2 = sigma**2 * ln(0.5)
+#                          r**2 = sigma**2 * ln(2)
+#                             r = sigma * sqrt(ln(2))
+echo 0.2 | awk '{r=$1*sqrt(log(2))*45/atan2(1,1); for (az=0; az<360; az++) print 0,0,az,r}' |\
+	step | psxy -J -R -O -K -Wthick,red >> $FIG
+
+
+# Plot knot points
+if [[ "$KERNEL" != "SH" ]]; then 
+	psxy knot_points_$KERNEL.xy -J -R -O -K -Sc0.1c -Gwhite -W0.5p >> $FIG
+fi
+
+# Plot section
+echo -e "-45 0\n45 0" | psxy -J -R -W1p,red -O -K >> $FIG
+awk '$2==0{print $1,$3}' out_$KERNEL.xy |\
+	psxy -Y15.5c -JX15c/5c -R-45/45/-0.5/1.5 -O -K >> $FIG
+r=`echo 0.2 | awk '{print $1*sqrt(log(2))*45/atan2(1,1)}'`
+echo -e "-45 0\n -$r 0\n -$r 1\n $r 1\n $r 0\n 45 0" |\
+	psxy -J -R -O -Wthin,red >> $FIG
+gv $FIG 2>/dev/null

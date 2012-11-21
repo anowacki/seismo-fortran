@@ -1,0 +1,15 @@
+#g95 -I../../modules/  TimingAccuracyGLQ.f95 -fno-second-underscore -L../../lib -lSHTOOLS2.5 -lfftw3 -lm -O3 -s -o TimingAccuracyGLQ
+#g95 -I../../modules/  TimingAccuracyDH.f95 -fno-second-underscore -L../../lib -lSHTOOLS2.5 -lfftw3 -lm -O3 -s -o TimingAccuracyDH
+#g95 -I../../modules/  TimingAccuracyDHC.f95 -fno-second-underscore -L../../lib -lSHTOOLS2.5 -lfftw3 -lm -O3 -s -o TimingAccuracyDHC
+#g95 -I../../modules/  TimingAccuracyGLQC.f95 -fno-second-underscore -L../../lib -lSHTOOLS2.5 -lfftw3 -lm -O3 -s -o TimingAccuracyGLQC
+
+
+f95 -p ../../modules/ TimingAccuracyGLQ.f95 -YEXT_NAMES=LCS -YEXT_SFX=_ -L../../lib -lSHTOOLS2.5 -lfftw3 -lm -llapack -lblas -O3 -s -m64 -o TimingAccuracyGLQ
+f95 -p ../../modules/ TimingAccuracyDH.f95 -YEXT_NAMES=LCS -YEXT_SFX=_ -L../../lib -lSHTOOLS2.5 -lfftw3 -lm -llapack -lblas -O3 -s -m64 -o TimingAccuracyDH
+f95 -p ../../modules/ TimingAccuracyDHC.f95 -YEXT_NAMES=LCS -YEXT_SFX=_ -L../../lib -lSHTOOLS2.5 -lfftw3 -lm -llapack -lblas -O3 -s -m64 -o TimingAccuracyDHC
+f95 -p ../../modules/ TimingAccuracyGLQC.f95 -YEXT_NAMES=LCS -YEXT_SFX=_ -L../../lib -lSHTOOLS2.5 -lfftw3 -lm -llapack -lblas -O3 -s -m64 -o TimingAccuracyGLQC
+
+#gfortran -J../../modules/ TimingAccuracyGLQ.f95  -L../../lib -lSHTOOLS2.5 -lfftw3 -lm -llapack -lblas -O3 -s -o TimingAccuracyGLQ
+#gfortran -J../../modules/ TimingAccuracyDH.f95  -L../../lib -lSHTOOLS2.5 -lfftw3 -lm -llapack -lblas -O3 -s -o TimingAccuracyDH
+#gfortran -J../../modules/ TimingAccuracyDHC.f95  -L../../lib -lSHTOOLS2.5 -lfftw3 -lm -llapack -lblas -O3 -s -o TimingAccuracyDHC
+#gfortran -J../../modules/ TimingAccuracyGLQC.f95  -L../../lib -lSHTOOLS2.5 -lfftw3 -lm -llapack -lblas -O3 -s -o TimingAccuracyGLQC

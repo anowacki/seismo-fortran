@@ -1,0 +1,24 @@
+ Input file = ../ExampleDataFiles/Mars2000.shape                                              
+ Lmax of input file =   90
+ Maximum degree to be used with rotations > 
+90
+ Input Euler Angles
+ Alpha (deg) = 
+20.
+ Beta (deg) = 
+40.
+ Gamma (deg) = 
+50.
+ Do these correspond to 
+ (1) Rotation of the coordinate system without rotation of the physical body, or
+ (2) Rotation of the physical body without rotation of the coordinate system.
+1
+ Output file name of rotated spherical harmonics > 
+test.sh
+ Grid spacing for output grid (deg) > 
+2.
+ File name of gridded rotated field > 
+test.dat
+ Computing rotation matrix
+ Rotating spherical harmonics
+ Making 2D grid

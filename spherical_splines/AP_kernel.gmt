@@ -1,0 +1,56 @@
+#!/bin/bash
+# Compute the Abel-Poisson kernel and plot it up for a given value of 0 <= h <= 1.
+
+if [ $# -eq 1 ]; then
+	h=$1
+else
+	h=0.90
+fi
+
+if [ -z `echo $h | awk '$1>=0&&$1<=1{print 1}'` ]; then
+	echo "`basename $0`: h must be in range 0-1" > /dev/stderr
+	exit 1
+fi
+
+for i in {1..9}; do
+	h=0.$i
+
+awk -v h=$h '
+	# Function returning angular distance.  In/out in radians
+	function d(lon1,lat1,lon2,lat2) {
+		delta = atan2(sqrt( (cos(lat2)*sin(lon2-lon1))**2 + (cos(lat1)*sin(lat2) - \
+           sin(lat1)*cos(lat2)*cos(lon2-lon1))**2) , \
+           sin(lat1)*sin(lat2) + cos(lat1)*cos(lat2)*cos(lon2-lon1))
+        return delta
+	}
+	
+	# Function returning the value of the Abel-Poisson kernel
+	function AP(d,h) {
+		pi = 4*atan2(1,1)
+		K = (1/4*pi)*(1 - h^2)/(1 + h^2 - 2*h*cos(d))^(3/2)
+		return K
+	}
+	
+	function abs(x) {
+		if (x >= 0) a =x
+		if (x < 0)  a = -x
+		return a
+	}
+	
+	# Print out the value of the kernel
+BEGIN {
+	pi = 4*atan2(1,1)
+	max = AP(0,h)
+	for (dist=-pi/2; dist<=pi/2; dist+=pi/5000) {
+		if (dist <  0) f = AP(-dist,h)
+		if (dist >= 0) {
+			f = AP(dist,h)
+#			if (abs(f/max-0.5) < 0.005) print h,dist 
+		}
+		print 180*dist/pi,f/max
+	}
+	
+}' | psxy -JX12c/10c -R-45/45/0/1.02 -Ba30/a0.2:."h = $h":nSeW -Wthick -P |\
+	gv - 2>/dev/null
+
+done

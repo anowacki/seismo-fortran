@@ -1,0 +1,65 @@
+Table 1. NNR-MORVEL56 Plate Angular Velocities (No-Net-Rotation Frame Fixed)a
+
+
+Plate	Abbreviation	Latitude (degreeN)	Longitude (degreeE)	omega (degree Ma-1)	RMS (mm a-1)	Area
+
+MORVEL Plates
+   Amur	am	63.17	-122.82	0.297 +/- 0.020	28.1	0.1307
+   Antarctica	an	65.42	-118.11	0.250 +/- 0.008	15.2	1.4327
+   Arabia	ar	48.88	-8.49	0.559 +/- 0.016	47.6	0.1208
+   Australia	au	33.86	37.94	0.632 +/- 0.017	63.1	0.9214
+   Capricorn	cp	44.44	23.09	0.608 +/- 0.019	66.2	0.2036
+   Caribbean	ca	35.20	-92.62	0.286 +/- 0.023	14.9	0.0730
+   Cocos	co	26.93	-124.31	1.198 +/- 0.045	74.6	0.0722
+   Eurasia	eu	48.85	-106.50	0.223 +/- 0.009	22.8	1.1963
+   India	in	50.37	-3.29	0.544 +/- 0.010	57.6	0.3064
+   Juan de Fuca	jf	-38.31	60.04	0.951 +/- 0.256	17.4	0.0063
+   Lwandle	lw	51.89	-69.52	0.286 +/- 0.026	26.5	0.1171
+   Macquarie	mq	49.19	11.05	1.144 +/- 0.274	49.5	0.0079
+   Nazca	nz	46.23	-101.06	0.696 +/- 0.029	70.0	0.3967
+   North America	na	-4.85	-80.64	0.209 +/- 0.013	19.8	1.3657
+   Nubia	nb	47.68	-68.44	0.292 +/- 0.007	29.2	1.4406
+   Pacific	pa	-63.58	114.70	0.651 +/- 0.011	65.5	2.5768
+   Philippine Sea	ps	-46.02	-31.36	0.910 +/- 0.050	52.6	0.1341
+   Rivera	ri	20.25	-107.29	4.536 +/- 0.630	11.8	0.0025
+   Sandwich	sw	-29.94	-36.87	1.362 +/- 0.744	72.6	0.0045
+   Scotia	sc	22.52	-106.15	0.146 +/- 0.016	16.2	0.0419
+   Somalia	sm	49.95	-84.52	0.339 +/- 0.011	31.0	0.3548
+   South America	sa	-22.62	-112.83	0.109 +/- 0.011	10.6	1.0034
+   Sunda	su	50.06	-95.02	0.337 +/- 0.020	32.2	0.2197
+   Sur	sr	-32.50	-111.32	0.107 +/- 0.028	11.0	0.0271
+   Yangtze	yz	63.03	-116.62	0.334 +/- 0.013	36.5	0.0542
+Bird's [2003] Plates
+   Aegean Sea	AS	19.43	122.87	0.124 +/- 0.050	13.7	0.0079
+   Altiplano	AP	-6.58	-83.98	0.488 +/- 0.053	16.9	0.0205
+   Anatolia	AT	40.11	26.66	1.210 +/- 0.049	14.0	0.0142
+   Balmoral Reef	BR	-63.74	142.06	0.490 +/- 0.045	44.1	0.0048
+   Banda Sea	BS	-1.49	121.64	2.475 +/- 0.058	33.1	0.0171
+   Birds Head	BH	-40.00	100.50	0.799 +/- 0.089	66.2	0.0129
+   Burma	BU	-6.13	-78.10	2.229 +/- 0.060	40.3	0.0127
+   Caroline	CL	-72.78	72.05	0.607 +/- 0.047	67.3	0.0376
+   Conway Reef	CR	-20.40	170.53	3.923 +/- 0.048	33.9	0.0036
+   Easter	EA	24.97	67.53	11.334 +/- 0.081	44.9	0.0041
+   Futuna	FT	-16.33	178.07	5.101 +/- 0.047	41.9	0.0008
+   Galapagos	GP	2.53	81.18	5.487 +/- 0.063	55.9	0.0004
+   Juan Fernandez	JZ	34.25	70.74	22.368 +/- 0.087	86.8	0.0024
+   Kermadec	KE	39.99	6.46	2.347 +/- 0.048	45.4	0.0124
+   Manus	MN	-3.67	150.27	51.569 +/- 0.061	55.8	0.0002
+   Maoke	MO	14.25	92.67	0.774 +/- 0.049	64.4	0.0028
+   Mariana	MA	11.05	137.84	1.306 +/- 0.070	26.7	0.0104
+   Molucca Sea	MS	2.15	-56.09	3.566 +/- 0.058	20.9	0.0103
+   New Hebrides	NH	0.57	-6.60	2.469 +/- 0.045	84.0	0.0159
+   Niuafo'ou	NI	-3.29	-174.49	3.314 +/- 0.067	86.2	0.0031
+   North Andes	ND	17.73	-122.68	0.116 +/- 0.051	9.6	0.0239
+   North Bismarck	NB	-45.04	127.64	0.856 +/- 0.045	69.0	0.0096
+   Okhotsk	OK	30.30	-92.28	0.229 +/- 0.051	25.0	0.0748
+   Okinawa	ON	36.12	137.92	2.539 +/- 0.050	61.8	0.0080
+   Panama	PM	31.35	-113.90	0.317 +/- 0.055	21.6	0.0067
+   Shetland	SL	50.71	-143.47	0.268 +/- 0.048	22.5	0.0018
+   Solomon Sea	SS	-2.87	130.62	1.703 +/- 0.049	71.9	0.0032
+   South Bismarck	SB	6.88	-31.89	8.111 +/- 0.091	48.3	0.0076
+   Timor	TI	-4.44	113.50	1.864 +/- 0.067	47.8	0.0087
+   Tonga	TO	25.87	4.48	8.942 +/- 0.100	121.8	0.0062
+   Woodlark	WL	0.10	128.52	1.744 +/- 0.049	66.6	0.0112
+
+aEach plate rotates counterclockwise relative to the no-net-rotation reference frame. RMS is the root-mean-square velocity of the plate relative to the no-net-rotation reference frame. Area is in steradians for a unit sphere and total to 4Pi. The RMS velocity of the entire lithosphere is 43.9 mm a-1. 95% confidence limits follow the "+/-." Some two-letter abbreviations from Bird [2003] are identical to those used for other plates by DeMets et al. [2010]. To preserve consistency with earlier papers we keep the same two-letter abbreviations while using capital letters for plates from Bird [2003] and lowercase letters for plates from DeMets et al. [2010].

@@ -1,0 +1,8 @@
+TimingAccuracyGLQ < input1 > output1
+TimingAccuracyGLQ < input2 > output2
+TimingAccuracyDH < input3 > output3
+TimingAccuracyDH < input4 > output4
+TimingAccuracyDHC < input5 > output5
+TimingAccuracyDHC < input6 > output6
+TimingAccuracyGLQC < input7 > output7
+TimingAccuracyGLQC < input8 > output8

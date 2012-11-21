@@ -1,0 +1,31 @@
+ Reading = ../ExampleDataFiles/Mars2000.shape                                              
+ Lmax of topography file =   90
+ Mean planetary radius (km) =   3389.50027458000
+ Reading = ../ExampleDataFiles/jgm85h02.sh                                                 
+ Lmax of potential file =   85
+ Reference radius of potential coefficients (km) =   3396.00000000000
+ Mass of planet (kg) =   6.417005067273981E+023
+ Maximum spherical harmonic degree to be used in calculations =   85
+ Number of tapers to use > 
+1
+ Latitude of feature of interest (degrees) > 
+25.0d0
+ Longitude (degrees) > 
+147.0d0
+ Angular radius of localization window (degrees) > 
+18.0d0
+ Create localization window using
+ (1) Desired concentration factor (alpha^2)
+ (2) Desired (approximate) Shannon number; (Lwin+1) Theta0 / pi)
+ (3) Desired Spectral bandwidth (Lwin)
+1
+ Input desired concentration factor of the Kth taper > 
+0.990d0
+ Corresponding spherical harmonic bandwidth =   14
+ Corresponding approximate Shannon number =   1.50000000000000
+ Concentration factor of first taper =   0.992524588591860
+ Taper order =   0
+ Gravity field evaluated at R = (km)   3396.00000000000
+ Name of output admittance and corrence file > 
+admit_corr.dat
+ System-wide FFTW wisdom is not available.

@@ -1,0 +1,7 @@
+R0 (km) =   3390.00000000000
+ Lmax of file =   90
+ R (km) =   3534.50800000000
+ Interval for gridded data (degrees) > 
+1.0
+ Elapsed time (sec) =   9.62000000000000
+   181  361

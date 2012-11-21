@@ -1,0 +1,195 @@
+=head1 MakeGravGrid2D
+
+=over 18
+
+=item MakeGravGrid2D -  
+
+Create a 2D cylindrical map of the gravity or gravitational potential referenced to a flattened ellipsoid from a set of spherical harmonic coefficients.
+
+=back
+
+=head1 SYNOPSIS
+
+=over 28
+
+=item SUBROUTINE MakeGravGrid2D ( 
+
+RAD, CILM, LMAX, R0, A, F, GM, GRAVPOT, INTERVAL, NLAT, NLONG, THETA, PHI, TOTAL, OMEGA, NORTH, SOUTH, EAST, WEST, NORMAL_GRAVITY )
+
+=back
+
+=over 4
+
+=over 19
+
+=item REAL*8	
+
+RAD(180/INTERVAL+1, 360/INTERVAL+1), S<CILM(2, LMAX+1, LMAX+1)>, R0, A, F, GM, INTERVAL
+
+=item INTEGER
+
+LMAX, NLAT, NLONG, NORMAL_GRAVITY
+
+=item CHARACTER*1
+
+GRAVPOT
+
+=item REAL*8, OPTIONAL
+
+THETA(180/INTERVAL+1, 360/INTERVAL+1), PHI(180/INTERVAL+1, 360/INTERVAL+1), TOTAL(180/INTERVAL+1, 360/INTERVAL+1), OMEGA, NORTH, SOUTH, EAST, WEST
+
+=back
+
+=back
+
+=head1 DESCRIPTION
+
+I<MakeGravGrid2D> will create a 2-dimensional cylindrical map, equally spaced in (geocentric) latitude and longitude, of either the gravitational potential, radial gravity, or all three components of the gravitational vector (in geocentric coordinates). The gravitational potential is given by
+
+V = GM/r Sum_{l=0}^LMAX (R0/r)^l Sum_{m=-l}^l C_{lm} Y_{lm}.
+
+The coefficients are referenced to a radius R0, and the function is computed on a flattened ellipsoid with semi-major axis A (i.e., the mean equatorial radius) and flattening F. If the entire radial gravitational acceleration is to be calculated, it is necessary that the degree-0 term be set equal to 1. When the radial gravity is output, the values are in SI units (m/s^2, to convert to mGals multiply by 10^5), and the sign is positive when directed upwards. If the optional angular rotation rate OMEGA is specified, the potential and radial gravitational acceleration will be calculated in a body-fixed rotating reference frame.
+
+The other two components and magnitude of the gravitational field can be calculated by specifying the optional arrays THETA, PHI, and TOTAL. In this case, all three optional parameters must be specified. To remove the "normal gravity" (total gravitational acceleration on the ellipsoid) from the magnitude of the total gravity field (to obtain the "gravity disturbance"), set NORMAL_GRAVITY equal to 1.
+
+The calculated values should be considered exact only when the radii on the ellipsoid are less than the maximum radius of the planet (the potential coefficients are simply downward continued in the spectral domain). Furthermore, the components of gravity vector are calculated along a vector whose origin is at the center of the planet; the components are not normal to the reference ellipsoid.
+
+The output grid is in raster format possessing upper-left and lower-right coordinates of (90 N, 0 E) and (90 S, 360 E), respectively. If the optional parameters NORTH, SOUTH, EAST and WEST are specified, then the output grid will possess upper-left and lower-right coordinates of (NORTH, WEST) and (SOUTH, EAST), respectively. The employed spherical harmonic normalization and Condon-Shortley phase convention use the default geodesy 4-pi normalized harmonics that exclude the Condon-Shortley phase of (-1)^m. 
+
+=head1 ARGUMENTS
+
+=over 11
+
+=item RAD
+
+(output) REAL*8, DIMENSION(180/INTERVAL+1, 360/INTERVAL+1)
+
+A 2D equally spaced map of the radial gravity or gravitational potential corresponding to the input spherical harmonic coefficients CILM. The  array is in raster format with upper-left and lower-right coordinates of (90 N, 0 E) and (90 S, 360 E), respectively. The output is in SI units (i.e., m^2/s^2 for the potential, and m/s^2 for the gravity).
+
+=item CILM 
+
+(input) REAL*8, DIMENSION (2, LMAX+1, LMAX+1)
+
+The real gravitational potential spherical harmonic coefficients to be expanded in the space domain. The coefficients C1lm and C2lm refer to the "cosine" (Clm) and "sine" (Slm) coefficients, respectively, with Clm = CILM(1, l+1, m+1) and Slm = CILM(2, l+1, m+1). Alternatively, C1lm and C2lm correspond to the positive and negative order coefficients, respectively.
+	
+=item LMAX
+
+(input) INTEGER
+
+The maximum spherical harmonic degree of the coefficients CILM.
+
+=item R0
+
+(input) REAL*8
+
+The reference radius of the spherical harmonic coefficients.
+
+=item A
+
+(input) REAL*8
+
+The semi-major axis of the flattened ellipsoid for which the field will be computed on.
+
+=item F
+
+(input) REAL*8 
+
+The flattening of the reference ellipsoid: i.e., F = (R_equator - R_pole) / R_equator = (A - B) / A.
+
+=item GM
+
+(input) REAL*8 
+
+The gravitational constant multiplied by the planetary mass.
+
+=item GRAVPOT
+
+(input) CHARACTER*1
+
+"U" to compute the gravitational potential or "G" to compute the gravity.
+
+=item INTERVAL
+
+(input) REAL*8
+
+The latitudinal and longitudinal spacing of GRID in degrees.
+	
+=item NLAT
+
+(output) INTEGER
+
+The number of latitudinal samples. Both 90 N and 90 S are included.
+
+=item NLONG
+
+(output) INTEGER
+
+The number of longitudinal samples. Both 0 and 360 E are included.
+
+=item THETA
+
+(output) REAL*8, DIMENSION(180/INTERVAL+1, 360/INTERVAL+1)
+
+A 2D equally spaced map of the theta component of the  gravity field corresponding to the input spherical harmonic coefficients CILM. The  array is in raster format with upper-left and lower-right coordinates of (90 N, 0 E) and (90 S, 360 E), respectively. The output is in SI units (i.e., m/s^2).
+
+=item PHI
+
+(output) REAL*8, DIMENSION(180/INTERVAL+1, 360/INTERVAL+1)
+
+A 2D equally spaced map of the phi component of the  gravity field corresponding to the input spherical harmonic coefficients CILM. The  array is in raster format with upper-left and lower-right coordinates of (90 N, 0 E) and (90 S, 360 E), respectively. The output is in SI units (i.e., m/s^2).
+
+=item TOTAL
+
+(output) REAL*8, DIMENSION(180/INTERVAL+1, 360/INTERVAL+1)
+
+A 2D equally spaced map of the magnitude of the gravity field corresponding to the input spherical harmonic coefficients CILM. The  array is in raster format with upper-left and lower-right coordinates of (90 N, 0 E) and (90 S, 360 E), respectively. The output is in SI units (i.e., m/s^2).
+
+=item OMEGA
+
+(input) REAL*8, OPTIONAL
+
+The angular rotation rate of the planet.
+
+=item NORTH
+
+(input) REAL*8, OPTIONAL
+
+The maximum latitude of the output raster grid, in degrees. The default is 90 degrees N.
+
+=item SOUTH
+
+(input) REAL*8, OPTIONAL
+
+The minimum latitude of the output raster grid, in degrees. The default is -90 degrees.
+
+=item EAST
+
+(input) REAL*8, OPTIONAL
+
+The maximum longitude of the output raster grid, in degrees. The default is 360 degrees.
+
+=item WEST
+
+(input) REAL*8, OPTIONAL
+
+The minimum longitude of the output raster grid, in degrees. The default is 0 degrees.
+
+=item NORMAL_GRAVITY
+
+(input) INTEGER, OPTIONAL
+
+If 1, the normal gravity (gravitational acceleration on the ellipsoid) will be subtracted from the total gravity, yielding the "gravity disturbance." This is done using Somigliana's formula (after converting geocentric to geodetic coordinates).
+
+=back
+
+=head1 SEE ALSO
+
+makegrid2d(1), shexpanddh(1), makegriddh(1), shexpandglq(1), makegridglq(1), makegeoid2d(1)
+
+L<http://www.ipgp.jussieu.fr/~wieczor/SHTOOLS/SHTOOLS.html>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2005-2009 by Mark Wieczorek <wieczor@ipgp.fr>.
+
+This is free software; you can distribute and modify it under the terms of the revised BSD license.

@@ -1,0 +1,3 @@
+#g95 -I../../modules/  TestSHExpandLSQ.f95 -fno-second-underscore -L../../lib -lSHTOOLS2.5 -llapack -lblas -O3 -s -o TestSHExpandLSQ
+
+f95 -p ../../modules/ TestSHExpandLSQ.f95 -YEXT_NAMES=LCS -YEXT_SFX=_ -L../../lib -lSHTOOLS2.5 -llapack -lblas -O3 -s -o TestSHExpandLSQ

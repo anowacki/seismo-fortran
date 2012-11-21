@@ -1,0 +1,62 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+        "http://www.w3.org/TR/html4/strict.dtd">
+
+<html>
+
+<head>
+	<title>SHTOOLS - Speed</title>
+	<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+	<link rel="stylesheet" type="text/css" href="CSS/sh.css">
+	<link rel="shortcut icon" type="image/vnd.microsoft.icon" href="Figures/favicon.ico">
+	<link rel="icon" type="image/vnd.microsoft.icon" href="Figures/favicon.ico">
+	<meta name="description" content="Timing results of the spherical harmonic transform routines in SHTOOLS.">
+</head>
+
+<body>
+
+<div class="main">
+
+	<p class="centeredimage"><img src="Figures/logo.jpg" width=694 height=115 alt="SHTOOLS --- Tools for working with spherical harmonics"></p>
+    	
+	<table class="menu">
+		<tbody>
+			<tr>
+				<td><a href="http://www.ipgp.fr/~wieczor/SHTOOLS/SHTOOLS.html">HOME</a></td>
+				<td><a href="download.html">DOWNLOAD</a></td>
+				<td class="selected"><a href="documentation.html">DOCUMENTATION</a></td>
+				<td><a href="http://groups.google.com/group/SHTOOLS">FORUM</a></td>
+				<td><a href="faq.html">FAQ</a> </td>
+			</tr>
+		</tbody>
+	</table>
+		
+	<p class="dir">
+>  <a href="../SHTOOLS.html" class="dir">Home</a> > <a href="documentation.html" class="dir">Documentation</a></p>
+		
+	<h1>Speed</h1>
+	<p>The following figure shows the amount of time in seconds that it takes to perform the forward and inverse spherical harmonic transform of a gridded data set as function of the spherical harmonic bandwidth. Results are shown for both the real and complex Gauss-Legendre quadrature (<tt>SHExpandGLQ</tt>, <tt>MakeGridGLQ</tt>, <tt>SHExpandGLQC</tt> and <tt>MakeGridGLQC</tt>) and Driscoll and Healy (<tt>SHExpandDH</tt>, <tt>MakeGridDH</tt>, <tt>SHExpandDHC</tt> and <tt>MakeGridDHC</tt>) routines. These calculations were performed on a MacBook Pro 2.4 GHz Intel Core 2 Duo with 4 Gbytes of memory using 64 bit executibles and level 3 optimizations.  For the real Gauss-Legendre quadrature routines, the transform time is seen to be on the order of a second for degrees close to 500 and about 3.6 minutes for degree 2800. For the real Driscoll and Healy routines, the transform time is close to a second for degree 400 and about 7 minutes for degree 2800. The complex routines are slower by a factor of about 60%.</p>
+	
+	<img class="eqinline" src="Figures/time2.jpg" alt="time2.jpg">
+		
+	<p class="smaller"><b>Figure 2.</b>  Time to perform the forward and inverse spherical harmonic transform as a function of spherical harmonic bandwidth using real and complex Gauss-Legendre quadrature and Driscoll and Healy routines.</p>
+	
+	<p class="indent">
+	If several transforms are to be performed using the same spherical harmonic bandwidth for Gauss-Legendre quadrature grids, these calculations can be speeded up by precomputing the Legendre functions on the Gauss-Legendre quadrature nodes. This is done by specifying the optional argument <tt>PLX</tt> with the routines <tt>PreCompute</tt>, <tt>MakeGridGLQ</tt>, and <tt>SHExpandGLQ</tt>. Note that the array <tt>PLX</tt> contains (L+1)(L+1)(L+2)/2 elements, and hence requires a considerable amount of memory for large degrees.</p>
+	
+	<p class="dir">
+>  <a href="../SHTOOLS.html" class="dir">Home</a> > <a href="documentation.html" class="dir">Documentation</a></p>
+
+	<table class="footer2" summary = "Mark Wieczorek">
+	<tbody>
+		<tr>
+			<td class="c1"><a href="http://www.cnrs.fr/">Centre National de la Recherche Scientifique</a></td>
+			<td class="c2"><a href="http://www.ipgp.fr/">Institut de Physique du Globe de Paris</a></td>
+			<td class="c3">&copy; 2011 <a href="http://www.ipgp.fr/~wieczor">Mark Wieczorek</a></td>
+		</tr>
+	</tbody>
+	</table>
+	
+</div>
+
+</body>
+</html>

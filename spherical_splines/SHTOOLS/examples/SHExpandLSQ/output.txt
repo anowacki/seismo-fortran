@@ -1,0 +1,82 @@
+ Maximum degree of spherical harmonic file =   90
+ Number of random data points to use > 
+400
+ Maximum spherical harmonic degree for overdetermined least-squares inversion =   19
+ maximum (km) =   3409.87067492481
+ minimum (km) =   3373.76048706132
+ l =   1
+ SHExpandLSQ --- Determining least squares solution of an overdetermined system.
+ Maximum error between input and output data points (km) =   20.3022634796845
+ Sum of squares residuals (km^2) =   12521.2574761395
+ l =   2
+ SHExpandLSQ --- Determining least squares solution of an overdetermined system.
+ Maximum error between input and output data points (km) =   14.3617353058406
+ Sum of squares residuals (km^2) =   1671.51630088930
+ l =   3
+ SHExpandLSQ --- Determining least squares solution of an overdetermined system.
+ Maximum error between input and output data points (km) =   14.5133245792096
+ Sum of squares residuals (km^2) =   1037.42943893044
+ l =   4
+ SHExpandLSQ --- Determining least squares solution of an overdetermined system.
+ Maximum error between input and output data points (km) =   13.9827200975497
+ Sum of squares residuals (km^2) =   915.688939662163
+ l =   5
+ SHExpandLSQ --- Determining least squares solution of an overdetermined system.
+ Maximum error between input and output data points (km) =   14.1570923578409
+ Sum of squares residuals (km^2) =   732.385820763573
+ l =   6
+ SHExpandLSQ --- Determining least squares solution of an overdetermined system.
+ Maximum error between input and output data points (km) =   13.0267431324413
+ Sum of squares residuals (km^2) =   605.125580390071
+ l =   7
+ SHExpandLSQ --- Determining least squares solution of an overdetermined system.
+ Maximum error between input and output data points (km) =   12.9811143849180
+ Sum of squares residuals (km^2) =   529.903174091033
+ l =   8
+ SHExpandLSQ --- Determining least squares solution of an overdetermined system.
+ Maximum error between input and output data points (km) =   12.2806795041026
+ Sum of squares residuals (km^2) =   455.173837716106
+ l =   9
+ SHExpandLSQ --- Determining least squares solution of an overdetermined system.
+ Maximum error between input and output data points (km) =   11.7339151958111
+ Sum of squares residuals (km^2) =   401.351638539002
+ l =   10
+ SHExpandLSQ --- Determining least squares solution of an overdetermined system.
+ Maximum error between input and output data points (km) =   11.1243193009817
+ Sum of squares residuals (km^2) =   351.406956745755
+ l =   11
+ SHExpandLSQ --- Determining least squares solution of an overdetermined system.
+ Maximum error between input and output data points (km) =   10.4787646584478
+ Sum of squares residuals (km^2) =   316.516213950908
+ l =   12
+ SHExpandLSQ --- Determining least squares solution of an overdetermined system.
+ Maximum error between input and output data points (km) =   9.77224716423452
+ Sum of squares residuals (km^2) =   265.202128765458
+ l =   13
+ SHExpandLSQ --- Determining least squares solution of an overdetermined system.
+ Maximum error between input and output data points (km) =   8.68964282013197
+ Sum of squares residuals (km^2) =   217.295042549176
+ l =   14
+ SHExpandLSQ --- Determining least squares solution of an overdetermined system.
+ Maximum error between input and output data points (km) =   7.07120468023932
+ Sum of squares residuals (km^2) =   167.309017876074
+ l =   15
+ SHExpandLSQ --- Determining least squares solution of an overdetermined system.
+ Maximum error between input and output data points (km) =   5.15480261916434
+ Sum of squares residuals (km^2) =   110.760082775081
+ l =   16
+ SHExpandLSQ --- Determining least squares solution of an overdetermined system.
+ Maximum error between input and output data points (km) =   3.37709607838560
+ Sum of squares residuals (km^2) =   70.6746201476797
+ l =   17
+ SHExpandLSQ --- Determining least squares solution of an overdetermined system.
+ Maximum error between input and output data points (km) =   1.48116984509910
+ Sum of squares residuals (km^2) =   30.4254851780968
+ l =   18
+ SHExpandLSQ --- Determining least squares solution of an overdetermined system.
+ Maximum error between input and output data points (km) =   0.855594355503097
+ Sum of squares residuals (km^2) =   4.65097056263690
+ l =   19
+ SHExpandLSQ --- Determining minimum norm solution of an underdetermined system.
+ Maximum error between input and output data points (km) =   7.124617695808411E-011
+ Sum of squares residuals (km^2) =   4.65097056263690

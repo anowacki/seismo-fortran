@@ -1,0 +1,9 @@
+1. Make a configuration file to determine if underscores need to be appended to LAPACK and FFTW routine names.
+2. Rewrite the Legendre functions such that they are accurate beyond degree 2800.
+3. Rewrite the spherical harmonic rotation routines such that they are done using real harmonics as in Blanco et al. (1997).
+4. Parallelize routines such as SHExpandGLQ, SHExpandDH, MakeGridDH, MakeGridGLQ.
+
+a. allow MakeGravGrid to output maps in geodetic coordinates.
+c. change NormalGravity to allow either geocentric or geodetic latitude.
+d. ask ipgp for domain name shtools.ipgp.fr, if not buy shtools.net
+e. configure file

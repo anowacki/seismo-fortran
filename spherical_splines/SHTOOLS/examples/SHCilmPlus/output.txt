@@ -1,0 +1,28 @@
+ Maximum degree of input file =   90
+ Maximum degree used in the calculations =   90
+ Precomputing data structures...
+ System-wide FFTW wisdom is not available.
+ Making Grid...
+ Expanding into spherical harmonics
+ Maximum relative error between spherical harmonic coefficients =   9.766085398684504E-009
+ Maximum error (meters) at the gauss points =   3.017069097967350E-007
+ Maximum spherical harmonic degree corresponding to n =   7  =   630
+ Computing gravity coefficients...
+ Maximum difference (mgals) between nmax =   7  and   1  =   576.892162795359
+ Maximum difference (mgals) between nmax =   7  and   2  =   89.9556082543201
+ Maximum difference (mgals) between nmax =   7  and   3  =   12.4129237973240
+ Maximum difference (mgals) between nmax =   7  and   4  =   1.46037727019961
+ Maximum difference (mgals) between nmax =   7  and   5  =   0.145586650783682
+ Maximum difference (mgals) between nmax =   7  and   6  =   1.173881633175170E-002
+ Maximum difference (mgals) between using Lmax of expansion equal to   630  and LMAX =   90  25.3271544735267
+ Maximum difference (mgals) between using Lmax of expansion equal to   630  and LMAX =   100  13.7759100326461
+ Maximum difference (mgals) between using Lmax of expansion equal to   630  and LMAX =   110  5.02378604357284
+ Maximum difference (mgals) between using Lmax of expansion equal to   630  and LMAX =   120  0.884611008968785
+ Maximum difference (mgals) between using Lmax of expansion equal to   630  and LMAX =   130  0.224929674034685
+ Maximum difference (mgals) between using Lmax of expansion equal to   630  and LMAX =   140  8.647788717382435E-002
+ Maximum difference (mgals) between using Lmax of expansion equal to   630  and LMAX =   150  2.439579560325645E-002
+ Maximum difference (mgals) between using Lmax of expansion equal to   630  and LMAX =   160  3.321535375027628E-003
+ Maximum difference (mgals) between using Lmax of expansion equal to   630  and LMAX =   170  8.578529920117676E-004
+ Maximum difference (mgals) between using Lmax of expansion equal to   630  and LMAX =   180  3.617636080166986E-004
+ Making 2d grid with equal latitude and longitude spacings
+ time (sec) =   69.0900000000000
