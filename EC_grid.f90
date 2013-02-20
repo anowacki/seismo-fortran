@@ -901,6 +901,51 @@ module EC_grid
 !-------------------------------------------------------------------------------
 
 !===============================================================================
+   subroutine EC_grid_dump_file_bin(file,necs)
+!===============================================================================
+!  Dump a binary grid file straight from the file to the screen
+
+   implicit none
+   character(len=*), intent(in) :: file
+   integer,intent(in),optional :: necs
+   type(ECgridr) :: gridr
+   type(ECgrid) :: grid
+   type(ECgridi) :: gridi
+   integer :: nver
+   
+!  Get the file type
+   call EC_grid_check_type_bin(file,nver)
+
+!  Call the relevant routine to load and dump the file
+   if (nver == nver_assumed_i) then
+      call EC_grid_load_bin(file,grid)
+      if (present(necs)) then
+         call EC_grid_dump(grid,necs=necs)
+      else
+         call EC_grid_dump(grid)
+      endif
+   else if (nver == nver_i) then
+      call EC_gridi_load_bin(file,gridi)
+      if (present(necs)) then
+         call EC_gridi_dump(gridi,necs=necs)
+      else
+         call EC_gridi_dump(gridi)
+      endif
+      
+   else if (nver == nver_r) then
+      call EC_gridr_load_bin(file,gridr)
+      if (present(necs)) then
+         call EC_gridr_dump(gridr,necs=necs)
+      else
+         call EC_gridr_dump(gridr)
+      endif
+   
+   endif
+   
+   end subroutine EC_grid_dump_file_bin
+!-------------------------------------------------------------------------------
+
+!===============================================================================
    subroutine EC_grid_to_gridr(gridr,grid,gridi)
 !===============================================================================
 !  Converts assumed- or explicit-integer dimensioned grids into ones with real
@@ -2016,8 +2061,6 @@ module EC_grid
    real(r8)                      :: x,y,z
    integer                       :: kx,ky,kz,i,j,nec
    
-   write(*,*) 'EC_gridr_load has not been tested.'; stop
-
 !  Check for requested output format; default to all 36 constants to be written out.
    if (present(necs)) then
       if (necs /= 21 .and. necs /= 36) stop 'EC_grid_write: necs must be 21 or 36'
