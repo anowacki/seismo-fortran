@@ -4,3 +4,10 @@
 .gmt*
 *.so
 *.so.?
+anisotropy_ajn/test_CIJ_brow_chev
+anisotropy_ajn/test_CIJ_tandon_and_weng
+anisotropy_ajn/test_Reuss_av
+anisotropy_ajn/test_Voigt_av
+anisotropy_ajn/test_global_VTI
+anisotropy_ajn/test_panning_VTI
+anisotropy_ajn/test_tensor_rot
