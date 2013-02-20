@@ -44,6 +44,7 @@
 !   * Added CIJ_to_thom to calculate thomsen parameters for a
 !     TI tensor with rotational symmetry about x3               2012/02
 !   * Added CIJ_save to write out tensor as .ecs file           2012/10
+!   * Added CIJ_VTI_global                                      2013/02
 !===============================================================================
    module anisotropy_ajn
 !===============================================================================
@@ -131,6 +132,93 @@
      return
    end function CIJ_thom
 !-------------------------------------------------------------------------------
+
+!===============================================================================
+   function CIJ_global_VTI(vp,vs,rho,xi,phi,eta)
+!===============================================================================
+!  Output the elastic tensor given a set of radial anisotropy parameters
+!  as used typically in global seismology.  Average velocities are given by:
+!        15*rho*<Vp>^2 = 3*C + (8 + 4*eta)*A + 8*(1 - eta)*L
+!        15*rho*<Vs>^2 =   C + (1 - 2*eta)*A + (6 + 4*eta)*L + 5*N
+!     vp:   Voigt average P wave velocity
+!     vs:   Voigt average shear wave velocity
+!     rho:  Density
+!     xi:   (Vsh^2/Vsv^2) of horizontal waves
+!     phi:  (Vpv^2/Vph^2)
+!     eta:  C13/(C11 - 2*C44)
+!  Input is in m/s and kg/m^3
+!  Output is UNNORMALISED ELASTICITY TENSOR, not density-normalised
+
+      implicit none
+      real(rs) :: CIJ_global_VTI(6,6)
+      real(rs),intent(in) :: vp,vs,rho,xi,phi,eta
+      real(rs) :: C12,A,C,F,L,N
+      real(rs),parameter :: O = 0._rs  ! Zero
+      
+      ! Love parameters from Voigt isotropic velocities and dimensionless parameters
+      L = 15._rs*rho*((3._rs*phi+8._rs+4._rs*eta)*vs**2 - &
+            (phi+1._rs-2._rs*eta)*vp**2) &
+         / ((6._rs+4._rs*eta+5._rs*xi)*(3._rs*phi+8._rs+4._rs*eta) &
+            - 8._rs*(phi+1._rs-2._rs*eta)*(1._rs-eta))
+      
+      A = (15._rs*rho*vp**2 - 8._rs*(1._rs-eta)*L) &
+         / (3._rs*phi + 8._rs + 4._rs*eta)
+      
+      F = eta*(A - 2._rs*L)
+      C = phi*A
+      N = xi*L
+      C12 = A - 2._rs*N
+      
+      CIJ_global_VTI = reshape( &
+            (/ A , C12, F, O, O, O, &
+              C12,  A , F, O, O, O, &
+               F ,  F , C, O, O, O, &
+               O ,  O , O, L, O, O, &
+               O ,  O , O, O, L, O, &
+               O ,  O , O, O, O, N  /), (/6,6/))
+   end function CIJ_global_VTI
+!-------------------------------------------------------------------------------      
+
+!===============================================================================
+   function CIJ_panning_VTI(vp,vs,rho,xi,phi)
+!===============================================================================
+!  Output the elastic tensor given a set of radial anisotropy parameters
+!  as used by Panning and Romanowicz in their global tomography.  They assume
+!  that eta ~ 1 and A ~ C to simplify the expression for Voigt average velocities
+!  to:
+!        <Vp>^2 = (1/5)*(Vpv^2 + 4*Vph^2)
+!        <Vs>^2 = (1/3)*(Vsh^2 + 2*Vsv^2)
+!     vp:   'Average' P-wave velocity
+!     vs:   'Average' S-wave velocity
+!     rho:  Density
+!     xi,phi:  Dimensionaless radial anisotropy parameters
+!  Input is in m/s and kg/m^3
+!  Output is UNNORMALISED ELASTICITY TENSOR, not density normalised
+
+      implicit none
+      real(rs) :: CIJ_panning_VTI(6,6)
+      real(rs),intent(in) :: vp,vs,rho,xi,phi
+      real(rs) :: A,C,F,L,N,C12
+      real(rs),parameter :: O = 0._rs
+      
+      ! Love parameters from simplified Voigt isotropic average velocities
+      L = rho*3._rs*vs**2/(2._rs + xi)
+      N = xi*L
+      A = rho*5._rs*vp**2/(4._rs + phi)
+      C = phi*A
+      F = A - 2._rs*L
+      C12 = A - 2._rs*N
+      
+      CIJ_panning_VTI = reshape( &
+            (/ A , C12, F, O, O, O, &
+              C12,  A , F, O, O, O, &
+               F ,  F , C, O, O, O, &
+               O ,  O , O, L, O, O, &
+               O ,  O , O, O, L, O, &
+               O ,  O , O, O, O, N  /), (/6,6/))
+
+   end function CIJ_panning_VTI      
+!-------------------------------------------------------------------------------      
 
 !===============================================================================
    subroutine CIJ_VTI2thom(C,rho,eps,gam,del)
