@@ -45,6 +45,8 @@
 !     TI tensor with rotational symmetry about x3               2012/02
 !   * Added CIJ_save to write out tensor as .ecs file           2012/10
 !   * Added CIJ_VTI_global                                      2013/02
+!   * Added CIJ_symm                                            2013/04
+!   * Added CIJ_disp                                            2013/04
 !===============================================================================
    module anisotropy_ajn
 !===============================================================================
