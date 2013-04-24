@@ -12,4 +12,5 @@ anisotropy_ajn/test_global_VTI
 anisotropy_ajn/test_panning_VTI
 anisotropy_ajn/test_tensor_rot
 anisotropy_ajn/test_symm
+anisotropy_ajn/test_disp
 test_EC_grid/test_EC_grid_dump_file_bin

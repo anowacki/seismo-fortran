@@ -1522,6 +1522,66 @@
    end subroutine CIJ_symm
 !-------------------------------------------------------------------------------
 
+!===============================================================================
+   subroutine CIJ_disp(C,unit,power,ndp,expo)
+!===============================================================================
+!  Show a pretty matrix for the values in C.
+!  Can choose which power to divide through by and how many decimal places, or
+!  choose to show all values as exponentials.
+      implicit none
+   
+      real(rs), intent(in) :: C(6,6)
+      integer, optional, intent(in) :: unit,power,ndp
+      logical, optional, intent(in) :: expo
+      integer :: iunit,ipower,indp
+      logical :: autopower,iexpo
+      character(len=80) :: fmt
+      
+      ! Defaults
+      iunit = 6   ! stdout
+      autopower = .true. ! autodetermine in routine
+      indp = 6    ! 4 decimal places
+      iexpo = .false.
+      
+      ! Get options
+      if (present(unit)) iunit = unit
+      if (iunit < 0) then
+         write(0,'(a,i0.0,a)') 'CIJ_disp: output logical unit must be > 0 (requested ',unit,')'
+         stop
+      endif
+      if (present(power)) then
+         ipower = power
+         autopower = .false.
+      endif
+      if (present(ndp)) indp = ndp
+      if (present(expo)) then
+         iexpo = expo
+         write(0,'(a)') 'Got expo = .true.'
+      endif
+      
+      ! Check that we haven't both specified a fixed power and exponential format
+      if (present(expo) .and. present(power)) then
+         write(0,'(a)') 'CIJ_disp: Cannot display in both fixed-power-of-10 and scientific notation'
+         stop
+      endif
+      
+      ! Non-exponential display (all values on same scale)
+      if (.not.iexpo) then
+         ! If necessary, work out max for matrix
+         if (autopower) ipower = log10(maxval(abs(C)))
+         write(fmt,'(a,i0.0,a,i0.0,a)') '(6(f',indp+3,'.',indp,',1x))'
+         write(iunit,'(a,i0.0)') 'x 10^',ipower
+         write(iunit,fmt) C/(10.**ipower)
+         
+      ! Exponential display: all values are in scientific notation
+      else
+         write(fmt,'(a,i0.0,a,i0.0,a)') '(6(e',indp+7,'.',indp,',1x))'
+         write(iunit,fmt) C
+      endif
+      
+   end subroutine CIJ_disp
+!-------------------------------------------------------------------------------
+
 !==============================================================================
    subroutine inverse(n, sz, A, AI)
 ! inverse.f90  compute AI = A^-1  modified simeq.f90

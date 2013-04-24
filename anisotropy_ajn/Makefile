@@ -1,15 +1,21 @@
 # Makefile for anisotropy_ajn module and test programs
 
 FC = gfortran
-FFLAGS = -O2 
+FFLAGS = -g -ggdb -fbounds-check -frange-check
 
 all: anisotropy_ajn.o
 
 anisotropy_ajn.o: anisotropy_ajn.f90
 	$(FC) $(FFLAGS) -c anisotropy_ajn.f90
 
-test: test_CIJ_tandon_and_weng test_CIJ_brow_chev test_Reuss_av test_Voigt_av \
-      test_global_VTI test_panning_VTI test_symm
+test: test_CIJ_tandon_and_weng \
+      test_CIJ_brow_chev \
+      test_Reuss_av \
+      test_Voigt_av \
+      test_global_VTI \
+      test_panning_VTI \
+      test_symm \
+      test_disp
 
 test_CIJ_tandon_and_weng: anisotropy_ajn.o test_CIJ_tandon_and_weng.o
 	$(FC) $(FFLAGS) -o test_CIJ_tandon_and_weng test_CIJ_tandon_and_weng.o \
@@ -55,3 +61,15 @@ test_symm: anisotropy_ajn.o test_symm.o
 
 test_symm.o: test_symm.f90
 	$(FC) ${FFLAGS} -c $^
+
+test_disp: anisotropy_ajn.o test_disp.o
+	$(FC) ${FFLAGS} -o $@ $^
+
+test_disp.o: test_disp.f90
+	$(FC) ${FFLAGS} -c $^
+
+
+.PHONY: clean
+
+clean:
+	/bin/rm -f *.o
