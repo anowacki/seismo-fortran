@@ -9,7 +9,7 @@ anisotropy_ajn.o: anisotropy_ajn.f90
 	$(FC) $(FFLAGS) -c anisotropy_ajn.f90
 
 test: test_CIJ_tandon_and_weng test_CIJ_brow_chev test_Reuss_av test_Voigt_av \
-      test_global_VTI test_panning_VTI
+      test_global_VTI test_panning_VTI test_symm
 
 test_CIJ_tandon_and_weng: anisotropy_ajn.o test_CIJ_tandon_and_weng.o
 	$(FC) $(FFLAGS) -o test_CIJ_tandon_and_weng test_CIJ_tandon_and_weng.o \
@@ -48,4 +48,10 @@ test_Voigt_av: anisotropy_ajn.o test_Voigt_av.o
 	$(FC) ${FFLAGS} -o $@ $^
 
 test_Voigt_av.o: test_Voigt_av.f90
+	$(FC) ${FFLAGS} -c $^
+
+test_symm: anisotropy_ajn.o test_symm.o
+	$(FC) ${FFLAGS} -o $@ $^
+
+test_symm.o: test_symm.f90
 	$(FC) ${FFLAGS} -c $^

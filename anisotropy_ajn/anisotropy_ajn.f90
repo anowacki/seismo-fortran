@@ -114,7 +114,6 @@
 !     Make symmetrical
       do i=1,6; do j=1,6; c(j,i) = c(i,j); enddo; enddo
      
-      return
    end subroutine thom
 !===============================================================================
 
@@ -129,7 +128,6 @@
      
      call thom(vp,vs,rho,eps,gam,del,CIJ_thom)
      
-     return
    end function CIJ_thom
 !-------------------------------------------------------------------------------
 
@@ -274,7 +272,6 @@
       
       do i=1,6; do j=1,6; C(j,i) = C(i,j); enddo; enddo
       
-      return
    end subroutine isocij
 !-------------------------------------------------------------------------------
 
@@ -288,7 +285,6 @@
       
       call isocij(vp,vs,CIJ_iso)
       
-      return
    end function CIJ_iso
 !-------------------------------------------------------------------------------  
    
@@ -346,7 +342,6 @@
       
       close(99)
 
-      return
    end subroutine CIJ_load_list
 !===============================================================================
 
@@ -415,7 +410,6 @@
 
       close(99)
       
-      return
    end subroutine CIJ_load
 !===============================================================================
 
@@ -531,7 +525,6 @@
          enddo
       enddo
       
-      return
    end subroutine CIJ_rot3
 !-------------------------------------------------------------------------------
 
@@ -555,7 +548,6 @@
       do i=1,6; do j=1,6; R(j,i) = R(i,j); enddo; enddo
       CIJ_rot90x = R
       
-      return
    end function CIJ_rot90x
 !-------------------------------------------------------------------------------
 
@@ -579,7 +571,6 @@
       do i=1,6; do j=1,6; R(j,i) = R(i,j); enddo; enddo
       CIJ_rot90y = R
             
-      return
    end function CIJ_rot90y
 !-------------------------------------------------------------------------------
 
@@ -603,7 +594,6 @@
       do i=1,6; do j=1,6; R(j,i) = R(i,j); enddo; enddo
       CIJ_rot90z = R
             
-      return
    end function CIJ_rot90z
 !-------------------------------------------------------------------------------
 
@@ -655,7 +645,6 @@
          tlag_eff = abs(tlag_eff)
       endif    
       
-      return
    end subroutine effective_splitting
 !===============================================================================
 
@@ -676,7 +665,6 @@
          if (angle < -90.0) angle = angle + 180.0      
       enddo
       
-      return
    end subroutine unwind_pm_90
 !===============================================================================
 
@@ -697,7 +685,6 @@
          if (angle < -180.0) angle = angle + 180.0      
       enddo
       
-      return
    end subroutine unwind_pm_180
 !===============================================================================
 
@@ -785,8 +772,6 @@
       call inverse(6,6,reuss,reuss_inv)
       
       Cave = (voigt + reuss_inv) / 2.
-      
-      return
       
    end subroutine CIJ_VRH_n
 !------------------------------------------------------------------------------
@@ -958,8 +943,6 @@
       do i=1,6; do j=1,6; C1(j,i) = C1(i,j); enddo; enddo
       
       Cout = (C0 + C1)/rhout
-   
-      return
    
    end subroutine CIJ_hudson
 !-------------------------------------------------------------------------------
@@ -1136,8 +1119,6 @@
 ! apply density normalisation
      C_out = CC / rh
      
-     return
-
    end subroutine CIJ_tandon_and_weng
 !------------------------------------------------------------------------------
 
@@ -1199,7 +1180,6 @@
       
       Cij2cijkl = CC
       
-      return
    end function Cij2cijkl
 !------------------------------------------------------------------------------
 
@@ -1302,7 +1282,6 @@
    !  Calculate Au
      CIJ_Au = 5._rs*(Gv/Gr) + (Kv/Kr) - 6._rs
       
-      return
    end function CIJ_Au
 !------------------------------------------------------------------------------
 
@@ -1435,7 +1414,6 @@
 !         pR = sum(XH**2)/sum(Xin**2)
 !      endif
          
-      return
    end subroutine CIJ_brow_chev
 !-------------------------------------------------------------------------------               
 
@@ -1469,7 +1447,6 @@
       CIJ2X(20) = 2._rs*sqrt(2._rs)*C(4,6)
       CIJ2X(21) = 2._rs*sqrt(2._rs)*C(4,5)
       
-      return
    end function CIJ2X
 !-------------------------------------------------------------------------------
 
@@ -1511,7 +1488,6 @@
          enddo
       enddo
       
-      return
    end function X2CIJ
 !-------------------------------------------------------------------------------
 
@@ -1527,6 +1503,23 @@
       stop
       
    end subroutine CIJ_isotropic_average
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+   subroutine CIJ_symm(C)
+!===============================================================================
+!  Make a matrix symmetrical.  Assumes the upper diagonal is filled in
+      implicit none
+      real(rs), intent(inout) :: C(6,6)
+      integer :: i,j
+
+      do i=1,6
+         do j=i,6
+            if (i /= j) C(i,j) = C(j,i)
+         enddo
+      enddo
+      
+   end subroutine CIJ_symm
 !-------------------------------------------------------------------------------
 
 !==============================================================================
