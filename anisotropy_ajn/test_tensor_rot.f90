@@ -13,11 +13,13 @@ program test_tensor_rot
    integer  :: i,j,k,l,a,b,c,d, n
    integer  :: seconds0=0, seconds1=0, rate
    real(rs),dimension(3,3) :: R,Ra,Rb,Rc,g   ! Rotation matrices
-   integer :: nrot=50000
+   integer :: nrot=5000
    character(len=80) :: arg
    
-   if (iargc() == 1) call getarg(1,arg); read(arg,*) nrot
-   
+   if (iargc() == 1) then
+      call getarg(1,arg)
+      read(arg,*) nrot
+   endif   
    
 !************************************************
 !  Rotate tensor the explicit way
@@ -86,7 +88,7 @@ program test_tensor_rot
 !  Show results
    CIJr = cijkl2Cij(Tr)
    CIJ1 = CIJr
-   write(*,'(a,f6.4,a)') 'Output from inbuilt rotation took ', &
+   write(*,'(a,f0.4,a)') 'Output from inbuilt rotation took ', &
                   (seconds1-seconds0)/real(rate),' seconds:'
    write(*,'(6f12.4)') CIJr
    write(*,*)

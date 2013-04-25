@@ -15,7 +15,8 @@ test: test_CIJ_tandon_and_weng \
       test_global_VTI \
       test_panning_VTI \
       test_symm \
-      test_disp
+      test_disp \
+      test_tensor_rot
 
 test_CIJ_tandon_and_weng: anisotropy_ajn.o test_CIJ_tandon_and_weng.o
 	$(FC) $(FFLAGS) -o test_CIJ_tandon_and_weng test_CIJ_tandon_and_weng.o \
@@ -66,6 +67,12 @@ test_disp: anisotropy_ajn.o test_disp.o
 	$(FC) ${FFLAGS} -o $@ $^
 
 test_disp.o: test_disp.f90
+	$(FC) ${FFLAGS} -c $^
+
+test_tensor_rot: anisotropy_ajn.o test_tensor_rot.o
+	$(FC) ${FFLAGS} -o $@ $^
+
+test_tensor_rot.o: test_tensor_rot.f90
 	$(FC) ${FFLAGS} -c $^
 
 
