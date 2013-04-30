@@ -33,11 +33,16 @@ module raypaths
    contains
    
 !===============================================================================
-   subroutine raypaths_read(file,ray)
+   subroutine raypaths_read(file,ray,taup)
 !===============================================================================
 !  Read in the coordinates of a ray from file.
 !  These ray files have x,y,z coordinates of ray on each line, with comment 
 !  lines containing #, % or > as the first character on the line.
+!
+!  An alternative input format is for output from taup_path.  These have format:
+!     > name info
+!     distance/deg radius/km lat/deg lon/deg
+!  Specifying taup=.true. as an argument enables this conversion
    
    implicit none
    
@@ -45,6 +50,12 @@ module raypaths
    type(raypath),intent(inout)  :: ray
    character(len=1)             :: comment
    integer                      :: npts,iostatus
+   logical, intent(in), optional :: taup
+   logical :: taup_input
+   real(rs) :: delta,r,lon,lat,colon,colat
+   
+!  Check if we have taup_input
+   if (present(taup)) taup_input = taup
    
 !  Check that this is a 'new' ray
    if (allocated(ray%x) .or. allocated(ray%y) .or. allocated(ray%z)) then
@@ -84,7 +95,16 @@ module raypaths
       read(20,'(1a)') comment
       if (comment == '#' .or. comment == '%' .or. comment == '>') cycle
       backspace(20)
-      read(20,*) ray%x(npts), ray%y(npts), ray%z(npts)
+      if (taup_input) then
+         read(20,*) delta, r, lat, lon
+         colat = to_rad*(90._rs - lat)
+         colon = to_rad*lon
+         ray%x(npts) = r * sin(colat) * cos(colon)
+         ray%y(npts) = r * sin(colat) * sin(colon)
+         ray%z(npts) = r * cos(colat)
+      else
+         read(20,*) ray%x(npts), ray%y(npts), ray%z(npts)
+      endif
       npts = npts + 1
    enddo
    
