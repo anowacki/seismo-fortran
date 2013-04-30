@@ -418,7 +418,7 @@ module spherical_geometry
    r_temp = sqrt(x**2 + y**2 + z**2)
    
    t = acos(z/r_temp)
-   p = acos( x/(r_temp*sin(t)) )
+   p = atan2(y,x)
    
    r = r_temp
    
@@ -454,7 +454,7 @@ module spherical_geometry
    r_temp = sqrt(x**2 + y**2 + z**2)
    
    t = acos(z/r_temp)
-   p = acos( x/(r*sin(t)) )
+   p = atan2(y,x)
    
    r = r_temp
    
