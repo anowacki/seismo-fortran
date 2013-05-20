@@ -1,7 +1,7 @@
 # Makefile for anisotropy_ajn module and test programs
 
 FC = gfortran
-FFLAGS = -g -ggdb -fbounds-check -frange-check
+FFLAGS = -O3 -g -ggdb -fbounds-check -frange-check
 
 all: anisotropy_ajn.o
 
