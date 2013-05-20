@@ -787,7 +787,6 @@
       real(rs),intent(in) :: VF_in(:), C_in(:,:,:), rh_in(:)
       real(rs),intent(out) :: Cave(6,6), rhave
       integer :: i,n
-!      real(rs),allocatable :: VF(:)
       
 !  Get size of arrays and check they're consistent
       n = size(VF_in)
@@ -798,12 +797,6 @@
          write(0,'(a)') 'anisotropy_ajn: CIJ_Voigt_av: C must be nx6x6 array.'
          stop
       endif
-      
-!  Allocate space for arrays
-!      allocate(VF(n))
-      
-!  Normalise the volume fractions to sum to unity
-!      VF = VF_in / sum(VF_in)
       
 !  Construct Voigt average
       Cave = 0.  ;  rhave = 0.
@@ -826,7 +819,6 @@
       real(rs),intent(in) :: VF_in(:), C_in(:,:,:), rh_in(:)
       real(rs),intent(out) :: Cave(6,6), rhave
       integer :: i,n
-!      real(rs),allocatable :: VF(:)
       real(rs) :: S(6,6), S_in(6,6), C_temp(6,6)
       
 !  Get size of arrays and check they're consistent
@@ -838,12 +830,6 @@
          write(0,'(a)') 'anisotropy_ajn: CIJ_Reuss_av: C must be nx6x6 array.'
          stop
       endif
-      
-!  Allocate space for arrays
-!      allocate(VF(n))
-      
-!  Normalise the volume fractions to sum to unity
-!      VF = VF_in / sum(VF_in)
       
 !  Construct Reuss average
       Cave = 0.  ;  S = 0.;  rhave = 0.
@@ -858,9 +844,7 @@
       
 !  Find stiffness from compliance
       call inverse(6,6,S,Cave)
-      
-!      deallocate(VF)
-      
+            
    end subroutine CIJ_Reuss_av
 !-------------------------------------------------------------------------------
 
