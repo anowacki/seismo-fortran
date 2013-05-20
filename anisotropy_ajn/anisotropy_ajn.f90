@@ -311,9 +311,9 @@
       integer :: nin,n
       real(rs) :: C(6,6,nin) ! Voigt notation matrix
       real(rs) :: Cin(21)
-      real(rs) :: ec, rho(nin),x(nin)
+      real(rs) :: rho(nin),x(nin)
       
-      integer :: ierr,ioflag ! error flags
+      integer :: ioflag ! error flags
       integer :: i,j,itensor,icnt
       
       character (len = 80) :: fname
@@ -466,7 +466,7 @@
       real(rs) :: C(6,6), CR(6,6) ! Voigt notation matrix
       real(rs) :: alp,bet,gam ! rotation (clockwise) about 1,2,3 axis respectively
       real(rs) :: a,b,g     
-      real(rs) :: R(3,3), D(6,6), R1(3,3), R2(3,3), R3(3,3), R21(3,3)
+      real(rs) :: R(3,3), R1(3,3), R2(3,3), R3(3,3), R21(3,3)
       
       integer :: i,j,k,l,m,n,lp,lq,lt
             
@@ -962,12 +962,8 @@
      real(rs)              :: amu,amui,alam,alami,bmi,bmps,E0,anu,amu12,amu23,anu31,&
                         anum,denom,aK23,anu12tst,CC(6,6),rh
      real(rs)              :: t1,t2,t3,t4,t5,D1,D2,D3,acshdel,g
-     real(rs)              :: s11,s12,s13,s14,s15,s16,&
-                              s21,s22,s23,s24,s25,s26,&
-                              s31,s32,s33,s34,s35,s36,&
-                              s41,s42,s43,s44,s45,s46,&
-                              s51,s52,s53,s54,s55,s56,&
-                              s61,s62,s63,s64,s65,s66
+     real(rs)              :: s11,s12,s13,s21,s22,s23,&
+                              s31,s32,s33,s44,s55,s66
      real(rs)              :: A,A1,A2,A3,A4,A5,B1,B2,B3,B4,B5,E11,E22
      integer               :: i,j
    
@@ -1296,7 +1292,7 @@
       real(rs) :: M(21,21)    ! Projector
       real(rs) :: C(6,6)
       real(rs) :: X(21),XH(21),Xin(21),CH(6,6)
-      integer  :: i,j
+      integer  :: i
       
 !  Input matrix and vector
       C = Cin
@@ -1479,17 +1475,17 @@
 !-------------------------------------------------------------------------------
 
 !===============================================================================
-   subroutine CIJ_isotropic_average(C,r,Ciso,Vp,Vs)
+!   subroutine CIJ_isotropic_average(C,r,Ciso,Vp,Vs)
 !===============================================================================
-      implicit none
-      
-      real(rs), intent(in) :: C(6,6), r
-      real(rs), intent(out), optional :: Ciso(6,6), Vp, Vs
-      
-      write(0,'(a)') 'anisotropy_ajn: CIJ_isotropic_average is not working yet.'
-      stop
-      
-   end subroutine CIJ_isotropic_average
+!      implicit none
+!      
+!      real(rs), intent(in) :: C(6,6), r
+!      real(rs), intent(out), optional :: Ciso(6,6), Vp, Vs
+!      
+!      write(0,'(a)') 'anisotropy_ajn: CIJ_isotropic_average is not working yet.'
+!      stop
+!      
+!   end subroutine CIJ_isotropic_average
 !-------------------------------------------------------------------------------
 
 !===============================================================================
@@ -1555,7 +1551,7 @@
       ! Non-exponential display (all values on same scale)
       if (.not.iexpo) then
          ! If necessary, work out max for matrix
-         if (autopower) ipower = log10(maxval(abs(C)))
+         if (autopower) ipower = int(log10(maxval(abs(C))))
          write(fmt,'(a,i0.0,a,i0.0,a)') '(6(f',indp+3,'.',indp,',1x))'
          write(iunit,'(a,i0.0)') 'x 10^',ipower
          write(iunit,fmt) C/(10.**ipower)
