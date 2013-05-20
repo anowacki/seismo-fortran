@@ -47,6 +47,9 @@
 !   * Added CIJ_VTI_global                                      2013/02
 !   * Added CIJ_symm                                            2013/04
 !   * Added CIJ_disp                                            2013/04
+!   * Removed the unnecessary rho from arguments to CIJ_VTI2thom
+!     WARNING: This will break codes which use this function,
+!     however none exist that I know of.                        2013/05
 !===============================================================================
    module anisotropy_ajn
 !===============================================================================
@@ -221,12 +224,12 @@
 !-------------------------------------------------------------------------------      
 
 !===============================================================================
-   subroutine CIJ_VTI2thom(C,rho,eps,gam,del)
+   subroutine CIJ_VTI2thom(C,eps,gam,del)
 !===============================================================================
 !  Given a normalised elasticity tensor and density, return the Thomsen (1986)
 !  parameters.  The tensor must be VTI, symmetrical about x3.
       implicit none
-      real(rs),intent(in) :: C(6,6),rho
+      real(rs),intent(in) :: C(6,6)
       real(rs),intent(out) :: eps,gam,del
       real(rs) :: tol
       
