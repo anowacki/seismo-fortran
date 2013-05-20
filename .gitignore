@@ -14,4 +14,10 @@ anisotropy_ajn/test_tensor_rot
 anisotropy_ajn/test_symm
 anisotropy_ajn/test_disp
 anisotropy_ajn/test_tensor_rot
+plate_motion/apm
+plate_motion/plate_name
+plate_motion/plate_name_list
+plate_motion/spread
+plate_motion/test_inout
+plate_motion/test_plate_motion
 test_EC_grid/test_EC_grid_dump_file_bin

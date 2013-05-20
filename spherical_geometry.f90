@@ -40,27 +40,27 @@ module spherical_geometry
 !  delta returns the angular distance between two points on a sphere given 
 !  the lat and lon of each using the Haversine formula
 !
-	  implicit none
-	  real(rs) :: delta,lat1,lon1,lat2,lon2
-	  logical,optional :: degrees
-	  	  
-	  if (present(degrees)) then
-	     if (degrees) then
-			lat1=lat1*pi/1.8D2 ; lon1=lon1*pi/1.8D2
-			lat2=lat2*pi/1.8D2 ; lon2=lon2*pi/1.8D2
-	     endif
-	  endif
-	  
-	  delta=atan2( sqrt( (cos(lat2)*sin(lon2-lon1))**2 + (cos(lat1)*sin(lat2) - &
-			  sin(lat1)*cos(lat2)*cos(lon2-lon1))**2) , &
-			  sin(lat1)*sin(lat2) + cos(lat1)*cos(lat2)*cos(lon2-lon1))
+     implicit none
+     real(rs) :: delta,lat1,lon1,lat2,lon2
+     logical,optional :: degrees
+          
+     if (present(degrees)) then
+        if (degrees) then
+         lat1=lat1*pi/1.8D2 ; lon1=lon1*pi/1.8D2
+         lat2=lat2*pi/1.8D2 ; lon2=lon2*pi/1.8D2
+        endif
+     endif
+     
+     delta=atan2( sqrt( (cos(lat2)*sin(lon2-lon1))**2 + (cos(lat1)*sin(lat2) - &
+           sin(lat1)*cos(lat2)*cos(lon2-lon1))**2) , &
+           sin(lat1)*sin(lat2) + cos(lat1)*cos(lat2)*cos(lon2-lon1))
 
-	  if (present(degrees)) then
+     if (present(degrees)) then
          if (degrees) delta = delta * 1.8D2/pi
       endif
-	  
-	  return
-	  
+     
+     return
+     
    end function delta
 !==============================================================================
 
@@ -85,7 +85,7 @@ module spherical_geometry
       real(rs),intent(out)  :: dist
       real(rs)             :: a,b,f,lon1,lat1,lon2,lat2,L,u1,u2,lambda1,lambda2,&
                               sin_s,cos_s,s,sin_a,cos_a_sq,cos_2sm,C,u_2,&
-                              big_A,big_B,ds,a1,a2
+                              big_A,big_B,ds
       logical              :: isnan
 !      real,intent(out),optional :: azi,baz
       
@@ -202,25 +202,25 @@ module spherical_geometry
 !!  Starting guess for the iteration variables
 !   lambda1 = big_number
 !   lambda2 = L
-!	
+!   
 !   do while ( abs(lambda2-lambda1) > convergence_limit ) 
-!	  sin_s = sqrt((cos(u2)*sin(lambda2))**2 + (cos(u1)*sin(u2)-sin(u1)*cos(u2)*cos(lambda2))**2)
-!	  cos_s = sin(u1)*sin(u2) + cos(u1)*cos(u2)*cos(lambda2)
-!	  s = atan2(sin_s,cos_s)
-!	  sin_a = cos(u1)*cos(u2)*sin(lambda2)/sin_s
-!	  cos_a_sq = 1.d0 - sin_a**2
-!	  cos_2sm = cos_s - s*sin(u1)*sin(u2)/cos_a_sq
+!     sin_s = sqrt((cos(u2)*sin(lambda2))**2 + (cos(u1)*sin(u2)-sin(u1)*cos(u2)*cos(lambda2))**2)
+!     cos_s = sin(u1)*sin(u2) + cos(u1)*cos(u2)*cos(lambda2)
+!     s = atan2(sin_s,cos_s)
+!     sin_a = cos(u1)*cos(u2)*sin(lambda2)/sin_s
+!     cos_a_sq = 1.d0 - sin_a**2
+!     cos_2sm = cos_s - s*sin(u1)*sin(u2)/cos_a_sq
 !      if (isnan(cos_2sm)) cos_2sm = 0.d0
-!	  C = (f/16.d0)*cos_a_sq*(4.d0+f*(4.d0-3.d0*cos_a_sq))
-!	  lambda1 = lambda2
-!	  lambda2 = L + (1.d0-C)*f*sin_a*(s+C*sin_a*(cos_2sm+C*cos_s*(-1.d0+2.d0*cos_2sm**2)))
+!     C = (f/16.d0)*cos_a_sq*(4.d0+f*(4.d0-3.d0*cos_a_sq))
+!     lambda1 = lambda2
+!     lambda2 = L + (1.d0-C)*f*sin_a*(s+C*sin_a*(cos_2sm+C*cos_s*(-1.d0+2.d0*cos_2sm**2)))
 !   enddo
-!	
+!   
 !   u_2 = cos_a_sq*(a**2-b**2)/b**2
 !   big_A = 1.d0+(u_2/16384.d0)*(4096.d0+u_2*(-768.d0+u_2*(320.d0-175.d0*u_2)))
 !   big_B = (u_2/1024.d0)*(256.d0+u_2*(-128.d0+u_2*(74.d0-47.d0*u_2)))
 !   Delta_s = big_B*sin_s*(cos_2sm+(big_B/4.d0)*(cos_s*(-1.d0+2.d0*cos_2sm**2)- &
-!			 (big_B/6.d0)*cos_2sm*(-3.d0+4.d0*sin_s**2)*(-3.d0+4.d0*cos_2sm**2)))
+!          (big_B/6.d0)*cos_2sm*(-3.d0+4.d0*sin_s**2)*(-3.d0+4.d0*cos_2sm**2)))
 !   test_dist_vincenty = b*big_A*(s-Delta_s) ;
 !   
 !   
@@ -234,65 +234,65 @@ module spherical_geometry
 !------------------------------------------------------------------------------
 ! Computes the endpoint given a starting point lon,lat, azimuth and angular distance
 
-	  implicit none
-	  
-	  real(rs),intent(in)  :: lon1_in,lat1_in,az_in,delta_in
-	  real(rs),intent(out) :: lon2,lat2
-	  real(rs)             :: lon1,lat1,az,delta
-	  logical,optional,intent(in) :: degrees
-	  logical          :: using_deg,deg
-	  
-	  lon1=lon1_in ; lat1=lat1_in ; az=az_in ; delta=delta_in
-	  
-	  using_deg = present(degrees)
-	  if (using_deg) then
-	     if (degrees) deg = degrees
-	  else
-	     deg = .false.
-	  endif
-	  
-	  if (using_deg .and. deg) then
-		 if ( delta > 180. ) then
-			 write(*,*)'Error: distance must be less than 180 degrees.'
-			 stop
-		 else if ( lon1 <-180 .or. lon1 > 180 ) then
-			 write(*,*)'Error: longitude must be in range -180 - 180.'
-			 stop
-		 else if ( lat1 <-90 .or. lat1 > 90 ) then
-			 write(*,*)'Error: latitude must be in range -90 - 90.'
-			 stop
-		 endif
-	  else
-		 if (delta > pi) then
+     implicit none
+     
+     real(rs),intent(in)  :: lon1_in,lat1_in,az_in,delta_in
+     real(rs),intent(out) :: lon2,lat2
+     real(rs)             :: lon1,lat1,az,delta
+     logical,optional,intent(in) :: degrees
+     logical          :: using_deg,deg
+     
+     lon1=lon1_in ; lat1=lat1_in ; az=az_in ; delta=delta_in
+     
+     using_deg = present(degrees)
+     if (using_deg) then
+        if (degrees) deg = degrees
+     else
+        deg = .false.
+     endif
+     
+     if (using_deg .and. deg) then
+       if ( delta > 180. ) then
+          write(*,*)'Error: distance must be less than 180 degrees.'
+          stop
+       else if ( lon1 <-180 .or. lon1 > 180 ) then
+          write(*,*)'Error: longitude must be in range -180 - 180.'
+          stop
+       else if ( lat1 <-90 .or. lat1 > 90 ) then
+          write(*,*)'Error: latitude must be in range -90 - 90.'
+          stop
+       endif
+     else
+       if (delta > pi) then
             write(*,*)'Error: distance must be less than 2pi radians.'
             stop
-	     else if (lon1 < -pi .or. lon2 > pi) then
+        else if (lon1 < -pi .or. lon2 > pi) then
             write(*,*)'Error: longitude must be in range -2pi - 2pi.'
             stop
-	     else if (lat1 < -pi/2.d0 .or. lat2 > pi/2.d0) then
+        else if (lat1 < -pi/2.d0 .or. lat2 > pi/2.d0) then
             write(*,*)'Error: latitude must be in range -pi - pi.'
-		    stop
-	     endif
-	  endif
-	  
-	  if (using_deg .and. deg) then
+          stop
+        endif
+     endif
+     
+     if (using_deg .and. deg) then
 !  Convert to radians
-		  lon1=lon1*pi/1.8D2 ; lat1=lat1*pi/1.8D2
-		  az=az*pi/1.8D2     ; delta=delta*pi/1.8D2
-	  endif
-	  
+        lon1=lon1*pi/1.8D2 ; lat1=lat1*pi/1.8D2
+        az=az*pi/1.8D2     ; delta=delta*pi/1.8D2
+     endif
+     
 !  Calculate point which is delta degrees/radians from lon1,lat1 along az
      lat2 = asin(sin(lat1)*cos(delta) + cos(lat1)*sin(delta)*cos(az))
      lon2 = lon1 + atan2(sin(az)*sin(delta)*cos(lat1),  &
                          cos(delta)-sin(lat1)*sin(lat2) )
         
-	  if (using_deg .and. deg) then
+     if (using_deg .and. deg) then
 !  Convert to degrees
-		  lat2=1.8D2*lat2/pi  ; lon2=1.8D2*lon2/pi
-		  if(lon2>1.8D2) lon2=lon2-3.6D2 ; if(lon2<-1.8D2) lon2=lon2+3.6D2
-	  end if
-	  
-	  return
+        lat2=1.8D2*lat2/pi  ; lon2=1.8D2*lon2/pi
+        if(lon2>1.8D2) lon2=lon2-3.6D2 ; if(lon2<-1.8D2) lon2=lon2+3.6D2
+     end if
+     
+     return
    
    end subroutine step
 !==============================================================================
@@ -302,33 +302,33 @@ module spherical_geometry
 !  Returns azimuth from point 1 to point 2.
 !  From: http://www.movable-type.co.uk/scripts/latlong.html
 
-	  implicit none
+     implicit none
 
-	  real(rs) :: azimuth,lon1,lat1,lon2,lat2
-	  real(rs) :: rlon1,rlat1,rlon2,rlat2,d,dlon,dlat,conversion
-	  logical,optional :: degrees
-	  
-	  conversion = 1._rs
-	  if (present(degrees)) then
-	     if (degrees) conversion = pi/180._rs
+     real(rs) :: azimuth,lon1,lat1,lon2,lat2
+     real(rs) :: rlon1,rlat1,rlon2,rlat2,conversion
+     logical,optional :: degrees
+     
+     conversion = 1._rs
+     if (present(degrees)) then
+        if (degrees) conversion = pi/180._rs
      endif
-	  	  
-	  rlon1 = conversion*lon1  ;  rlon2 = conversion*lon2
-	  rlat1 = conversion*lat1  ;  rlat2 = conversion*lat2
-	  
+          
+     rlon1 = conversion*lon1  ;  rlon2 = conversion*lon2
+     rlat1 = conversion*lat1  ;  rlat2 = conversion*lat2
+     
      azimuth = atan2(sin(rlon2-rlon1)*cos(rlat2) , &
                cos(rlat1)*sin(rlat2) - sin(rlat1)*cos(rlat2)*cos(rlon2-rlon1) )
 
-	  if (azimuth < 0) then
-		  azimuth = azimuth+2._rs*pi
-	  endif
-	  
-	  azimuth = azimuth / conversion
-	  
-!	  write(*,*)'Azimuth',azimuth
-	  
-	  return
-	  
+     if (azimuth < 0) then
+        azimuth = azimuth+2._rs*pi
+     endif
+     
+     azimuth = azimuth / conversion
+     
+!     write(*,*)'Azimuth',azimuth
+     
+     return
+     
    end function azimuth
 !==============================================================================
 
@@ -418,7 +418,7 @@ module spherical_geometry
    r_temp = sqrt(x**2 + y**2 + z**2)
    
    t = acos(z/r_temp)
-   p = acos( x/(r_temp*sin(t)) )
+   p = atan2(y,x)
    
    r = r_temp
    
@@ -454,7 +454,7 @@ module spherical_geometry
    r_temp = sqrt(x**2 + y**2 + z**2)
    
    t = acos(z/r_temp)
-   p = acos( x/(r*sin(t)) )
+   p = atan2(y,x)
    
    r = r_temp
    
@@ -484,40 +484,40 @@ module spherical_geometry
 !  0 for an upward, vertical ray, 90° for a horizontal ray, 180° for a downward,
 !  vertical ray
    
-	  implicit none
-	  
-	  real(rs),intent(in)   :: r_in(3),lon_in,lat_in
-	  real(rs)              :: inclination
-	  real(rs)              :: r(3),lon,lat,radial(3),conversion,dot
-	  logical,intent(in),optional :: degrees
-	 
+     implicit none
+     
+     real(rs),intent(in)   :: r_in(3),lon_in,lat_in
+     real(rs)              :: inclination
+     real(rs)              :: r(3),lon,lat,radial(3),conversion,dot
+     logical,intent(in),optional :: degrees
+    
 !  Convert to radians if necessary
-	  if (present(degrees)) then
-		 if (degrees) conversion = pi/1.8d2
-		 if (.not.degrees) conversion = 1.d0
-	  else
-		 conversion = 1.d0
-	  endif
-	  lon = conversion * lon_in ; lat = conversion * lat_in
-	  
+     if (present(degrees)) then
+       if (degrees) conversion = pi/1.8d2
+       if (.not.degrees) conversion = 1.d0
+     else
+       conversion = 1.d0
+     endif
+     lon = conversion * lon_in ; lat = conversion * lat_in
+     
 !  Create the (unit) cartesian vector along the Earth radial direction
-	  radial(1) = cos(lat)*cos(lon)
-	  radial(2) = cos(lat)*sin(lon)
-	  radial(3) = sin(lat)
-	  	  
+     radial(1) = cos(lat)*cos(lon)
+     radial(2) = cos(lat)*sin(lon)
+     radial(3) = sin(lat)
+          
 !  Make r into unit vector
-	  r = r_in / sqrt(r_in(1)**2 + r_in(2)**2 + r_in(3)**2)
-	  
+     r = r_in / sqrt(r_in(1)**2 + r_in(2)**2 + r_in(3)**2)
+     
 !  Compute the dot product and the inclination
-	  dot = r(1)*radial(1) + r(2)*radial(2) * r(3)*radial(3)
-	  inclination = abs(acos(dot))
-	  
-	  if (inclination > pi/2.d0) inclination = pi - inclination
-	  
-	  inclination = inclination / conversion
+     dot = r(1)*radial(1) + r(2)*radial(2) * r(3)*radial(3)
+     inclination = abs(acos(dot))
+     
+     if (inclination > pi/2.d0) inclination = pi - inclination
+     
+     inclination = inclination / conversion
 !      write(*,*)'Inclination',inclination
    
-	  return
+     return
   
    end function inclination
 !==============================================================================
