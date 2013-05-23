@@ -252,25 +252,25 @@ module spherical_geometry
      endif
      
      if (using_deg .and. deg) then
-       if ( delta > 180. ) then
-          write(*,*)'Error: distance must be less than 180 degrees.'
+       if (delta > 180.) then
+          write(*,*)'spherical_geometry: step: Error: distance must be less than 180 degrees.'
           stop
-       else if ( lon1 <-180 .or. lon1 > 180 ) then
-          write(*,*)'Error: longitude must be in range -180 - 180.'
+       else if (lon1 <-180 .or. lon1 > 180) then
+          write(*,*)'spherical_geometry: step: Error: longitude must be in range -180 - 180.'
           stop
-       else if ( lat1 <-90 .or. lat1 > 90 ) then
-          write(*,*)'Error: latitude must be in range -90 - 90.'
+       else if (lat1 <-90 .or. lat1 > 90) then
+          write(*,*)'spherical_geometry: step: Error: latitude must be in range -90 - 90.'
           stop
        endif
      else
        if (delta > pi) then
-            write(*,*)'Error: distance must be less than 2pi radians.'
+            write(*,*)'spherical_geometry: step: Error: distance must be less than 2pi radians.'
             stop
-        else if (lon1 < -pi .or. lon2 > pi) then
-            write(*,*)'Error: longitude must be in range -2pi - 2pi.'
+        else if (lon1 < -pi .or. lon1 > pi) then
+            write(*,*)'spherical_geometry: step: Error: longitude must be in range -2pi - 2pi.'
             stop
-        else if (lat1 < -pi/2.d0 .or. lat2 > pi/2.d0) then
-            write(*,*)'Error: latitude must be in range -pi - pi.'
+        else if (lat1 < -pi/2.d0 .or. lat1 > pi/2.d0) then
+            write(*,*)'spherical_geometry: step: Error: latitude must be in range -pi - pi.'
           stop
         endif
      endif
@@ -296,6 +296,105 @@ module spherical_geometry
    
    end subroutine step
 !==============================================================================
+
+!-------------------------------------------------------------------------------
+   subroutine gcp_points(lon1,lat1,lon2,lat2,ptslon,ptslat,npts,ds,n,degrees)
+!-------------------------------------------------------------------------------
+!  Returns arrays of lon and lat points (including the end points)
+!  along a great circle path between two endpoints.  The user must specify
+!  one of the separation distance, ds (degrees or radians), or number of points
+!  (including the end points), n.  geographic coordinates can be in degrees or
+!  radians, and the points are returned in the same format.  The array must be
+!  at least npts long (optionally returned by the subroutine).
+
+      implicit none
+      real(rs),intent(in) :: lon1,lat1,lon2,lat2
+      real(rs) :: x1,x2,y1,y2,xs,ys,d,ddelta,azi
+      real(rs),dimension(:),intent(out) :: ptslon,ptslat
+      integer,intent(out),optional :: npts
+      real(rs),intent(in),optional :: ds
+      integer,intent(in),optional :: n
+      logical,intent(in),optional :: degrees
+      real(rs) :: conversion
+      integer :: i,npoints
+      
+      ! Default to radians; convert from degrees if necessary
+      conversion = 1._rs
+      if (present(degrees)) then
+         if (degrees) conversion = pi/180._rs
+      endif
+      x1 = lon1*conversion;  x2 = lon2*conversion
+      y1 = lat1*conversion;  y2 = lat2*conversion
+      
+      ! Check one of ds or n is present
+      if (.not.present(ds) .and. .not.present(n)) then
+         write(*,'(a)') 'spherical_geometry: gcp_points: Error: one of ds or n must be specified'
+         stop
+      endif
+      
+      ! Get distance and azimuth between two points
+      d = delta(x1,y1,x2,y2,degrees=.false.)
+      azi = azimuth(x1,y1,x2,y2,degrees=.false.)
+      
+      ! Using a fixed distance ds (same units as coordinates)
+      if (present(ds)) then
+         if (.not.present(npts)) then
+            write(*,'(a)') 'spherical_geometry: gcp_points: Error: must supply npts as well as ds if using constant spacing'
+            stop
+         endif
+         ddelta = ds*conversion
+         ! Check we haven't asked for too much
+         if (ddelta > d) then
+            write(*,'(a)') 'spherical_geometry: gcp_points: Error: requested point spacing is larger than distance between points'
+            stop
+         endif
+         ! Calculate number of points
+         npoints = ceiling(d/ddelta) + 1
+         npts = npoints
+         
+      ! Using a fixed number of points
+      else
+         npoints = n
+         ! Have supplied too few points
+         if (npoints < 2) then
+            write(*,'(a)') 'spherical_geometry: gcp_points: Error: n must be at least 2'
+            stop
+         ! Have asked for two points--which are the end points we've supplied!
+         else if (npoints == 2) then
+            write(*,'(a)') &
+            'spherical_geometry: gcp_points: Warning: have asked for only two points on path, so returning end points'
+            ptslon(2) = x2
+            ptslat(2) = y2
+            ptslon(1:2) = ptslon(1:2) / conversion
+            ptslat(1:2) = ptslat(1:2) / conversion
+            return
+         endif
+         ! Calculate distance between points
+         ddelta = d/npoints
+      endif
+
+      ! Check we have room for all the points
+      if (size(ptslon) < npoints .or. size(ptslat) < npoints) then
+         write(*,'(a)') 'spherical_geometry: gcp_points: Error: arrays to hold lon and lat points are not long enough'
+         stop
+      endif
+
+      ! Fill in points
+      ptslon(1) = x1
+      ptslat(1) = y1
+      do i=2,npoints-1
+         call step(x1,y1,azi,real(i-1)*ddelta,ptslon(i),ptslat(i),degrees=.false.)
+      enddo
+      ptslon(npoints) = x2
+      ptslat(npoints) = y2
+      
+      ! Convert back
+      ptslon(1:npoints) = ptslon(1:npoints) / conversion
+      ptslat(1:npoints) = ptslat(1:npoints) / conversion
+      
+
+   end subroutine gcp_points
+!===============================================================================
 
 !------------------------------------------------------------------------------
    function azimuth(lon1,lat1,lon2,lat2,degrees)
@@ -442,7 +541,7 @@ module spherical_geometry
 
 !------------------------------------------------------------------------------
    subroutine cart2sph(x,y,z,theta,phi,r,degrees)
-!  Returns the geographic coordinates from cartesian ones.
+!  Returns the spherical coordinates from cartesian ones.
 
    implicit none
    

@@ -21,3 +21,7 @@ plate_motion/spread
 plate_motion/test_inout
 plate_motion/test_plate_motion
 test_EC_grid/test_EC_grid_dump_file_bin
+test_spherical_geometry/test_gcp_points
+test_spherical_geometry/test_sphere_sample
+test_spherical_geometry/test_step
+test_spherical_geometry/test_vincenty

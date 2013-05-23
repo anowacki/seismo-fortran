@@ -5,7 +5,7 @@ LIBDIR = $(CURDIR)/lib
 OBJDIR = objs
 MODSDIR = mods
 FC = gfortran
-FCOPTS = -O3 -fbounds-check -g
+FCOPTS = -O3 -fbounds-check -g -ggdb
 LOPTS = -fpic
 
 SPLINEOPTS = -framework vecLib -llapack
