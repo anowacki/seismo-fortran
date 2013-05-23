@@ -309,7 +309,7 @@ module spherical_geometry
 
       implicit none
       real(rs),intent(in) :: lon1,lat1,lon2,lat2
-      real(rs) :: x1,x2,y1,y2,xs,ys,d,ddelta,azi
+      real(rs) :: x1,x2,y1,y2,d,ddelta,azi
       real(rs),dimension(:),intent(out) :: ptslon,ptslat
       integer,intent(out),optional :: npts
       real(rs),intent(in),optional :: ds

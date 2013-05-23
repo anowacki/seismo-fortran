@@ -1,0 +1,10 @@
+#!/bin/bash
+# Overlay the points output by test_gcp_points on those calculated by GMT.
+# Obviously needs GMT installed.
+
+(
+	./test_gcp_points |
+		psxy -JQ0/15c -R-10/55/-10/55 -Ba20f10nSeW -Wthick,red -P -K &&
+	echo -e "0 0\n45 45" |
+		psxy -J -R -Wthin,black,. -O
+) | gv --scale=2 - 2>/dev/null
