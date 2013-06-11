@@ -12,6 +12,7 @@ test: test_CIJ_tandon_and_weng \
       test_CIJ_brow_chev \
       test_Reuss_av \
       test_Voigt_av \
+	  test_axial_average \
       test_global_VTI \
       test_panning_VTI \
       test_symm \
@@ -32,6 +33,11 @@ test_CIJ_brow_chev: anisotropy_ajn.o test_CIJ_brow_chev.o
 test_CIJ_brow_chev.o : test_CIJ_brow_chev.f90
 	$(FC) $(FFLAGS) -c test_CIJ_brow_chev.f90
 
+test_axial_average: anisotropy_ajn.o test_axial_average.o
+	$(FC) ${FFLAGS} -o $@ $^
+
+test_axial_average.o: test_axial_average.f90
+	$(FC) ${FFLAGS} -c $^
 
 test_Reuss_av: anisotropy_ajn.o test_Reuss_av.o
 	$(FC) ${FFLAGS} -o $@ $^

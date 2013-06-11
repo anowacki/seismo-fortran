@@ -254,6 +254,76 @@
 !-------------------------------------------------------------------------------
 
 !===============================================================================
+   subroutine CIJ_axial_average(Cin,axis,Cout,nrot,ave_type)
+!===============================================================================
+!  Give the average of a set of constants rotated about one of the principal
+!  axes.  The subroutine rotates the constants by 360/nrot each time and
+!  sums the constants with one's method of choise (V,R,VRH).
+      implicit none
+      real(rs), intent(in) :: Cin(6,6)
+      integer, intent(in) :: axis
+      real(rs), intent(out) :: Cout(6,6)
+      integer, intent(in), optional :: nrot
+      character(len=*), intent(in), optional :: ave_type
+      integer :: i,nrotations
+      character(len=3) :: average_type
+      real(rs) :: Crot(6,6),Srot(6,6),Sout(6,6),a,da
+
+      ! Set defaults
+      nrotations = 720
+      average_type = 'VRH'
+
+      ! Check input options
+      if (present(nrot)) then
+         if (nrot <= 1) then
+            write(0,'(a)') 'anisotropy_ajn: CIJ_axial_average: nrot must be greater than 1'
+            stop
+         endif
+         nrotations = nrot
+      endif
+      if (present(ave_type)) then
+         if (ave_type /= 'v' .and. ave_type /= 'r' .and. ave_type /= 'vrh' .and. &
+             ave_type /= 'V' .and. ave_type /= 'R' .and. ave_type /= 'VRH') then
+            write(0,'(a)') 'anisotropy_ajn: CIJ_axial_average: ave_type must be V(oigt), R(euss) or VRH (Voigt-Reuss-Hill)'
+            stop
+         endif
+         average_type = ave_type
+      endif
+      if (axis < 1 .or. axis > 3) then
+         write(0,'(a)') 'anisotropy_ajn: CIJ_axial_average: iaxis must be 1, 2 or 3 (a, b or c axes)'
+         stop
+      endif
+
+      ! Rotate about 360/nrotations and sum either C, S or both
+      Cout = 0._rs
+      Sout = 0._rs
+      a = 0._rs
+      da = 360._rs/real(nrotations,rs)
+      do i=1,nrotations
+         if (axis == 1) call CIJ_rot3(Cin,a,0._rs,0._rs,Crot)
+         if (axis == 2) call CIJ_rot3(Cin,0._rs,a,0._rs,Crot)
+         if (axis == 3) call CIJ_rot3(Cin,0._rs,0._rs,a,Crot)
+         if (average_type == 'v' .or. average_type == 'V' .or. &
+            average_type == 'vrh' .or. average_type == 'VRH') then
+            Cout = Cout + Crot/real(nrotations,rs)
+         endif
+         if (average_type == 'r' .or. average_type == 'R' .or. &
+            average_type == 'vrh' .or. average_type == 'VRH') then
+            call inverse(6,6,Crot,Srot)
+            Sout = Sout + Srot/real(nrotations,rs)
+         endif
+         a = a + da
+      enddo
+
+      if (average_type == 'vrh' .or. average_type == 'VRH') then
+         call inverse(6,6,Sout,Crot)
+         Cout = (Cout + Crot)/2._rs
+      endif
+
+   end subroutine CIJ_axial_average
+!-------------------------------------------------------------------------------
+
+!===============================================================================
    subroutine isocij(vp,vs,C)
 !===============================================================================
 !
