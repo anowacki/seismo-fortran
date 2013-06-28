@@ -672,6 +672,66 @@
    end function CIJ_rot90z
 !-------------------------------------------------------------------------------
 
+!===============================================================================
+function CIJ_flipx(C) result(F)
+!===============================================================================
+! Transform a tensor so that it is its mirror image across the plane normal to x
+! This can be done by swapping values for speed for this simple case.
+   implicit none
+   real(rs), intent(in) :: C(6,6)
+   real(rs) :: F(6,6)
+   integer :: i,j
+   F = C
+   do i=1,4
+      do j=5,6
+         F(i,j) = -C(i,j)
+         F(j,i) = -C(j,i)
+      enddo
+   enddo
+end function CIJ_flipx
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+function CIJ_flipy(C) result(F)
+!===============================================================================
+! Transform a tensor so that it is its mirror image across the plane normal to y
+! This can be done by swapping values for speed for this simple case.
+   implicit none
+   real(rs), intent(in) :: C(6,6)
+   real(rs) :: F(6,6)
+   integer :: i,j
+   F = C
+   do i=1,3
+      do j=4,6,2
+         F(i,j) = -C(i,j)
+         F(j,i) = -C(j,i)
+      enddo
+   enddo
+   F(4,5) = -C(4,5);  F(5,4) = -C(5,4)
+   F(5,6) = -C(5,6);  F(6,5) = -C(6,5)
+end function CIJ_flipy
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+function CIJ_flipz(C) result(F)
+!===============================================================================
+! Transform a tensor so that it is its mirror image across the plane normal to z
+! This can be done by swapping values for speed for this simple case.
+   implicit none
+   real(rs), intent(in) :: C(6,6)
+   real(rs) :: F(6,6)
+   integer :: i,j
+   F = C
+   do i=1,3
+      do j=4,5
+         F(i,j) = -C(i,j)
+         F(j,i) = -C(j,i)
+      enddo
+   enddo
+   F(4,6) = -C(4,6);  F(6,4) = -C(6,4)
+   F(5,6) = -C(5,6);  F(6,5) = -C(6,5)
+end function CIJ_flipz
+!-------------------------------------------------------------------------------
 
 !===============================================================================
    subroutine effective_splitting(fast1,tlag1,fast2,tlag2,f,fast_eff,tlag_eff)

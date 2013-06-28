@@ -13,6 +13,7 @@ test: test_CIJ_tandon_and_weng \
       test_Reuss_av \
       test_Voigt_av \
 	  test_axial_average \
+	  test_flip \
       test_global_VTI \
       test_panning_VTI \
       test_symm \
@@ -43,6 +44,12 @@ test_Reuss_av: anisotropy_ajn.o test_Reuss_av.o
 	$(FC) ${FFLAGS} -o $@ $^
 
 test_Reuss_av.o: test_Reuss_av.f90
+	$(FC) ${FFLAGS} -c $^
+
+test_flip: anisotropy_ajn.o test_flip.o
+	$(FC) ${FFLAGS} -o $@ $^
+
+test_flip.o: test_flip.f90
 	$(FC) ${FFLAGS} -c $^
 
 test_global_VTI: anisotropy_ajn.o test_global_VTI.o
