@@ -12,27 +12,28 @@ test: test_CIJ_tandon_and_weng \
       test_CIJ_brow_chev \
       test_Reuss_av \
       test_Voigt_av \
-	  test_axial_average \
-	  test_flip \
+      test_axial_average \
+      test_flip \
       test_global_VTI \
       test_panning_VTI \
       test_symm \
       test_disp \
-      test_tensor_rot
+      test_tensor_rot \
+      test_transform_M
 
 test_CIJ_tandon_and_weng: anisotropy_ajn.o test_CIJ_tandon_and_weng.o
-	$(FC) $(FFLAGS) -o test_CIJ_tandon_and_weng test_CIJ_tandon_and_weng.o \
+	$(FC) ${FFLAGS} -o test_CIJ_tandon_and_weng test_CIJ_tandon_and_weng.o \
                        anisotropy_ajn.o
 
 test_CIJ_tandon_and_weng.o: test_CIJ_tandon_and_weng.f90
-	$(FC) $(FFLAGS) -c test_CIJ_tandon_and_weng.f90
+	$(FC) ${FFLAGS} -c test_CIJ_tandon_and_weng.f90
 
 
 test_CIJ_brow_chev: anisotropy_ajn.o test_CIJ_brow_chev.o
-	$(FC) $(FFLAGS) -o test_CIJ_brow_chev anisotropy_ajn.o test_CIJ_brow_chev.o
+	$(FC) ${FFLAGS} -o test_CIJ_brow_chev anisotropy_ajn.o test_CIJ_brow_chev.o
 
 test_CIJ_brow_chev.o : test_CIJ_brow_chev.f90
-	$(FC) $(FFLAGS) -c test_CIJ_brow_chev.f90
+	$(FC) ${FFLAGS} -c test_CIJ_brow_chev.f90
 
 test_axial_average: anisotropy_ajn.o test_axial_average.o
 	$(FC) ${FFLAGS} -o $@ $^
@@ -88,6 +89,11 @@ test_tensor_rot: anisotropy_ajn.o test_tensor_rot.o
 test_tensor_rot.o: test_tensor_rot.f90
 	$(FC) ${FFLAGS} -c $^
 
+test_transform_M: anisotropy_ajn.o test_transform_M.o
+	$(FC) ${FFLAGS} -o $@ $^
+
+test_transform_M.o: test_transform_M.f90
+	$(FC) ${FFLAGS} -c $^
 
 .PHONY: clean
 

@@ -13,6 +13,7 @@ anisotropy_ajn/test_flip
 anisotropy_ajn/test_global_VTI
 anisotropy_ajn/test_panning_VTI
 anisotropy_ajn/test_tensor_rot
+anisotropy_ajn/test_transform_M
 anisotropy_ajn/test_symm
 anisotropy_ajn/test_disp
 anisotropy_ajn/test_tensor_rot

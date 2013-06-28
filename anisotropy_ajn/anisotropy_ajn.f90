@@ -519,7 +519,64 @@
 !===============================================================================
    subroutine CIJ_rot3(C,alp,bet,gam,CR)
 !===============================================================================
-!  
+!
+!  Rotate an elastic constants matrix in 3D, by three angles:
+!
+!  alpha = clockwise rotation about the 1-axis, looking at origin (~ yaw)
+!          (+ve from 3 -> 2)
+!  beta  = clockwise rotation about the 2-axis, looking at origin (~ dip)
+!          (+ve from 1 -> 3)
+!  gamma = clockwise rotation about the 3-axis, looking at origin (~ azimuth)
+!          (+ve from 2 -> 1)
+!
+!  The rotations are applied in this order
+!
+!-------------------------------------------------------------------------------
+!  This newer version uses the basis change formulae given by A.F. Bower,
+!  'Applied mechanics of solids', Section 3.2.11 (http://solidmechanics.org/)
+!  which allows the operation to be performed directly on the 6x6 Voigt matrix:
+!     C^(m) = KCK^(T),
+!  where C^(m) is the matrix in the new frame, and K is the basis change matrix.
+!
+!  This routine has been tested and agrees to within 0.01% of the Mainprice
+!  version.
+!-------------------------------------------------------------------------------
+      implicit none
+      real(rs), intent(in) :: C(6,6),alp,bet,gam
+      real(rs), intent(out) :: CR(6,6)
+      real(rs) :: a,b,g,R1(3,3),R2(3,3),R3(3,3),R21(3,3),R(3,3)
+
+      a = alp * pi/180._rs
+      b = bet * pi/180._rs
+      g = gam * pi/180._rs
+
+      ! Build the individual rotation matrices
+      R1(1,1) =  1.     ; R1(1,2) =  0.     ; R1(1,3) =  0.
+      R1(2,1) =  0.     ; R1(2,2) =  cos(a) ; R1(2,3) =  sin(a)
+      R1(3,1) =  0.     ; R1(3,2) = -sin(a) ; R1(3,3) =  cos(a)
+
+      R2(1,1) =  cos(b) ; R2(1,2) =  0.     ; R2(1,3) = -sin(b)
+      R2(2,1) =  0.     ; R2(2,2) =  1.     ; R2(2,3) =  0.
+      R2(3,1) =  sin(b) ; R2(3,2) =  0.     ; R2(3,3) =  cos(b)
+
+      R3(1,1) =  cos(g) ; R3(1,2) =  sin(g) ; R3(1,3) =  0.
+      R3(2,1) = -sin(g) ; R3(2,2) =  cos(g) ; R3(2,3) =  0.
+      R3(3,1) =  0.     ; R3(3,2) =  0.     ; R3(3,3) =  1.
+
+      ! Build the compound rotation matrix
+      R21 = matmul(R2,R1)
+      R = matmul(R3,R21)
+
+      ! Perform the rotation
+      CR = CIJ_transform_M(C,R)
+
+   end subroutine CIJ_rot3
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+   subroutine CIJ_rot3_old(C,alp,bet,gam,CR)
+!===============================================================================
+!
 !  Rotate an elastic constant matrix in 3D, by three angles:
 !
 !  alpha = clockwise rotation about the 1-axis, looking at origin (~ yaw)
@@ -530,9 +587,12 @@
 !          (+ve from 2 -> 1)
 !
 !  The rotations are applied in this order
-!    
+!
 !  Subroutine is based in part on code by David Mainprice
 !
+!-------------------------------------------------------------------------------
+!  This version is now deprecated in favour of the matrix multiplication
+!  approach contained in the new CIJ_rot3.  The new routine is about 15% faster.
 !-------------------------------------------------------------------------------
       implicit none
       
@@ -600,7 +660,7 @@
          enddo
       enddo
       
-   end subroutine CIJ_rot3
+   end subroutine CIJ_rot3_old
 !-------------------------------------------------------------------------------
 
 !===============================================================================
@@ -673,64 +733,107 @@
 !-------------------------------------------------------------------------------
 
 !===============================================================================
-function CIJ_flipx(C) result(F)
+   function CIJ_flipx(C) result(F)
 !===============================================================================
 ! Transform a tensor so that it is its mirror image across the plane normal to x
 ! This can be done by swapping values for speed for this simple case.
-   implicit none
-   real(rs), intent(in) :: C(6,6)
-   real(rs) :: F(6,6)
-   integer :: i,j
-   F = C
-   do i=1,4
-      do j=5,6
-         F(i,j) = -C(i,j)
-         F(j,i) = -C(j,i)
+      implicit none
+      real(rs), intent(in) :: C(6,6)
+      real(rs) :: F(6,6)
+      integer :: i,j
+      F = C
+      do i=1,4
+         do j=5,6
+            F(i,j) = -C(i,j)
+            F(j,i) = -C(j,i)
+         enddo
       enddo
-   enddo
-end function CIJ_flipx
+   end function CIJ_flipx
 !-------------------------------------------------------------------------------
 
 !===============================================================================
-function CIJ_flipy(C) result(F)
+   function CIJ_flipy(C) result(F)
 !===============================================================================
 ! Transform a tensor so that it is its mirror image across the plane normal to y
 ! This can be done by swapping values for speed for this simple case.
-   implicit none
-   real(rs), intent(in) :: C(6,6)
-   real(rs) :: F(6,6)
-   integer :: i,j
-   F = C
-   do i=1,3
-      do j=4,6,2
-         F(i,j) = -C(i,j)
-         F(j,i) = -C(j,i)
+      implicit none
+      real(rs), intent(in) :: C(6,6)
+      real(rs) :: F(6,6)
+      integer :: i,j
+      F = C
+      do i=1,3
+         do j=4,6,2
+            F(i,j) = -C(i,j)
+            F(j,i) = -C(j,i)
+         enddo
       enddo
-   enddo
-   F(4,5) = -C(4,5);  F(5,4) = -C(5,4)
-   F(5,6) = -C(5,6);  F(6,5) = -C(6,5)
-end function CIJ_flipy
+      F(4,5) = -C(4,5);  F(5,4) = -C(5,4)
+      F(5,6) = -C(5,6);  F(6,5) = -C(6,5)
+   end function CIJ_flipy
 !-------------------------------------------------------------------------------
 
 !===============================================================================
-function CIJ_flipz(C) result(F)
+   function CIJ_flipz(C) result(F)
 !===============================================================================
 ! Transform a tensor so that it is its mirror image across the plane normal to z
 ! This can be done by swapping values for speed for this simple case.
-   implicit none
-   real(rs), intent(in) :: C(6,6)
-   real(rs) :: F(6,6)
-   integer :: i,j
-   F = C
-   do i=1,3
-      do j=4,5
-         F(i,j) = -C(i,j)
-         F(j,i) = -C(j,i)
+      implicit none
+      real(rs), intent(in) :: C(6,6)
+      real(rs) :: F(6,6)
+      integer :: i,j
+      F = C
+      do i=1,3
+         do j=4,5
+            F(i,j) = -C(i,j)
+            F(j,i) = -C(j,i)
+         enddo
       enddo
-   enddo
-   F(4,6) = -C(4,6);  F(6,4) = -C(6,4)
-   F(5,6) = -C(5,6);  F(6,5) = -C(6,5)
-end function CIJ_flipz
+      F(4,6) = -C(4,6);  F(6,4) = -C(6,4)
+      F(5,6) = -C(5,6);  F(6,5) = -C(6,5)
+   end function CIJ_flipz
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+   function CIJ_transform_M(C,M) result(CT)
+!===============================================================================
+! Transform a tensor by some arbitrary transformation matrix M(3,3).  This allows
+! any mirroring, rotation, inversion, and so on.  This uses the method given in
+! Bowers, 'Applied mechanics of solids', section 3.2.11 (http://solidmechanics.org/),
+! which appears to be faster by about 15% than the traditional tensor arithmetic
+! as used by Mainprice and in CIJ_rot3_old.
+      implicit none
+      real(rs), intent(in) :: C(6,6),M(3,3)
+      real(rs) :: CT(6,6),K(6,6),K1(3,3),K2(3,3),K3(3,3),K4(3,3)
+      integer :: i,j
+
+      do i=1,3
+         do j=1,3
+            K1(i,j) = M(i,j)**2
+            K2(i,j) = MM(i,j+1)*MM(i,j+2)
+            K3(i,j) = MM(i+1,j)*MM(i+2,j)
+            K4(i,j) = MM(i+1,j+1)*MM(i+2,j+2) + MM(i+1,j+2)*MM(i+2,j+1)
+         enddo
+      enddo
+
+      K(1:3,1:3) = K1
+      K(1:3,4:6) = 2._rs*K2
+      K(4:6,1:3) = K3
+      K(4:6,4:6) = K4
+
+      CT = matmul(K,matmul(C,transpose(K)))
+
+      contains
+         function MM(iin,jin)
+            integer, intent(in) :: iin,jin
+            integer :: ii,jj
+            real(rs) :: MM
+            if (iin <= 3) ii = iin
+            if (iin > 3)  ii = iin - 3
+            if (jin <= 3) jj = jin
+            if (jin > 3)  jj = jin - 3
+            MM = M(ii,jj)
+         end function MM
+   end function CIJ_transform_M
 !-------------------------------------------------------------------------------
 
 !===============================================================================
