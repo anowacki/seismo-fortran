@@ -54,7 +54,8 @@ module raypaths
    logical :: taup_input
    real(rs) :: delta,r,lon,lat,colon,colat
    
-!  Check if we have taup_input
+!  Check if we have taup_input; default to false
+   taup_input = .false.
    if (present(taup)) taup_input = taup
    
 !  Check that this is a 'new' ray
