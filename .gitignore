@@ -29,5 +29,6 @@ test_spherical_geometry/test_sphere_sample
 test_spherical_geometry/test_step
 test_spherical_geometry/test_vincenty
 
-# Programs derived from module subroutines
-progs/bin
+# Programs derived from module subroutines: ignore binaries but keep directories
+progs/bin/*
+progs/obj/*

@@ -80,6 +80,7 @@ contains
    subroutine write_points
    !============================================================================
       implicit none
+      write(*,'(a)') sep
       do i=1,np
          write(*,*) lon(i),lat(i)
       enddo
@@ -94,6 +95,8 @@ contains
       character(len=250) :: arg
       if (command_argument_count() == 0) then
          return
+      else if (command_argument_count() == 1) then
+         call usage
       else
          call get_arg('-d',ds,supplied=d_supplied)
          call get_arg('-n',np,supplied=n_supplied)
@@ -134,7 +137,7 @@ contains
                      '',&
                      'By default, gcp_points reads sets of endpoints from stdin as lon1,lat1,lon2,lat2',&
                      'and writes intermediate points to along the great circle path to stdout,',&
-                     ' separated by ">"s for use with GMT.'
+                     'separated by ">"s for use with GMT.'
       stop
    end subroutine usage
    !----------------------------------------------------------------------------
