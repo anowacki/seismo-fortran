@@ -28,3 +28,6 @@ test_spherical_geometry/test_gcp_points
 test_spherical_geometry/test_sphere_sample
 test_spherical_geometry/test_step
 test_spherical_geometry/test_vincenty
+
+# Programs derived from module subroutines
+progs/bin
