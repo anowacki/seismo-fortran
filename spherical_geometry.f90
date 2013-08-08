@@ -35,22 +35,25 @@ module spherical_geometry
    contains
    
 !------------------------------------------------------------------------------
-   function delta(lon1,lat1,lon2,lat2,degrees)
+   function delta(lon1_in,lat1_in,lon2_in,lat2_in,degrees)
 !------------------------------------------------------------------------------
 !  delta returns the angular distance between two points on a sphere given 
 !  the lat and lon of each using the Haversine formula
 !
      implicit none
      real(rs) :: delta,lat1,lon1,lat2,lon2
+     real(rs),intent(in) :: lat1_in,lon1_in,lat2_in,lon2_in
      logical,optional :: degrees
-          
+
+     lat1 = lat1_in;  lon1 = lon1_in
+     lat2 = lat2_in;  lon2 = lon2_in
      if (present(degrees)) then
         if (degrees) then
          lat1=lat1*pi/1.8D2 ; lon1=lon1*pi/1.8D2
          lat2=lat2*pi/1.8D2 ; lon2=lon2*pi/1.8D2
         endif
      endif
-     
+
      delta=atan2( sqrt( (cos(lat2)*sin(lon2-lon1))**2 + (cos(lat1)*sin(lat2) - &
            sin(lat1)*cos(lat2)*cos(lon2-lon1))**2) , &
            sin(lat1)*sin(lat2) + cos(lat1)*cos(lat2)*cos(lon2-lon1))
@@ -58,9 +61,9 @@ module spherical_geometry
      if (present(degrees)) then
          if (degrees) delta = delta * 1.8D2/pi
       endif
-     
+
      return
-     
+
    end function delta
 !==============================================================================
 
