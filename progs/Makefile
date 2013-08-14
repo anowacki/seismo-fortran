@@ -13,6 +13,7 @@ BINDIR = ~/Applications/bin
 PROGS = $(B)/azi \
         $(B)/baz \
         $(B)/gcp_points \
+		$(B)/project_to_gcp \
         $(B)/step
 
 all: progs
