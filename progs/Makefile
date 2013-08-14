@@ -10,7 +10,8 @@ S = src
 LIBS = -lget_args -lspherical_geometry
 BINDIR = ~/Applications/bin
 
-PROGS = $(B)/gcp_points \
+PROGS = $(B)/azi \
+        $(B)/gcp_points \
         $(B)/step
 
 all: progs
