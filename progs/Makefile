@@ -1,4 +1,4 @@
-# Makefile for anisotropy_ajn module and test programs
+# Makefile for wrapper programs for routines provided in modules
 
 FC = gfortran
 FFLAGS = -g -ggdb -fbounds-check -frange-check
@@ -7,10 +7,11 @@ L = -L../lib
 M = ../mods
 O = obj
 S = src
-LIBS = -lget_args -lspherical_geometry
+LIBS = -lspherical_geometry
 BINDIR = ~/Applications/bin
 
 PROGS = $(B)/azi \
+        $(B)/baz \
         $(B)/gcp_points \
         $(B)/step
 
