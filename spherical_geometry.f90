@@ -14,23 +14,23 @@
 module spherical_geometry
 
 !  ** size constants
-   integer, parameter, private :: i4 = selected_int_kind(9) ; ! long int
-   integer, parameter, private :: r4 = selected_real_kind(6,37) ; ! SP
-   integer, parameter, private :: r8 = selected_real_kind(15,307) ; ! DP
+   integer, parameter, private :: i4 = selected_int_kind(9)       ! long int
+   integer, parameter, private :: r4 = selected_real_kind(6,37)   ! SP
+   integer, parameter, private :: r8 = selected_real_kind(15,307) ! DP
    
 !  ** precision selector
    integer, parameter, private :: rs = r8
    
 !  ** maths constants and other useful things
-   real(rs), parameter, private :: pi = 3.141592653589793238462643_rs ;
+   real(rs), parameter, private :: pi = 3.141592653589793238462643_rs
    real(rs), parameter, private :: pi2 = pi/2._rs
    real(rs), parameter, private :: twopi = 2._rs*pi
-   real(rs), parameter, private :: to_rad = 1.74532925199433e-002 ;  
-   real(rs), parameter, private :: to_deg = 57.2957795130823e0 ;  
-   real(rs), parameter, private :: to_km = 111.194926644559 ;      
+   real(rs), parameter, private :: to_rad = 1.74532925199433e-002
+   real(rs), parameter, private :: to_deg = 57.2957795130823e0
+   real(rs), parameter, private :: to_km = 111.194926644559
    
-   real(rs), parameter, private :: big_number = 10.e36 ;      
-   
+   real(rs), parameter, private :: big_number = 10.e36
+   real(rs), parameter, private :: angle_tol = 1.e-15
 
    contains
    
@@ -843,6 +843,132 @@ module spherical_geometry
       return
    end function sph_poly_inout
 !===============================================================================
+
+!===============================================================================
+function sg_torad(a)
+!===============================================================================
+!  Convert from degrees to radians
+   implicit none
+   real(rs), intent(in) :: a
+   real(rs) :: sg_torad
+   sg_torad = a*to_rad
+end function sg_torad
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+function sg_todeg(a)
+!===============================================================================
+!  Convert from radians to degrees
+   implicit none
+   real(rs), intent(in) :: a
+   real(rs) :: sg_todeg
+   sg_todeg = a*to_deg
+end function sg_todeg
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+subroutine sg_project_to_gcp(long,latg,lonp,latp,lon,lat,degrees)
+!===============================================================================
+!  Using the pole to a great circle path about a sphere with coordinates long,
+!  latg, project a point onto that path (point at lonp,latp)
+!  Input is assumed to be in radians.
+   implicit none
+   real(rs), intent(in) :: long,latg,lonp,latp
+   real(rs), intent(out) :: lon,lat
+   logical, optional, intent(in) :: degrees
+   real(rs), dimension(3) :: g,p,gp,pp
+   real(rs) :: r
+   logical :: deg
+
+   deg = .false.
+   if (present(degrees)) deg = degrees
+   ! Convert to vectors
+   g = sg_lonlat2vec(long,latg,degrees=deg)
+   p = sg_lonlat2vec(lonp,latp,degrees=deg)
+
+   ! Check whether the point already lies on the gcp
+   if (abs(dot_product(g,p)) < angle_tol) then
+      call cart2geog(p(1),p(2),p(3),lat,lon,r,degrees=deg)
+      return
+   endif
+
+   ! Compute the pole to the gcp containing g and the point
+   gp = sg_cross_prod(g,p)
+
+   ! Check for the point and the pole being the same--we can't handle this
+   if (sqrt(gp(1)**2 + gp(2)**2 + gp(3)**2) < angle_tol) then
+      write(0,'(a)') 'spherical_geometry: sg_project_to_gcp: Error: point and pole to plane are the same'
+      stop
+   endif
+
+   gp = gp/sqrt(sum(gp**2))  ! Normalise to unit vector
+   pp = sg_cross_prod(gp,g)
+   ! Have to swap the sign of the point if the angle between the starting and
+   ! projected point is more than 90 deg.  Everything is a unit vector.
+   if (acos(dot_product(p,pp)) > pi2) pp = -pp
+
+   call cart2geog(pp(1),pp(2),pp(3),lat,lon,r,degrees=deg)
+
+end subroutine sg_project_to_gcp
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+function sg_cross_prod(a,b) result(c)
+!===============================================================================
+!  Compute the cross product for two three-vectors.
+   implicit none
+   real(rs), dimension(3), intent(in) :: a,b
+   real(rs) :: c(3)
+   c = (/a(2)*b(3) - a(3)*b(2),  a(3)*b(1) - a(1)*b(3),  a(1)*b(2) - a(2)*b(1)/)
+end function sg_cross_prod
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+function sg_lonlat2vec(lon,lat,degrees) result(v)
+!===============================================================================
+!  Convert a longitude and latitude on a unit sphere to a vector.
+   implicit none
+   real(rs), intent(in) :: lon,lat
+   logical, optional, intent(in) :: degrees
+   real(rs) :: r,x,y,z,v(3)
+   logical :: deg
+   deg = .false.
+   if (present(degrees)) deg = degrees
+   r = 1._rs
+   call geog2cart(lon,lat,r,x,y,z,degrees=deg)
+   v = (/x, y, z/)
+end function sg_lonlat2vec
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+subroutine sg_gcp_from_point_azi(lon,lat,azi,lonp,latp,degrees)
+!===============================================================================
+!  Given a point on a unit sphere and and azimuth from that point, return the
+!  pole to the great cricle path created by that point and azimuth
+   implicit none
+   real(rs), intent(in) :: lon,lat,azi
+   real(rs), intent(out) :: lonp,latp
+   logical, optional, intent(in) :: degrees
+   logical :: deg
+   real(rs), dimension(3) :: pstart, pstep, gp
+   real(rs) :: r,conversion
+   real(rs), parameter :: step_dist = 45._rs
+
+   deg = .false.
+   if (present(degrees)) deg = degrees
+   conversion = 1._rs
+   if (deg) conversion = to_rad
+   ! Convert to a vector
+   pstart = sg_lonlat2vec(lon, lat, degrees=deg)
+   ! Find a point along the gcp
+   call step(lon, lat, azi, step_dist*conversion, lonp, latp, degrees=deg)
+   pstep = sg_lonlat2vec(lonp,latp,degrees=deg)
+   ! Find the pole to the two points
+   gp = sg_cross_prod(pstart,pstep)
+   call cart2geog(gp(1),gp(2),gp(3),latp,lonp,r,degrees=deg)
+
+end subroutine sg_gcp_from_point_azi
+!-------------------------------------------------------------------------------
 
 !______________________________________________________________________________
 end module spherical_geometry
