@@ -30,7 +30,7 @@ module spherical_geometry
    real(rs), parameter, private :: to_km = 111.194926644559
    
    real(rs), parameter, private :: big_number = 10.e36
-   real(rs), parameter, private :: angle_tol = 1.e-15
+   real(rs), parameter, private :: angle_tol = 1.e-5
 
    contains
    
@@ -968,6 +968,44 @@ subroutine sg_gcp_from_point_azi(lon,lat,azi,lonp,latp,degrees)
    call cart2geog(gp(1),gp(2),gp(3),latp,lonp,r,degrees=deg)
 
 end subroutine sg_gcp_from_point_azi
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+subroutine sg_gcp_from_points(lon1,lat1,lon2,lat2,lonp,latp,degrees)
+!===============================================================================
+!  Given two points on a sphere (geographic coordinates), return the coordinates
+!  of the pole to the great circle containing the two points.
+   implicit none
+   real(rs), intent(in) :: lon1,lat1,lon2,lat2
+   real(rs), intent(out) :: lonp,latp
+   logical, optional, intent(in) :: degrees
+   logical :: deg
+   real(rs), dimension(3) :: p1,p2,g
+   real(rs) :: r,conversion
+
+   deg = .false.
+   if (present(degrees)) deg = degrees
+   conversion = 1._rs
+   if (deg) conversion = to_rad
+   ! Check the points don't overlap
+   if (conversion*abs(lon1-lon2) < angle_tol .and. conversion*abs(lat1-lat2) < angle_tol) then
+      write(0,'(a)') 'spherical_geometry: sg_gcp_from_points: Error: two points overlap'
+      stop
+   endif
+   ! Check the points aren't antipodal
+   if (abs(delta(lon1,lat1,lon2,lat2,degrees=deg) - pi/conversion) < angle_tol) then
+      write(0,'(a)') 'spherical_geometry: sg_gcp:from_points: Error: two points are antipodal'
+      stop
+   endif
+   ! Convert the coordinates to vectors and compute the cross product, which
+   ! gives the pole to the great circle
+   p1 = sg_lonlat2vec(lon1,lat1,degrees=deg)
+   p2 = sg_lonlat2vec(lon2,lat2,degrees=deg)
+   g = sg_cross_prod(p1,p2)
+   g = g/sqrt(sum(g**2))
+   call cart2geog(g(1),g(2),g(3),latp,lonp,r,degrees=deg)
+
+end subroutine sg_gcp_from_points
 !-------------------------------------------------------------------------------
 
 !______________________________________________________________________________
