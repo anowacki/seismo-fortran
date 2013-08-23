@@ -7,7 +7,7 @@ L = -L../lib
 M = ../mods
 O = obj
 S = src
-LIBS = -lspherical_geometry
+LIBS = -lspherical_geometry -lget_args
 BINDIR = ~/Applications/bin
 
 PROGS = $(B)/azi \
