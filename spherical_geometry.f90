@@ -994,7 +994,7 @@ subroutine sg_gcp_from_points(lon1,lat1,lon2,lat2,lonp,latp,degrees)
    endif
    ! Check the points aren't antipodal
    if (abs(delta(lon1,lat1,lon2,lat2,degrees=deg) - pi/conversion) < angle_tol) then
-      write(0,'(a)') 'spherical_geometry: sg_gcp:from_points: Error: two points are antipodal'
+      write(0,'(a)') 'spherical_geometry: sg_gcp_from_points: Error: two points are antipodal'
       stop
    endif
    ! Convert the coordinates to vectors and compute the cross product, which
@@ -1006,6 +1006,38 @@ subroutine sg_gcp_from_points(lon1,lat1,lon2,lat2,lonp,latp,degrees)
    call cart2geog(g(1),g(2),g(3),latp,lonp,r,degrees=deg)
 
 end subroutine sg_gcp_from_points
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+function sg_gcp_to_azimuth(long,latg,lonp,latp,degrees) result(azi)
+!===============================================================================
+!  Calculate the local azimuth of the great circle defined by pole (long,latg)
+!  at a point (lonp,latp).  Default is for input/output in radians; use
+!  degrees=.true. for azimuth in degrees.
+   implicit none
+   real(rs), intent(in) :: long,latg,lonp,latp
+   real(rs) :: azi
+   logical, optional, intent(in) :: degrees
+   real(rs) :: lon,lat,conversion
+
+   conversion = 1._rs
+   if (present(degrees)) then
+      if (degrees) conversion = to_rad
+   endif
+   ! Check values
+   if (latg < -pi2/conversion .or. latg > pi2/conversion .or. &
+       latp < -pi2/conversion .or. latp > pi2/conversion) then
+      write(0,'(a)') 'spherical_geometry: sg_gcp_to_azimuth: Error: '// &
+         'latitude must be in range -pi/2 to pi/2 (-90 to 90 deg)'
+      stop
+   endif
+   ! Project the point onto the great circle
+   call sg_project_to_gcp(long,latg,lonp,latp,lon,lat,degrees=degrees)
+   ! The local azimuth is pi/2 (90 deg) from the azimuth to the pole, given
+   ! in the range 0-pi or 0-360
+   azi = modulo(azimuth(lon,lat,long,latg,degrees=degrees) + pi2/conversion + &
+         twopi/conversion, twopi/conversion)
+end function sg_gcp_to_azimuth
 !-------------------------------------------------------------------------------
 
 !______________________________________________________________________________

@@ -9,6 +9,7 @@ default: all
 progs = test_sphere_sample \
         test_vincenty \
         test_gcp_points \
+		test_sg_gcp_to_azimuth \
         test_step
 
 all: ${progs}
@@ -20,6 +21,9 @@ test_vincenty: test_vincenty.o
 	$(FC) ${FCFLAGS} -o test_vincenty -L$(LIBDIR) ${LIBS} -J$(MODDIR) test_vincenty.o
 
 test_gcp_points: test_gcp_points.o
+	$(FC) ${FCFLAGS} -o $@ -L$(LIBDIR) ${LIBS} -J$(MODDIR) $^
+
+test_sg_gcp_to_azimuth: test_sg_gcp_to_azimuth.o
 	$(FC) ${FCFLAGS} -o $@ -L$(LIBDIR) ${LIBS} -J$(MODDIR) $^
 
 test_step: test_step.o
