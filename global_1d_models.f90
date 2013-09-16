@@ -271,7 +271,7 @@ subroutine ak135(depth,vp,vs,rho)
                vp1 = vpm(i);  vp2 = vpm(i+1)
             endif
             if (present(vs)) then
-               vs1 = vsm(i);  vs2 = vpm(i+1)
+               vs1 = vsm(i);  vs2 = vsm(i+1)
             endif
             twodepths = .true.
             exit
@@ -283,7 +283,7 @@ subroutine ak135(depth,vp,vs,rho)
 !  Extrapolate linearly to find density
       if (present(rho)) rho = den1 + (depth-dep1)*(den2-den1)/(dep2-dep1)
       if (present(vp))   vp = vp1  + (depth-dep1)*(vp2-vp1) / (dep2-dep1)
-      if (present(vs))   vs = vs1  + (depth-dep1)*(vs2-vs2) / (dep2-dep1)
+      if (present(vs))   vs = vs1  + (depth-dep1)*(vs2-vs1) / (dep2-dep1)
    endif
    
    return
@@ -390,7 +390,7 @@ subroutine prem(depth,vp,vs,rho)
                vp1 = vpm(i);  vp2 = vpm(i+1)
             endif
             if (present(vs)) then
-               vs1 = vsm(i);  vs2 = vpm(i+1)
+               vs1 = vsm(i);  vs2 = vsm(i+1)
             endif
             twodepths = .true.
             exit
@@ -402,7 +402,7 @@ subroutine prem(depth,vp,vs,rho)
 !  Extrapolate linearly to find density
       if (present(rho)) rho = den1 + (depth-dep1)*(den2-den1)/(dep2-dep1)
       if (present(vp))   vp = vp1  + (depth-dep1)*(vp2-vp1) / (dep2-dep1)
-      if (present(vs))   vs = vs1  + (depth-dep1)*(vs2-vs2) / (dep2-dep1)
+      if (present(vs))   vs = vs1  + (depth-dep1)*(vs2-vs1) / (dep2-dep1)
    endif
    
    return

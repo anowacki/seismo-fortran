@@ -7,14 +7,18 @@ L = -L../lib
 M = ../mods
 O = obj
 S = src
-LIBS = -lspherical_geometry -lget_args
+LIBS = -lspherical_geometry -lget_args -lglobal_1d_models
 BINDIR = ~/Applications/bin
 
-PROGS = $(B)/azi \
+PROGS = $(B)/Vak135 \
+        $(B)/Vprem \
+		$(B)/ak135 \
+        $(B)/azi \
         $(B)/baz \
 		$(B)/gcp_from_point_azi \
 		$(B)/gcp_from_points \
         $(B)/gcp_points \
+		$(B)/prem \
 		$(B)/project_to_gcp \
         $(B)/step
 
