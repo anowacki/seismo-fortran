@@ -1040,5 +1040,39 @@ function sg_gcp_to_azimuth(long,latg,lonp,latp,degrees) result(azi)
 end function sg_gcp_to_azimuth
 !-------------------------------------------------------------------------------
 
+!===============================================================================
+function sg_angle_180(a) result(angle)
+!===============================================================================
+!  Make an angle be in the range -180 to 180 deg
+   implicit none
+   real(rs), intent(in) :: a
+   real(rs) :: angle
+   angle = modulo(a+180._rs,360._rs) - 180._rs
+end function sg_angle_180
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+function sg_angle_360(a) result(angle)
+!===============================================================================
+!  Make an angle be in the range 0 to 360 deg
+   implicit none
+   real(rs), intent(in) :: a
+   real(rs) :: angle
+   angle = modulo(a,360._rs)
+end function sg_angle_360
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+function sg_angle_diff(a,b) result(diff)
+!===============================================================================
+!  Provide the difference between two angles, handling cases where they are
+!  either side of 0/360 or -180/180
+   implicit none
+   real(rs), intent(in) :: a,b
+   real(rs) :: diff
+   diff = abs(sg_angle_360(b) - sg_angle_360(a))
+   if (diff > 180._rs) diff = 360._rs - diff
+end function sg_angle_diff
+!-------------------------------------------------------------------------------
 !______________________________________________________________________________
 end module spherical_geometry
