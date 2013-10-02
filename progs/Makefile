@@ -18,6 +18,7 @@ PROGS = $(B)/Vak135 \
 		$(B)/gcp_from_point_azi \
 		$(B)/gcp_from_points \
         $(B)/gcp_points \
+		$(B)/midpoint \
 		$(B)/prem \
 		$(B)/project_to_gcp \
         $(B)/step
