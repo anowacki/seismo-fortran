@@ -1,7 +1,7 @@
 # Makefile for wrapper programs for routines provided in modules
 
 FC = gfortran
-FFLAGS = -g -ggdb -fbounds-check -frange-check
+FFLAGS = -O3 -ggdb -fbounds-check -frange-check
 B = bin
 L = -L../lib
 M = ../mods
@@ -10,7 +10,8 @@ S = src
 LIBS = -lspherical_geometry -lget_args -lglobal_1d_models
 BINDIR = ~/Applications/bin
 
-PROGS = $(B)/Vak135 \
+PROGS = $(B)/GPa2km \
+        $(B)/Vak135 \
         $(B)/Vprem \
 		$(B)/ak135 \
         $(B)/azi \
@@ -18,6 +19,7 @@ PROGS = $(B)/Vak135 \
 		$(B)/gcp_from_point_azi \
 		$(B)/gcp_from_points \
         $(B)/gcp_points \
+		$(B)/km2GPa \
 		$(B)/midpoint \
 		$(B)/prem \
 		$(B)/project_to_gcp \
