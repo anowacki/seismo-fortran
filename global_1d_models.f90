@@ -70,7 +70,7 @@ module global_1d_models
        if (trim(model_in) == 'AK135') call ak135(z,rho=rho)
        if (trim(model_in) == 'PREM' ) call prem(z,rho=rho)
        rho = rho * 1.e3             ! Convert to kg/m^3
-       M = M + rho*(4.)*pi*((r1 * 1.e3)**2 - (r0 - 1.e3)**2)*dr*1.e3   ! Add mass within shell
+       M = M + rho*(4./3.)*pi*((r1 * 1.e3)**3 - (r0 * 1.e3)**3) ! Add mass within shell
        r0 = r1                      ! Next layer upwards
      enddo
 
