@@ -4,6 +4,8 @@
 .gmt*
 *.so
 *.so.?
+FFFTW/test_FFFTW/*.xy
+FFFTW/test_FFFTW/test_FFFTW
 anisotropy_ajn/test_axial_average
 anisotropy_ajn/test_CIJ_brow_chev
 anisotropy_ajn/test_CIJ_tandon_and_weng
