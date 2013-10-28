@@ -3,51 +3,47 @@ FFFTW
 Andy Nowacki
 andy.nowacki@bristol.ac.uk
 
+
 Introduction
 ------------
 FFFTW is a wrapper Fortran 2003 module which provides a friendly interface
 to the FFTW3 functions.  Because they are in C, and Fortran 2003 provides
-a C binding module, some slightly complex pseudo-Fortran is needed to call
-the FFT routines directly.  This module hides the complexity (pointers, etc.)
-from the user of the module and allows straightforward subroutines to be
-provided which just do a 'good-enough' job.
+a C binding module, we can be sure of a few things (such as the size of reals
+vs. float, etc.) which make it more portable.
+
 
 Why call the routines directly when the old interface worked fine?
 ------------------------------------------------------------------
-FFTW3 also provides a legacy (F77) interface which has advantages: you don't
-need to faff around with pointers and allocating memory in C-land; you don't
-have to flip the array orders as it's done automatically in the legacy
-interface; and there's no need to write things like FFFTW3.
+FFTW3 already provides a legacy (F77) interface which you can call; but you
+still need to remember certain things (the size of the F-domain trace you get,
+and so on).  FFFTW removes all that and allows you to just call FFFTW_fwd()
+or FFFTW_rev()--that's it.  The trace is allocated automatically.
 
-However, on most modern CPUs, things like single-precision FFTs can be sped
-up a lot by using SIMD (single instruction multiple data) capabilities.
-FFTW3 supports this, but only when aligning data using FFTW's own
-fftw_malloc() function.  Hence FFFTW provides wrapper routines to easily
-allocate arrays (real or complex) that are compatible with these faster
-routines.
 
 How to use FFFTW
 ----------------
-    include FFFTW
-	integer :: i, npts = 1024
-	! FFFTW_r4 gives you a single precision real; you can use FFFTW_r8
-	! for double precision
-    real(FFFTW_r4), allocatable, pointer :: real_trace(:)
-	! Declare the FFT array with the same precision as the time-domain trace;
-	! so you can use FFFTW_c8 to correspond to a double precision real trace
-    complex(FFFTW_c4), allocatable, pointer :: complex_trace(:)
-    
-	! Allocate room for the real (time-domain) trace with npts points and
-	! automatically calculate the length of the FFT
-    call FFFTW_allocate(real_trace, npts, complex_trace)
-	
-    ! Fill real_trace in with data
-	do i=1,npts; real_trace = sin(0.001*i); enddo
-	
-	! Perform the FFT--complex_trace holds the FFT
-    call FFFTW_r2c_1d(real_trace, complex_trace)
-	
-	! Do whatever you want with the FFT, then deallocate the memory if you
-	! plan to call the routine again with a different trace
-    call FFFTW_deallocate(real_trace, complex_trace)
+    ! Use the FFFTW module.
+	use FFFTW
 
+	! The size of the time-domain array...
+	integer, parameter :: npts = 1024
+	integer :: i
+
+    ! Time-domain array
+	real :: real_trace(npts) ! Or you can use an allocatable array
+
+	! Declare the FFT array with the same precision as the time-domain trace
+    complex, allocatable, pointer :: complex_trace(:)
+
+    ! Fill real_trace in with data
+	real_trace = (sin(0.001*i), i=1,npts)
+
+	! Perform the FFT--complex_trace holds the FFT, and is allocated to the right
+	! size automatically.  It is reallocated if it's already allocated, but to the
+	! wrong size.
+    call FFFTW_fwd(real_trace, complex_trace)
+
+	! You can do what you like to the frequency-domain trace (filter, etc.), then
+	! convert back to the time domain.  (NB: complex_trace is destroyed in the
+	! inverse transform, so copy it elsewhere if you need it later.)
+	call FFFTW_rev(complex_trace, real_trace)

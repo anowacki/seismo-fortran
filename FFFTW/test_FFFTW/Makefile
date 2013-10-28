@@ -1,5 +1,5 @@
 FC = gfortran
-FCOPTS = -Wall -g -ggdb
+FCOPTS = -Wall -g -ggdb -O3
 
 O = ../../objs
 M = ../../mods

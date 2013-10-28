@@ -8,12 +8,15 @@ FC = gfortran
 FCOPTS = -O3 -fbounds-check -g -ggdb
 LOPTS = -fpic
 
+# Need to link FFFTW against FFTW3
+FFFTWOPTS = -I/opt/local/include -L/opt/local/lib -lfftw3 -lfftw3f
 SPLINEOPTS = -framework vecLib -llapack
 
 MODS = $(OBJDIR)/constants.o \
        $(OBJDIR)/density_1d.o \
        $(OBJDIR)/EC_grid_assumed_int.o \
        $(OBJDIR)/EC_grid.o \
+	   $(OBJDIR)/FFFTW.o \
        $(OBJDIR)/functions.o \
        $(OBJDIR)/EmatrixUtils.o \
        $(OBJDIR)/global_1d_models.o \
@@ -37,6 +40,11 @@ $(OBJDIR)/anisotropy_ajn.o: anisotropy_ajn/anisotropy_ajn.f90
 	$(FC) ${FCOPTS} ${LOPTS} -c -J$(MODSDIR) -o $(OBJDIR)/anisotropy_ajn.o anisotropy_ajn/anisotropy_ajn.f90
 	$(FC) -I$(MODSDIR) -o $(LIBDIR)/libanisotropy_ajn.so.1 -shared -W1,-soname,libanisotropy_ajn.so.1 $(OBJDIR)/anisotropy_ajn.o
 	ln -sf $(LIBDIR)/libanisotropy_ajn.so.1 $(LIBDIR)/libanisotropy_ajn.so
+
+$(OBJDIR)/FFFTW.o: FFFTW/FFFTW.f03
+	$(FC) ${FCOPTS} ${LOPTS} ${FFFTWOPTS} -c -J$(MODSDIR) -o $(OBJDIR)/FFFTW.o FFFTW/FFFTW.f03
+	$(FC) -I$(MODSDIR) ${FFFTWOPTS} -o $(LIBDIR)/libFFFTW.so.1 -shared -W1,-soname,FFFTW.so.1 $(OBJDIR)/FFFTW.o
+	ln -sf $(LIBDIR)/libFFFTW.so.1 $(LIBDIR)/libFFFTW.so
 
 $(OBJDIR)/get_args.o: get_args/get_args.f90
 	$(FC) ${FCOPTS} ${LOPTS} -c -J$(MODSDIR) -o $(OBJDIR)/get_args.o get_args/get_args.f90
