@@ -11,6 +11,7 @@ LOPTS = -fpic
 # Need to link FFFTW against FFTW3
 FFFTWOPTS = -I/opt/local/include -L/opt/local/lib -lfftw3 -lfftw3f
 SPLINEOPTS = -framework vecLib -llapack
+SPLITWAVEOPTS = -L${LIBDIR} -lFFFTW -lf90sac
 
 MODS = $(OBJDIR)/constants.o \
        $(OBJDIR)/density_1d.o \
@@ -22,6 +23,7 @@ MODS = $(OBJDIR)/constants.o \
        $(OBJDIR)/global_1d_models.o \
        $(OBJDIR)/mod_raypaths.o \
        $(OBJDIR)/spherical_geometry.o \
+       $(OBJDIR)/splitwave.o \
        $(OBJDIR)/statistical.o 
 
 all: ${MODS} \
@@ -30,11 +32,6 @@ all: ${MODS} \
      $(OBJDIR)/get_args.o \
      $(OBJDIR)/plate_motion.o \
      $(OBJDIR)/spherical_splines.o
-
-$(OBJDIR)/%.o: %.f90
-	$(FC) ${FCOPTS} ${LOPTS} -c $*.f90 -J$(MODSDIR) -o $(OBJDIR)/$*.o
-	$(FC) -I$(MODSDIR) -o $(LIBDIR)/lib$*.so.1 -shared -W1,-soname,lib$*.so.1 $(OBJDIR)/$*.o
-	$(MAKE) --directory=lib OBJ=$*
 
 $(OBJDIR)/anisotropy_ajn.o: anisotropy_ajn/anisotropy_ajn.f90
 	$(FC) ${FCOPTS} ${LOPTS} -c -J$(MODSDIR) -o $(OBJDIR)/anisotropy_ajn.o anisotropy_ajn/anisotropy_ajn.f90
@@ -60,6 +57,16 @@ $(OBJDIR)/spherical_splines.o: spherical_splines/spherical_splines.f90
 	$(FC) ${FCOPTS} ${LOPTS} -c -J$(MODSDIR) -o $(OBJDIR)/spherical_splines.o spherical_splines/spherical_splines.f90
 	$(FC) -I$(MODSDIR) ${SPLINEOPTS} -o $(LIBDIR)/libspherical_splines.so.1 -shared -W1,-soname,libspherical_splines.so.1 $(OBJDIR)/spherical_splines.o
 	ln -sf $(LIBDIR)/libspherical_splines.so.1 $(LIBDIR)/libspherical_splines.so
+
+$(OBJDIR)/splitwave.o: $(LIBDIR)/libFFFTW.so splitwave.f90
+	$(FC) ${FCOPTS} ${LOPTS} -c -J$(MODSDIR) -o $(OBJDIR)/splitwave.o splitwave.f90
+	$(FC) -I$(MODSDIR) ${SPLITWAVEOPTS} -o $(LIBDIR)/libsplitwave.so.1 -shared -W1,-soname,libsplitwave.so.1 $(OBJDIR)/splitwave.o
+	ln -sf $(LIBDIR)/libsplitwave.so.1 $(LIBDIR)/libsplitwave.so
+
+$(OBJDIR)/%.o: %.f90
+	$(FC) ${FCOPTS} ${LOPTS} -c $*.f90 -J$(MODSDIR) -o $(OBJDIR)/$*.o
+	$(FC) -I$(MODSDIR) -o $(LIBDIR)/lib$*.so.1 -shared -W1,-soname,lib$*.so.1 $(OBJDIR)/$*.o
+	$(MAKE) --directory=lib OBJ=$*
 
 
 libf90sac: f90sac/f90sac.F90
