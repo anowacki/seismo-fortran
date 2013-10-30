@@ -27,6 +27,7 @@ PROGS = $(B)/GPa2km \
 		$(B)/project_to_gcp \
 		$(B)/split_misfit \
 		$(B)/splitwave \
+		$(B)/splitwaveN \
         $(B)/step
 
 all: progs
