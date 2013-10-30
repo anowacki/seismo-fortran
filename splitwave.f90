@@ -10,20 +10,20 @@ module splitwave
 !===============================================================================
 
    implicit none
-   
+
    ! Kind parameters
    integer, parameter, private :: r4 = selected_real_kind(6,37)
    integer, parameter, private :: r8 = selected_real_kind(15,307)
    integer, parameter, private :: rs = r8  ! Use double precision for reals
-   
+
    ! Constants
    real(rs), parameter, private :: pi = 4._rs*atan2(1._rs,1._rs)
-   
+
    ! Input/output units
    integer, parameter, private :: lu_stdin = 5, &
                                   lu_stdout = 6, &
                                   lu_stderr = 0
-   
+
    ! Hide internal routines
    private :: gaussian1, &
               gaussian2, &
@@ -32,6 +32,84 @@ module splitwave
               sw_warning
 
 contains
+
+!===============================================================================
+function sw_misfit(phi1,dt1,phi2,dt2,spol,freq,delta,noise,wavetype) result(misfit)
+!===============================================================================
+!  Calculates a misfit between two splitting operators.  This obviously depends
+!  on several factors: the source polarisation, the frequency content of the
+!  the split waves, and so on.
+!  INPUT:
+!     phi1,dt1,phi2,dt2 : Two splitting operators to compare
+!     spol     : Source polarisation of wave / degrees
+!  OPTIONAL INPUT:
+!     freq     : Dominant frequency of wave
+!     noise    : Fractional amount of random noise
+!     wavetype : 'g'aussian (first-derivative) or 'r'icker
+   use f90sac
+
+   implicit none
+
+   real :: misfit
+   type(SACtrace) :: E,N,Z
+   real, intent(in) :: phi1, dt1, phi2, dt2, spol
+   real, intent(in), optional :: freq, delta, noise
+   character(len=*), intent(in), optional :: wavetype
+   real :: f, delta_in, noise_in, c(2,2), eig(2)
+   character(len=1) :: wavetype_in
+   logical :: debug = .false.  ! Set to .true. to output waves
+
+   f = 0.1
+   noise_in = 0.05
+   wavetype_in = 'g'
+   if (present(freq)) f = freq
+   delta_in = 1./(f*100.)
+   if (present(noise)) noise_in = noise
+   if (present(delta)) delta_in = delta
+   if (present(wavetype)) wavetype_in = wavetype(1:1)
+
+   ! Make trace
+   call sw_create_wave(E,N,Z, freq=f, delta=delta_in, noise=noise_in, &
+      wavetype=wavetype_in, spol=spol)
+   call debug_writetrace('wave')
+   ! Apply the first splitting operator, then remove the second operator
+   call sw_splitN(E,N,Z, 1, (/phi1/), (/ dt1/))
+   call debug_writetrace('wave_s1')
+   call sw_splitN(E,N,Z, 1, (/phi2/), (/-dt2/))
+   call debug_writetrace('wave_s1_-s2')
+   ! Find covariance matrix and get misfit as ratio of smaller to larger
+   ! eigenvalues of covariance matrix
+   call f90sac_covar2(N,E,c)
+   eig = sw_eig2x2(c)
+   misfit = minval(eig)/maxval(eig)
+
+   ! Now do the same but the other way round
+   call sw_create_wave(E,N,Z, freq=f, delta=delta_in, noise=noise_in, &
+      wavetype=wavetype_in, spol=spol)
+   call sw_splitN(E,N,Z, 1, (/phi2/), (/ dt2/))
+   call debug_writetrace('wave_s2')
+   call sw_splitN(E,N,Z, 1, (/phi1/), (/-dt1/))
+   call debug_writetrace('wave_s2_-s1')
+   call f90sac_covar2(N,e,c)
+   eig = sw_eig2x2(c)
+   misfit = (misfit + minval(eig)/maxval(eig))/2.
+   call f90sac_deletetrace(E)
+   call f90sac_deletetrace(N)
+   call f90sac_deletetrace(Z)
+
+contains
+
+   subroutine debug_writetrace(str)
+      implicit none
+      character(len=*), intent(in) :: str
+      if (debug) then
+         call f90sac_writetrace(trim(str)//'.BHE', E)
+         call f90sac_writetrace(trim(str)//'.BHN', N)
+         call f90sac_writetrace(trim(str)//'.BHZ', Z)
+      endif
+   end subroutine debug_writetrace
+end function sw_misfit
+!-------------------------------------------------------------------------------
 
 !==============================================================================
 subroutine sw_create_wave(E,N,Z,freq,delta,noise,wavetype,spol)
@@ -136,15 +214,15 @@ subroutine sw_create_wave(E,N,Z,freq,delta,noise,wavetype,spol)
       call random_number(random_noise)
       random_noise = (random_noise*2.0 - 1.0) * noise_in
       N%trace = N%trace + random_noise
-   
+
       call random_number(random_noise)
       random_noise = (random_noise*2.0 - 1.0) * noise_in
       E%trace = E%trace + random_noise
-   
+
       call random_number(random_noise)
       random_noise = (random_noise*2.0 - 1.0) * noise_in
       Z%trace = Z%trace + random_noise
-      
+
       deallocate(random_noise)
    endif
 
@@ -156,7 +234,7 @@ subroutine sw_create_wave(E,N,Z,freq,delta,noise,wavetype,spol)
    N%f = 4.0/freq_in ; N%user2 = N%f ; N%user3 = N%f + delta_in
    E%f = 4.0/freq_in ; N%user2 = E%f ; N%user3 = E%f + delta_in
    Z%f = 4.0/freq_in ; Z%user2 = N%f ; Z%user3 = Z%f + delta_in
-   
+
    deallocate(trace)
 
 end subroutine sw_create_wave
@@ -254,7 +332,7 @@ end subroutine ricker
 !===============================================================================
 subroutine sw_splitN(t1,t2,t3,N,phi_in,dt_in,quiet)
 !===============================================================================
-!  Split a set of SACtrace waves in the frequency domain.
+!  Split a set of SACtrace waves in the time domain.
 !  INPUT:
 !     t1,t2,t3:     SACtrace types for the two horizontals (t1,t2) and the
 !                   vertical.  These are changed in place.
@@ -358,7 +436,7 @@ subroutine sw_fdsplitN(t1,t2,t3,N,phi_in,dt_in,quiet)
 
    ! Create fd traces
    np = t1%npts
-   
+
    ! Calculate FFT: f1 and f2 are allocated
    call FFFTW_fwd(t1%trace,f1)
    call FFFTW_fwd(t2%trace,f2)
@@ -366,7 +444,7 @@ subroutine sw_fdsplitN(t1,t2,t3,N,phi_in,dt_in,quiet)
    if (size(f1) /= size(f2)) then
       call sw_error('sw_fdsplitN: Some problem with FFFTW: FFTs are not the same length')
    endif
-   
+
    !  Get old component names
    kcmpnm1 = t1 % kcmpnm   ;   kcmpnm2 = t2 % kcmpnm
 
@@ -478,6 +556,24 @@ subroutine sw_fdtshift(f,n,delta,tshift)
    enddo
 
 end subroutine sw_fdtshift
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+function sw_eig2x2(a) result(e)
+!===============================================================================
+!  Compute the eigenvalues for a 2-by-2 matrix.
+   implicit none
+   real, intent(in) :: a(2,2)
+   real :: e(2)
+   real :: trace, det
+   real, parameter :: tol = 1.e-7
+   ! Check for singularity
+   trace = a(1,1) + a(2,2)
+   det = a(1,1)*a(2,2) - a(1,2)*a(2,1)
+   if (abs(det) < tol) call sw_warning('sw_eig2x2: Matrix is singular')
+   e(1) = trace/2. + sqrt(trace**2/4. - det)
+   e(2) = trace/2. - sqrt(trace**2/4. - det)
+end function sw_eig2x2
 !-------------------------------------------------------------------------------
 
 !===============================================================================
