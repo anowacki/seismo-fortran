@@ -17,6 +17,7 @@ PROGS = $(B)/GPa2km \
         $(B)/azi \
         $(B)/baz \
         $(B)/create_wave \
+        $(B)/fdsplitwaveN \
 		$(B)/gcp_from_point_azi \
 		$(B)/gcp_from_points \
         $(B)/gcp_points \
