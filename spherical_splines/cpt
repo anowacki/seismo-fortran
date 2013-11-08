@@ -1,7 +1,0 @@
-#	cpt file created by: makecpt -I -Cgray -Z
-#COLOR_MODEL = RGB
-#
-0	255	255	255	1	0	0	0
-B	255	255	255
-F	0	0	0
-N	128	128	128

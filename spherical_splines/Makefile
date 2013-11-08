@@ -24,9 +24,8 @@ test_AP_width2h: $(O)/spherical_splines.o test_AP_width2h.o
 
 test_SHTOOLS: test_SHTOOLS.f90
 #	$(FC) ${FCLAGS} -c -o $(O)/test_SHTOOLS.o -J$(M) $^
-	ln -sf SHTOOLS/modules/shtools.mod
-	$(FC) ${FCFLAGS} -o $@ -L$(L) -lspherical_geometry -J$(M) -framework vecLib \
-        SHTOOLS/lib/libSHTOOLS2.6.a $^
+	$(FC) ${FCFLAGS} -o $@ -L$(L) -ISHTOOLS/modules -lspherical_geometry \
+        -J$(M) -framework vecLib SHTOOLS/lib/libSHTOOLS2.6.a $^
 
 # Compilation rules
 $(O)/%.o: %.f90

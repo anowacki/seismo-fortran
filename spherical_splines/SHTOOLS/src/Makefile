@@ -51,7 +51,7 @@ endif
 LIBTOOL = libtool
 LIBTOOLFLAGS = -static
 AR = ar
-ARFLAGS = -r
+ARFLAGS = -rcs
 RLIB = ranlib
 RLIBFLAGS =
 LDFLAGS = -s

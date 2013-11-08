@@ -24,7 +24,9 @@ if ! [ -e out_$KERNEL.xy ]; then
 		./test_spherical_splines $KERNEL $width > out_$KERNEL.xy ||\
 			{ echo "Problem evaluating spline interpolation" ; exit 1; }
 	else
-		./test_SHTOOLS $lmax | awk 'NR>1' > out_$KERNEL.xy ||\
+		# Because of some bizarre linking/library creation problem,
+		# you have to run test_SHTOOLS from the SHTOOLS directory...
+		( cd SHTOOLS && ../test_SHTOOLS $lmax | awk 'NR>1' ) > out_$KERNEL.xy ||\
 			{ echo "Problem evaluating SH interpolation:"; exit 1; }
 		
 	fi
@@ -33,7 +35,9 @@ else
 fi
 
 # Make colour palette; defaults to range [0,1], which is what we want.
-makecpt -Cgray -I -Z > cpt
+CPT=`mktemp /tmp/splot_spherical_splines.cptXXXXXXXXXX`
+trap "rm -f $CPT" EXIT
+makecpt -Cgray -I -Z > $CPT
 
 FIG=out_$KERNEL.ps
 
@@ -44,7 +48,7 @@ I=`awk 'NR==1{x1=$1; x2=$1} \
 
 # Plot surface
 xyz2grd out_$KERNEL.xy -R-45/45/-45/45 -Gout_$KERNEL.grd -I$I
-grdimage out_$KERNEL.grd -JX15c/15c -R-45/45/-45/45 -B15:."$KERNEL kernel":nSeW -Ccpt -P -K > $FIG
+grdimage out_$KERNEL.grd -JX15c/15c -R-45/45/-45/45 -B15:."$KERNEL kernel":nSeW -C$CPT -P -K > $FIG
 
 # Plot outline of true surface function, a circle of radius ~10deg at (0,0)
 # exp{ (-x**2 -y**2)/sigma**2 } = 0.5
