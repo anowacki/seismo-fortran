@@ -182,7 +182,7 @@ contains
       ! Set whether we write to stdout or stderr based on whether we asked to
       ! call this routine
       if (arg(1:2) == '-h') then
-         iout = 5
+         iout = 6
       else
          iout = 0
       endif
