@@ -19,6 +19,13 @@ module splitwave
    ! Constants
    real(rs), parameter, private :: pi = 4._rs*atan2(1._rs,1._rs)
 
+   ! Default values for routines
+   real, parameter, private :: freq_default = 0.1_rs, &
+                               delta_default = 0.05_rs, &
+                               noise_default = 0.05_rs
+   character(len=1), parameter, private :: wavetype_default = 'g'
+
+
    ! Input/output units
    integer, parameter, private :: lu_stdin = 5, &
                                   lu_stdout = 6, &
@@ -32,6 +39,103 @@ module splitwave
               sw_warning
 
 contains
+
+!===============================================================================
+subroutine sw_misfit_ecs(C,az,inc,phi,dt,spol,misfit,t,phi_ecs,dt_ecs,freq, &
+   delta,noise,wavetype)
+!===============================================================================
+!  Calculate the misfits between a set of splitting observations and those
+!  predicted by a set of elastic constants.
+!  Unless a layer thickness is specified, by default sw_misfit_ecs calculates
+!  the splitting for the Cijs then normalises the dt to have the same maximum
+!  as the observed splits.  Specifying the layer thickness turns this off.
+!  INPUT:
+!     C(6,6)       : Density-normalised (Aij) elastic constants / m^2.s^-2
+!     az(:)        : Azimuth of rays defined in the CIJ_phasevels frame / deg
+!     inc(:)       : Inclination of rays     "   "        "         "
+!     phi(:),dt(:) : Splitting parameters of observations (ray frame) / deg, s
+!     spol(:)      : Source polarisation of observations (ray frame) / deg
+!  OPTIONAL INPUT:
+!     t            : Thickness of an assumed layer across which the splits in the
+!                    elastic constants are accrued / km
+!     freq         : Dominant frequency of wave / Hz
+!     noise        : Fractional amount of random noise
+!     wavetype     : 'g'aussian (first-derivative) or 'r'icker
+!  OUTPUT:
+!     misfit(:)    : Array of misfits corresponding to each observation
+!  OPTIONAL OUTPUT:
+!     phi_ecs(:),dt_ecs(:) : Splits accrued in the elastic constants / deg, s
+   use EmatrixUtils
+
+   implicit none
+
+   real(rs), intent(in) :: C(6,6), az(:), inc(:), phi(:), dt(:), spol(:)
+   real(rs), intent(in), optional :: t, freq, delta, noise
+   real(rs), intent(out) :: misfit(:)
+   real(rs), intent(out), optional :: phi_ecs(:), dt_ecs(:)
+   real :: freq_in, delta_in, noise_in
+   character(len=*), intent(in), optional :: wavetype
+   character(len=1) :: wavetype_in
+   real(rs), allocatable :: phi2(:), dt2(:)
+   real(rs) :: vs1, vs2
+   integer :: i, n
+
+   ! Take wave parameters from arguments or set to standard values
+   freq_in = freq_default
+   noise_in = noise_default
+   wavetype_in = wavetype_default
+   if (present(freq)) freq_in = real(freq,r4)
+   delta_in = 1./(freq_in*200.)
+   if (present(noise)) noise_in = real(noise,r4)
+   if (present(delta)) delta_in = real(delta,r4)
+   if (present(wavetype)) wavetype_in = wavetype(1:1)
+
+   ! Check array sizes
+   n = size(az)
+   if (size(inc) /= n .or. size(phi) /= n .or. size(dt) /= n .or. size(spol) /= n) &
+      call sw_error('sw_misfit_ecs: Arrays for az, inc, phi, dt and spol not the same length')
+   if (size(misfit) < n) &
+      call sw_error('sw_misfit_ecs: Output array for misfit is too small')
+   if (present(phi_ecs)) then
+      if (size(phi_ecs) < n) &
+         call sw_error('sw_misfit_ecs: Output array for phi_ecs is too small')
+   endif
+   if (present(dt_ecs)) then
+      if (size(dt_ecs) < n) &
+         call sw_error('sw_misfit_ecs: Output array for dt_ecs is too small')
+   endif
+
+   allocate(phi2(n), dt2(n))
+
+   ! Calculate splitting and misfit for each observation
+   do i=1,n
+      call CIJ_phasevels(C, 1._rs, az(i), inc(i), pol=phi2(i), vs1=vs1, vs2=vs2)
+      if (present(phi_ecs)) phi_ecs(i) = phi2(i)
+      dt2(i) = 1._rs/vs2 - 1._rs/vs1
+      if (present(dt_ecs)) dt_ecs(i) = dt2(i)
+   enddo
+
+   ! If we've specified a layer thickness set dt2, otherwise normalise to
+   ! same maximum as input dt (hopefully similar range)
+   if (present(t)) then
+      dt2 = t*dt2
+   else
+      dt2 = maxval(dt)*dt2/maxval(dt2)
+   endif
+
+   if (present(phi_ecs)) phi_ecs = phi2
+   if (present(dt_ecs)) dt_ecs = dt2
+
+   do i=1,n
+      misfit(i) = sw_misfit(real(phi(i),r4), real(dt(i),r4), real(phi2(i),r4), &
+         real(dt2(i),r4), real(spol(i),r4), freq=real(freq_in,r4), &
+         delta=real(delta_in,r4), noise=real(noise_in,r4), wavetype=wavetype_in)
+   enddo
+
+   deallocate(phi2, dt2)
+
+end subroutine sw_misfit_ecs
+!-------------------------------------------------------------------------------
 
 !===============================================================================
 function sw_misfit(phi1,dt1,phi2,dt2,spol,freq,delta,noise,wavetype) result(misfit)
@@ -59,11 +163,11 @@ function sw_misfit(phi1,dt1,phi2,dt2,spol,freq,delta,noise,wavetype) result(misf
    character(len=1) :: wavetype_in
    logical :: debug = .false.  ! Set to .true. to output waves
 
-   f = 0.1
-   noise_in = 0.05
-   wavetype_in = 'g'
+   f = freq_default
+   noise_in = noise_default
+   wavetype_in = wavetype_default
    if (present(freq)) f = freq
-   delta_in = 1./(f*100.)
+   delta_in = 1./(f*200.)
    if (present(noise)) noise_in = noise
    if (present(delta)) delta_in = delta
    if (present(wavetype)) wavetype_in = wavetype(1:1)
@@ -122,7 +226,7 @@ subroutine sw_create_wave(E,N,Z,freq,delta,noise,wavetype,spol)
 !     noise:    Add white noise with max amplitude noise_in of the wave.
 !     wavetype: String describing type of waveform desired
 !     spol:     Source polarisation measured from N.
-!  E,N,Z if not already allocated   
+!  E,N,Z if not already allocated
 
    use f90sac
 
