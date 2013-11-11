@@ -1,13 +1,20 @@
 # Makefile for wrapper programs for routines provided in modules
 
 FC = gfortran
-FFLAGS = -O2 -ggdb -fbounds-check -frange-check
+FFLAGS = -O0 -g -ggdb -fcheck=all -fbacktrace
 B = bin
 L = -L../lib
 M = ../mods
 O = obj
 S = src
-LIBS = -lspherical_geometry -lget_args -lglobal_1d_models -lsplitwave -lf90sac -lFFFTW
+LIBS = \
+    -lanisotropy_ajn \
+	-lf90sac \
+	-lFFFTW \
+    -lget_args \
+	-lglobal_1d_models \
+    -lspherical_geometry \
+	-lsplitwave
 BINDIR = ~/Applications/bin
 
 PROGS = $(B)/GPa2km \
@@ -26,6 +33,7 @@ PROGS = $(B)/GPa2km \
 		$(B)/prem \
 		$(B)/project_to_gcp \
 		$(B)/split_misfit \
+		$(B)/split_misfit_ecs \
 		$(B)/splitwave \
 		$(B)/splitwaveN \
         $(B)/step
