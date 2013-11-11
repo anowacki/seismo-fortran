@@ -1,16 +1,21 @@
 FC = gfortran
-FCOPTS = -Wall -g -ggdb -fcheck=all -O0
+FCOPTS = -Wall -g -ggdb -fcheck=all -fbacktrace -O0
 
 O = ../objs
 M = ../mods
 L = ../lib
 
-LIBS = -L$L -lFFFTW -lf90sac
+LIBS = -L$L \
+    -lanisotropy_ajn \
+	-lEmatrixUtils \
+	-lf90sac \
+    -lFFFTW \
+	-lspherical_geometry
 INCS = 
 
 MODS = $(O)/splitwave.o
 
-PROGS = test_splitwave test_misfit
+PROGS = test_splitwave test_misfit test_misfit_ecs
 
 all: ${PROGS}
 

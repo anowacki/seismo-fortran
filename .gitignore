@@ -51,6 +51,7 @@ test_splitwave/*BHE
 test_splitwave/*BHN
 test_splitwave/*BHZ
 test_splitwave/test_misfit
+test_splitwave/test_misfit_ecs
 test_splitwave/test_splitwave
 
 # Programs derived from module subroutines: ignore binaries but keep directories
