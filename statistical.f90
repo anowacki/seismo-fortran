@@ -125,6 +125,7 @@ function incomp_beta_func(z,a,b)
    endif
    du = 0.000001_rs
    u = 0._rs
+   incomp_beta_func = 0._rs
    do while (u <= z)
       incomp_beta_func = incomp_beta_func + (u**(a-1._rs))*((1._rs-u)**(b-1._rs))*du
       u = u + du
