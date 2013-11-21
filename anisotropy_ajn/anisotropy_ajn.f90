@@ -1808,7 +1808,7 @@
      integer, intent(in) :: n  ! number of equations
      integer, intent(in) :: sz ! dimension of arrays
      real(rs), dimension(sz,sz), intent(in) :: A
-     real(rs), dimension(sz,sz), intent(inout) :: AI
+     real(rs), dimension(sz,sz), intent(out) :: AI
    
 !      PURPOSE : COMPUTE INVERSE WITH REAL COEFFICIENTS  |AI| = |A|^-1
 !                                                                   
