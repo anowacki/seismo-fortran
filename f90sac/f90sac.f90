@@ -2302,7 +2302,8 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
 
       if (scale >= 0.0) then
 
-!        * get maximum amplitude in trace      
+!        * get maximum amplitude in trace
+         ampmax = 0.0
          do i=1,t1 % npts
             if (abs(t1 % trace(i)) > ampmax) &
                         ampmax = abs(t1 % trace(i))
