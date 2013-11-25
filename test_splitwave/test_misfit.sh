@@ -31,7 +31,7 @@ awk 'BEGIN{
 	awk '{print $3,$4,$6}' 2>/dev/null |
 	xyz2grd -R$R -I$I -G$GRD &&
 {
-	grdimage /tmp/grd -JX10c/10c -R-90/90/0/5 -C$CPT \
+	grdimage $GRD -JX10c/10c -R-90/90/0/5 -C$CPT \
 		-Ba30f10:"@~f":/a1f0.2:"@~d@~t":nSeW -P -K
 	echo "0 1" | psxy -N -J -R -O -K -Sx0.3c -W2p
 	cat <<-END | psxy -J -R -O -W1p -m
