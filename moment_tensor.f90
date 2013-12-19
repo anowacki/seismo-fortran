@@ -53,7 +53,8 @@ module moment_tensor
    ! Conversion from 6-vector to array elements
    integer, parameter :: rr = 1, tt = 2, pp = 3, rt = 4, rp = 5, tp = 6
 
-   public :: mt_radiation_pattern, &
+   public :: mt_faultplane2auxplane, &
+             mt_radiation_pattern, &
              mt_sdr2mt, &
              mt_Mw2M0, &
              mt_M02Mw
@@ -185,6 +186,51 @@ function mt_sdr2mt(strike, dip, rake, Mw, M0) result(M)
    M(tp) = -Mxy
 
 end function mt_sdr2mt
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+subroutine mt_faultplane2auxplane(strike1, dip1, rake1, strike2, dip2, rake2)
+!===============================================================================
+!  Calculate the strike, dip and rake of the auxiliary plane for a given fault
+!  plane (and hence vice versa).
+!  Formula from Shearer. Introduction to Seismology.
+!
+!  INPUT (all degrees):
+!    fstrike, fdip, frake: Fault plane parameters (see mt_sdr2mt for definition)
+!  OUTPUT (all degrees):
+!    astrike, adip, arake: Auxiliary plane parameters (same convention)
+   implicit none
+   real(rs), intent(in) :: strike1, dip1, rake1
+   real(rs), intent(out) :: strike2, dip2, rake2
+   real(rs) :: s1, d1, r1, s2, d2, r2, sr2, cr2, s12, c12
+
+   s1 = strike1*rad
+   d1 = dip1*rad
+   r1 = rake1*rad
+
+   d2 = acos(sin(r1)*sin(d1))
+
+   sr2 = cos(d1)/sin(d2)
+   cr2 = -sin(d1)*cos(r1)/sin(d2)
+   r2 = atan2(sr2,cr2)
+
+   s12 = cos(r1)/sin(d2)
+   c12 = -1._rs/(tan(d1)*tan(d2))
+   s2  = s1 - atan2(s12,c12)
+
+   strike2 = s2*deg
+   dip2 = d2*deg
+   rake2 = r2*deg
+
+   if (dip2 > 90._rs) then
+      strike2 = strike2 + 180._rs
+      dip2 = 180._rs - dip2
+      rake2 = 360._rs - rake2
+   end if
+   rake2 = modulo(rake2 + 180._rs, 360._rs) - 180._rs ! In range -180 to 180
+   strike2 = modulo(strike2, 360._rs) ! In range 0 to 360
+
+end subroutine mt_faultplane2auxplane
 !-------------------------------------------------------------------------------
 
 !===============================================================================
