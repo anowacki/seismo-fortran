@@ -9,33 +9,35 @@ O = obj
 S = src
 LIBS = \
     -lanisotropy_ajn \
-	-lf90sac \
-	-lFFFTW \
+    -lf90sac \
+    -lFFFTW \
     -lget_args \
-	-lglobal_1d_models \
+    -lglobal_1d_models \
+	-lmoment_tensor \
     -lspherical_geometry \
-	-lsplitwave
+    -lsplitwave
 BINDIR = ~/Applications/bin
 
 PROGS = $(B)/GPa2km \
+        $(B)/MT2rp \
         $(B)/Vak135 \
         $(B)/Vprem \
-		$(B)/ak135 \
+        $(B)/ak135 \
         $(B)/azi \
         $(B)/baz \
         $(B)/create_wave \
         $(B)/fdsplitwaveN \
-		$(B)/gcp_from_point_azi \
-		$(B)/gcp_from_points \
+        $(B)/gcp_from_point_azi \
+        $(B)/gcp_from_points \
         $(B)/gcp_points \
-		$(B)/km2GPa \
-		$(B)/midpoint \
-		$(B)/prem \
-		$(B)/project_to_gcp \
-		$(B)/split_misfit \
-		$(B)/split_misfit_ecs \
-		$(B)/splitwave \
-		$(B)/splitwaveN \
+        $(B)/km2GPa \
+        $(B)/midpoint \
+        $(B)/prem \
+        $(B)/project_to_gcp \
+        $(B)/split_misfit \
+        $(B)/split_misfit_ecs \
+        $(B)/splitwave \
+        $(B)/splitwaveN \
         $(B)/step
 
 all: progs

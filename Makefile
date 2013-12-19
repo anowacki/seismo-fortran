@@ -29,6 +29,7 @@ MODS = $(O)/constants.o \
        $(O)/functions.o \
        $(O)/global_1d_models.o \
        $(O)/mod_raypaths.o \
+	   $(O)/moment_tensor.o \
        $(O)/spherical_geometry.o \
        $(O)/splitwave.o \
        $(O)/statistical.o 

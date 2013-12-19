@@ -1,0 +1,55 @@
+#!/bin/bash -x
+# Plot up the radiation pattern as given by Kennett (ref in CMT2rp.sh).
+
+# 1997-04-06 04:36:35 (77.00,39.45), depth 15
+Mrr=-6.08
+Mtt=2.09
+Mpp=3.99
+Mrt=1.12
+Mrp=-5.95
+Mtp=6.73
+exp=17
+
+PROG="../progs/bin/MT2rp"
+[ -x "$PROG" ] ||
+	{ echo "Can't find $PROG: do \"make -C progs bin/MT2rp\" in root directory"; exit 1; }
+
+FIG=`mktemp /tmp/plot_rp.psXXXXXXXXXX`
+TEMP=`mktemp /tmp/plot_rp.tmpXXXXXXXXXX`
+trap "rm -f \"$FIG\" \"$TEMP\"" EXIT
+
+psxy -JA0/-90/5c -R0/360/-90/0 -K -T > "$FIG"
+
+# Generate data
+for ((az=0; az<360; az+=10)); do
+	for ((i=10; i<=90; i+=10)); do
+		echo $az $i
+	done
+done | "$PROG" -m $Mrr $Mtt $Mpp $Mrt $Mrp $Mtp > "$TEMP"
+
+# P pattern
+awk '{$2-=90; $3/=20; if ($3>=0) s="+"; else s="-"; print $1,$2,$3"c",s}' < "$TEMP" |
+	psxy -Y10c -J -R -S -B/nsew -O -K >> $FIG
+echo "0 -90 10 0 0 CM @;red;P" | pstext -J -R -O -K -Wwhite >> $FIG
+
+# SH
+awk '{$2-=90; $5/=20; if ($5>0) {d=90} else {d=270; $5*=-1}; print $1,$2,d,$5"c"}' \
+	< "$TEMP" |
+	psxy -X6c -J -R -SV0.02c/0.08c/0.05c -Gblack -B/nsew -O -K >> $FIG
+echo "0 -90 10 0 0 CM @;red;SH" | pstext -J -R -O -K -Wwhite >> $FIG
+
+# SV
+awk '{$2-=90; $4/=20; if ($4>0) {d=0} else {d=180; $4*=-1}; print $1,$2,d,$4"c"}' \
+	"$TEMP" |
+	psxy -X-3c -Y-5c -J -R -SV0.02c/0.08c/0.05c -Gblack -B/nsew -O -K >> $FIG
+echo "0 -90 10 0 0 CM @;red;SV" | pstext -J -R -O -K -Wwhite >> $FIG
+
+psxy -J -R -O -T >> "$FIG"
+
+# Compare the figure from the book with our result
+{
+	gv "$FIG" 2>/dev/null &
+	display radiation_pattern_example.png
+	wait
+}
+
