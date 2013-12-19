@@ -12,16 +12,25 @@ module moment_tensor
 !
 ! (Individual routines may use different conventions internally.)
 !
+! Other conventions are:
+!   Aki & Richards, Kennett:
+!     x // N
+!     y // E
+!     z // down
+!   Aki & Richards:
+!     x // r
+!     y //
+!
 ! MTs should be passed around as 6-element arrays with the following construction:
 !    MT = [Mrr, Mtt, Mpp, Mrt, Mrp, Mtp]
 ! They can then be accessed using the vector index parameters like so:
 !    MT(tt) = 1.5.
 
    implicit none
-   
+
    ! All variables and routines private by default
    private
-   
+
    ! Precision selectors
    integer, parameter :: r4 = selected_real_kind(6, 37), &
                          r8 = selected_real_kind(15, 307)
@@ -44,7 +53,10 @@ module moment_tensor
    ! Conversion from 6-vector to array elements
    integer, parameter :: rr = 1, tt = 2, pp = 3, rt = 4, rp = 5, tp = 6
 
-   public :: mt_radiation_pattern
+   public :: mt_radiation_pattern, &
+             mt_sdr2mt, &
+             mt_Mw2M0, &
+             mt_M02Mw
 
 contains
 
@@ -116,6 +128,106 @@ subroutine mt_radiation_pattern(M, azi, inc, P, SV, SH, j)
 	j = deg*atan2(SV,SH)
 
 end subroutine mt_radiation_pattern
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+function mt_sdr2mt(strike, dip, rake, Mw, M0) result(M)
+!===============================================================================
+! Creates a double-couple moment tensor for a given strike, dip and rake.
+! INPUT (all degrees):
+!   strike : Azimuth of fault plane strike from north towards east
+!   dip    : Angle of dip of fault plane from horizontal
+!   rake   : Angle of fault motion along fault plane, measured anticlockwise
+!            from the strike direction when looking at footwall
+! OUTPUT:
+!   M(6)   : Moment tensor
+!
+! Uses formulation given in Aki & Richards, then converted into our convention
+   implicit none
+   real(rs), intent(in) :: strike, dip, rake
+   real(rs), intent(in), optional :: Mw, M0
+   real(rs) :: M(6)
+   real(rs) :: s, d, r, Mxx, Myy, Mzz, Mxy, Mxz, Myz, Mw_in, M0_in
+
+   ! Check things
+   if (dip < 0._rs .or. dip > 90._rs) &
+      call mt_error('mt_sdr2mt', 'Dip must be in range 0 to 90 degrees')
+   if (present(Mw) .and. present(M0)) &
+      call mt_error('mt_sdr2mt', 'Cannot supply both Mw and M0')
+
+   ! Convert angles to radians
+   s = rad*strike
+   d = rad*dip
+   r = rad*rake
+
+   ! Default moment is for a magnitude 5 event
+   Mw_in = 5._rs
+
+   ! Custom moment
+   if (present(Mw)) Mw_in = Mw
+   if (.not.present(M0)) M0_in = mt_Mw2M0(Mw_in)
+   if (present(M0)) M0_in = M0
+
+   ! Calculate MT in Aki & Richards convention
+   Mxx = -M0_in*(sin(d)*cos(r)*sin(2._rs*s) + sin(2._rs*d)*sin(r)*(sin(s))**2)
+   Mxy =  M0_in*(sin(d)*cos(r)*cos(2._rs*s) + 0.5d0*sin(2._rs*d)*sin(r)*sin(2._rs*s))
+   Mxz = -M0_in*(cos(d)*cos(r)*cos(s) + cos(2._rs*d)*sin(r)*sin(s))
+   Myy =  M0_in*(sin(d)*cos(r)*sin(2._rs*s) - sin(2._rs*d)*sin(r)*(cos(s))**2)
+   Myz = -M0_in*(cos(d)*cos(r)*sin(s) - cos(2._rs*d)*sin(r)*cos(s))
+   Mzz =  M0_in*sin(2._rs*d)*sin(r)
+
+   ! Convert to our convention
+   M(rr) =  Mzz
+   M(tt) =  Mxx
+   M(pp) =  Myy
+   M(rt) =  Mxz
+   M(rp) = -Myz
+   M(tp) = -Mxy
+
+end function mt_sdr2mt
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+function mt_M02Mw(M0) result(Mw)
+!===============================================================================
+!  Calculate moment magnitude Mw from seismic moment M0.
+!  Uses formula from Kanamori (1977), as for Harvard/Global CMT project.
+   implicit none
+   real(rs), intent(in) :: M0
+   real(rs) :: Mw
+   Mw = (2._rs/3._rs)*(log(M0) - 16.1_rs)
+end function mt_M02Mw
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+function mt_Mw2M0(Mw) result(M0)
+!===============================================================================
+!  Calculate seismic moment M0 from moment magnitude Mw.
+!  See note on formulation above.
+   implicit none
+   real(rs), intent(in) :: Mw
+   real(rs) :: M0
+   M0 = 10._rs**((3._rs/2._rs)*Mw + 16.1_rs)
+end function mt_Mw2M0
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+subroutine mt_error(routine, str)
+!===============================================================================
+   implicit none
+   character(len=*), intent(in) :: routine, str
+   write(lu_stderr,'(a)') 'moment_tensor: '//trim(routine)//': Error: '//trim(str)
+   stop
+end subroutine mt_error
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+subroutine mt_warning(routine, str)
+!===============================================================================
+   implicit none
+   character(len=*), intent(in) :: routine, str
+   write(lu_stderr,'(a)') 'moment_tensor: '//trim(routine)//': Error: '//trim(str)
+end subroutine mt_warning
 !-------------------------------------------------------------------------------
 
 end module moment_tensor
