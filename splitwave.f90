@@ -58,8 +58,8 @@ module splitwave
 contains
 
 !===============================================================================
-subroutine sw_misfit_ecs(C,az,inc,phi,dt,spol,misfit,t,phi_ecs,dt_ecs,freq, &
-   delta,noise,wavetype)
+subroutine sw_misfit_ecs(C,az,inc,phi,dt,spol,misfit,t,phi_ecs,dt_ecs,t_scaled, &
+   freq,delta,noise,wavetype)
 !===============================================================================
 !  Calculate the misfits between a set of splitting observations and those
 !  predicted by a set of elastic constants.
@@ -82,6 +82,7 @@ subroutine sw_misfit_ecs(C,az,inc,phi,dt,spol,misfit,t,phi_ecs,dt_ecs,freq, &
 !     misfit(:)    : Array of misfits corresponding to each observation
 !  OPTIONAL OUTPUT:
 !     phi_ecs(:),dt_ecs(:) : Splits accrued in the elastic constants / deg, s
+!     t_scaled     : Thickness used as scaling when not specifying t above / km
    use EmatrixUtils
 
    implicit none
@@ -89,7 +90,7 @@ subroutine sw_misfit_ecs(C,az,inc,phi,dt,spol,misfit,t,phi_ecs,dt_ecs,freq, &
    real(rs), intent(in) :: C(6,6), az(:), inc(:), phi(:), dt(:), spol(:)
    real(rs), intent(in), optional :: t, freq, delta, noise
    real(rs), intent(out) :: misfit(:)
-   real(rs), intent(out), optional :: phi_ecs(:), dt_ecs(:)
+   real(rs), intent(out), optional :: phi_ecs(:), dt_ecs(:), t_scaled
    real :: freq_in, delta_in, noise_in
    character(len=*), intent(in), optional :: wavetype
    character(len=1) :: wavetype_in
@@ -138,6 +139,7 @@ subroutine sw_misfit_ecs(C,az,inc,phi,dt,spol,misfit,t,phi_ecs,dt_ecs,freq, &
    if (present(t)) then
       dt2 = t*dt2
    else
+      if (present(t_scaled)) t_scaled = maxval(dt)/maxval(dt2)
       dt2 = maxval(dt)*dt2/maxval(dt2)
    endif
 

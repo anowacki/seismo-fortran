@@ -13,7 +13,7 @@ LIBS = \
     -lFFFTW \
     -lget_args \
     -lglobal_1d_models \
-	-lmoment_tensor \
+    -lmoment_tensor \
     -lspherical_geometry \
     -lsplitwave
 BINDIR = ~/Applications/bin
