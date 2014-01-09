@@ -12,9 +12,7 @@ module splitwave
    use f90sac
 
    implicit none
-   
-   private
-   
+
    ! Kind parameters
    integer, parameter, private :: r4 = selected_real_kind(6,37)
    integer, parameter, private :: r8 = selected_real_kind(15,307)
@@ -39,21 +37,12 @@ module splitwave
    ! allocation and deallocation (module variables are saved by default)
    type(SACtrace), private :: E_misfit, N_misfit, Z_misfit
 
-   interface sw_alloc
-      module procedure sw_alloc1r4, &
-                       sw_alloc2r4, &
-                       sw_alloc3r4, &
-                       sw_alloc1r8, &
-                       sw_alloc2r8, &
-                       sw_alloc3r8
-   end interface
-
-   ! Expose external routines
-   public :: sw_misfit_ecs, &
-             sw_misfit, &
-             sw_create_wave, &
-             sw_splitN, &
-             sw_fdsplitN
+   ! Hide internal routines
+   private :: gaussian1, &
+              gaussian2, &
+              ricker, &
+              sw_error, &
+              sw_warning
 
 contains
 
@@ -94,7 +83,7 @@ subroutine sw_misfit_ecs(C,az,inc,phi,dt,spol,misfit,t,phi_ecs,dt_ecs,t_scaled, 
    real :: freq_in, delta_in, noise_in
    character(len=*), intent(in), optional :: wavetype
    character(len=1) :: wavetype_in
-   real(rs), allocatable, save :: phi2(:), dt2(:)
+   real(rs), allocatable :: phi2(:), dt2(:)
    real(rs) :: vs1, vs2
    integer :: i, n
 
@@ -123,8 +112,7 @@ subroutine sw_misfit_ecs(C,az,inc,phi,dt,spol,misfit,t,phi_ecs,dt_ecs,t_scaled, 
          call sw_error('sw_misfit_ecs: Output array for dt_ecs is too small')
    endif
 
-   call sw_alloc(phi2,n)
-   call sw_alloc(dt2,n)
+   allocate(phi2(n), dt2(n))
 
    ! Calculate splitting and misfit for each observation
    do i=1,n
@@ -151,6 +139,8 @@ subroutine sw_misfit_ecs(C,az,inc,phi,dt,spol,misfit,t,phi_ecs,dt_ecs,t_scaled, 
          real(dt2(i),r4), real(spol(i),r4), freq=real(freq_in,r4), &
          delta=real(delta_in,r4), noise=real(noise_in,r4), wavetype=wavetype_in)
    enddo
+
+   deallocate(phi2, dt2)
 
 end subroutine sw_misfit_ecs
 !-------------------------------------------------------------------------------
@@ -246,7 +236,7 @@ subroutine sw_create_wave(E,N,Z,freq,delta,noise,wavetype,spol)
    type(SACtrace), intent(inout)   :: E, N, Z
    real, intent(in), optional :: freq, delta, noise, spol
    character(len=*), intent(in), optional :: wavetype
-   real(r4), allocatable, save :: trace(:), random_noise(:)
+   real(r4), allocatable :: trace(:), random_noise(:)
    real :: delta_in, spol_in, freq_in, noise_in
    integer :: npts
    character(len=1) :: wavetype_in
@@ -288,7 +278,7 @@ subroutine sw_create_wave(E,N,Z,freq,delta,noise,wavetype,spol)
 
    ! The waveform is 5/f s long: npts = 5/(delta * freq)
    npts = int(5.0 / (delta_in * freq_in)) + 1
-   call sw_alloc(trace, npts)
+   allocate(trace(npts))
 
    ! Create the waveform
    if (wavetype_in == 'g') call gaussian1(freq_in,delta_in,trace,npts)
@@ -323,7 +313,7 @@ subroutine sw_create_wave(E,N,Z,freq,delta,noise,wavetype,spol)
 
    ! Add noise
    if (noise_in > 1.0e-5) then
-      call sw_alloc(random_noise, 2*(npts-1)+1)
+      allocate(random_noise(2*(npts-1)+1))
       call random_seed()
 
       call random_number(random_noise)
@@ -337,6 +327,8 @@ subroutine sw_create_wave(E,N,Z,freq,delta,noise,wavetype,spol)
       call random_number(random_noise)
       random_noise = (random_noise*2.0 - 1.0) * noise_in
       Z%trace = Z%trace + random_noise
+
+      deallocate(random_noise)
    endif
 
    ! Add analysis window picks
@@ -347,6 +339,8 @@ subroutine sw_create_wave(E,N,Z,freq,delta,noise,wavetype,spol)
    N%f = 4.0/freq_in ; N%user2 = N%f ; N%user3 = N%f + delta_in
    E%f = 4.0/freq_in ; N%user2 = E%f ; N%user3 = E%f + delta_in
    Z%f = 4.0/freq_in ; Z%user2 = N%f ; Z%user3 = Z%f + delta_in
+
+   deallocate(trace)
 
 end subroutine sw_create_wave
 !------------------------------------------------------------------------------
@@ -682,114 +676,6 @@ function sw_eig2x2(a) result(e)
    e(1) = trace/2. + sqrt(trace**2/4. - det)
    e(2) = trace/2. - sqrt(trace**2/4. - det)
 end function sw_eig2x2
-!-------------------------------------------------------------------------------
-
-!===============================================================================
-subroutine sw_alloc1r4(var, n)
-!===============================================================================
-!  (Re)allocate a variable if not the correct size
-   implicit none
-   real(r4), intent(inout), allocatable, dimension(:) :: var
-   integer, intent(in) :: n
-   if (allocated(var)) then
-      if (size(var) /= n) then
-         deallocate(var)
-         allocate(var(n))
-      endif
-   else
-      allocate(var(n))
-   endif
-end subroutine sw_alloc1r4
-!-------------------------------------------------------------------------------
-
-!===============================================================================
-subroutine sw_alloc2r4(var, m, n)
-!===============================================================================
-!  (Re)allocate a variable if not the correct size
-   implicit none
-   real(r4), intent(inout), allocatable, dimension(:,:) :: var
-   integer, intent(in) :: m, n
-   if (allocated(var)) then
-      if (size(var, 1) /= m .or. size(var, 2) /= n) then
-         deallocate(var)
-         allocate(var(m,n))
-      endif
-   else
-      allocate(var(m,n))
-   endif
-end subroutine sw_alloc2r4
-!-------------------------------------------------------------------------------
-
-!===============================================================================
-subroutine sw_alloc3r4(var, l, m, n)
-!===============================================================================
-!  (Re)allocate a variable if not the correct size
-   implicit none
-   real(r4), intent(inout), allocatable, dimension(:,:,:) :: var
-   integer, intent(in) :: l, m, n
-   if (allocated(var)) then
-      if (size(var, 1) /= l .or. size(var, 2) /= m .or. size(var, 3) /= n) then
-         deallocate(var)
-         allocate(var(l,m,n))
-      endif
-   else
-      allocate(var(l,m,n))
-   endif
-end subroutine sw_alloc3r4
-!-------------------------------------------------------------------------------
-
-!===============================================================================
-subroutine sw_alloc1r8(var, n)
-!===============================================================================
-!  (Re)allocate a variable if not the correct size
-   implicit none
-   real(r8), intent(inout), allocatable, dimension(:) :: var
-   integer, intent(in) :: n
-   if (allocated(var)) then
-      if (size(var) /= n) then
-         deallocate(var)
-         allocate(var(n))
-      endif
-   else
-      allocate(var(n))
-   endif
-end subroutine sw_alloc1r8
-!-------------------------------------------------------------------------------
-
-!===============================================================================
-subroutine sw_alloc2r8(var, m, n)
-!===============================================================================
-!  (Re)allocate a variable if not the correct size
-   implicit none
-   real(r8), intent(inout), allocatable, dimension(:,:) :: var
-   integer, intent(in) :: m, n
-   if (allocated(var)) then
-      if (size(var, 1) /= m .or. size(var, 2) /= n) then
-         deallocate(var)
-         allocate(var(m,n))
-      endif
-   else
-      allocate(var(m,n))
-   endif
-end subroutine sw_alloc2r8
-!-------------------------------------------------------------------------------
-
-!===============================================================================
-subroutine sw_alloc3r8(var, l, m, n)
-!===============================================================================
-!  (Re)allocate a variable if not the correct size
-   implicit none
-   real(r8), intent(inout), allocatable, dimension(:,:,:) :: var
-   integer, intent(in) :: l, m, n
-   if (allocated(var)) then
-      if (size(var, 1) /= l .or. size(var, 2) /= m .or. size(var, 3) /= n) then
-         deallocate(var)
-         allocate(var(l,m,n))
-      endif
-   else
-      allocate(var(l,m,n))
-   endif
-end subroutine sw_alloc3r8
 !-------------------------------------------------------------------------------
 
 !===============================================================================
