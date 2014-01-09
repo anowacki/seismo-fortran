@@ -9,8 +9,6 @@
 module splitwave
 !===============================================================================
 
-   use f90sac
-
    implicit none
 
    ! Kind parameters
@@ -32,10 +30,6 @@ module splitwave
    integer, parameter, private :: lu_stdin = 5, &
                                   lu_stdout = 6, &
                                   lu_stderr = 0
-
-   ! Saved module variables which are private, but kept to prevent continuous
-   ! allocation and deallocation (module variables are saved by default)
-   type(SACtrace), private :: E_misfit, N_misfit, Z_misfit
 
    ! Hide internal routines
    private :: gaussian1, &
@@ -158,10 +152,12 @@ function sw_misfit(phi1,dt1,phi2,dt2,spol,freq,delta,noise,wavetype) result(misf
 !     freq     : Dominant frequency of wave
 !     noise    : Fractional amount of random noise
 !     wavetype : 'g'aussian (first-derivative) or 'r'icker
+   use f90sac
 
    implicit none
 
    real :: misfit
+   type(SACtrace) :: E,N,Z
    real, intent(in) :: phi1, dt1, phi2, dt2, spol
    real, intent(in), optional :: freq, delta, noise
    character(len=*), intent(in), optional :: wavetype
@@ -179,30 +175,33 @@ function sw_misfit(phi1,dt1,phi2,dt2,spol,freq,delta,noise,wavetype) result(misf
    if (present(wavetype)) wavetype_in = wavetype(1:1)
 
    ! Make trace
-   call sw_create_wave(E_misfit,N_misfit,Z_misfit, freq=f, delta=delta_in, &
-      noise=noise_in, wavetype=wavetype_in, spol=spol)
+   call sw_create_wave(E,N,Z, freq=f, delta=delta_in, noise=noise_in, &
+      wavetype=wavetype_in, spol=spol)
    call debug_writetrace('wave')
    ! Apply the first splitting operator, then remove the second operator
-   call sw_splitN(E_misfit,N_misfit,Z_misfit, 1, (/phi1/), (/ dt1/))
+   call sw_splitN(E,N,Z, 1, (/phi1/), (/ dt1/))
    call debug_writetrace('wave_s1')
-   call sw_splitN(E_misfit,N_misfit,Z_misfit, 1, (/phi2/), (/-dt2/))
+   call sw_splitN(E,N,Z, 1, (/phi2/), (/-dt2/))
    call debug_writetrace('wave_s1_-s2')
    ! Find covariance matrix and get misfit as ratio of smaller to larger
    ! eigenvalues of covariance matrix
-   call f90sac_covar2(N_misfit, E_misfit, c)
+   call f90sac_covar2(N,E,c)
    eig = sw_eig2x2(c)
    misfit = minval(eig)/maxval(eig)
 
    ! Now do the same but the other way round
-   call sw_create_wave(E_misfit,N_misfit,Z_misfit, freq=f, delta=delta_in, &
-      noise=noise_in, wavetype=wavetype_in, spol=spol)
-   call sw_splitN(E_misfit,N_misfit,Z_misfit, 1, (/phi2/), (/ dt2/))
+   call sw_create_wave(E,N,Z, freq=f, delta=delta_in, noise=noise_in, &
+      wavetype=wavetype_in, spol=spol)
+   call sw_splitN(E,N,Z, 1, (/phi2/), (/ dt2/))
    call debug_writetrace('wave_s2')
-   call sw_splitN(E_misfit,N_misfit,Z_misfit, 1, (/phi1/), (/-dt1/))
+   call sw_splitN(E,N,Z, 1, (/phi1/), (/-dt1/))
    call debug_writetrace('wave_s2_-s1')
-   call f90sac_covar2(N_misfit, E_misfit, c)
+   call f90sac_covar2(N,e,c)
    eig = sw_eig2x2(c)
    misfit = (misfit + minval(eig)/maxval(eig))/2.
+   call f90sac_deletetrace(E)
+   call f90sac_deletetrace(N)
+   call f90sac_deletetrace(Z)
 
 contains
 
@@ -210,9 +209,9 @@ contains
       implicit none
       character(len=*), intent(in) :: str
       if (debug) then
-         call f90sac_writetrace(trim(str)//'.BHE', E_misfit)
-         call f90sac_writetrace(trim(str)//'.BHN', N_misfit)
-         call f90sac_writetrace(trim(str)//'.BHZ', Z_misfit)
+         call f90sac_writetrace(trim(str)//'.BHE', E)
+         call f90sac_writetrace(trim(str)//'.BHN', N)
+         call f90sac_writetrace(trim(str)//'.BHZ', Z)
       endif
    end subroutine debug_writetrace
 end function sw_misfit
@@ -231,9 +230,11 @@ subroutine sw_create_wave(E,N,Z,freq,delta,noise,wavetype,spol)
 !     spol:     Source polarisation measured from N.
 !  E,N,Z if not already allocated
 
+   use f90sac
+
    implicit none
 
-   type(SACtrace), intent(inout)   :: E, N, Z
+   type(SACtrace), intent(out)   :: E, N, Z
    real, intent(in), optional :: freq, delta, noise, spol
    character(len=*), intent(in), optional :: wavetype
    real(r4), allocatable :: trace(:), random_noise(:)
@@ -447,6 +448,8 @@ subroutine sw_splitN(t1,t2,t3,N,phi_in,dt_in,quiet)
 !
 !  Splitting operators are applied in order
 
+   use f90sac
+
    implicit none
 
    type(SACtrace), intent(inout) :: t1, t2, t3
@@ -515,6 +518,7 @@ subroutine sw_fdsplitN(t1,t2,t3,N,phi_in,dt_in,quiet)
 !  Splitting operators are applied in order
 
    use FFFTW
+   use f90sac
 
    implicit none
 
