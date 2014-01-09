@@ -111,9 +111,7 @@ subroutine sw_misfit_ecs(C,az,inc,phi,dt,spol,misfit,t,phi_ecs,dt_ecs,t_scaled, 
    ! Calculate splitting and misfit for each observation
    do i=1,n
       call CIJ_phasevels(C, 1._rs, az(i), inc(i), pol=phi2(i), vs1=vs1, vs2=vs2)
-      if (present(phi_ecs)) phi_ecs(i) = phi2(i)
       dt2(i) = 1._rs/vs2 - 1._rs/vs1
-      if (present(dt_ecs)) dt_ecs(i) = dt2(i)
    enddo
 
    ! If we've specified a layer thickness set dt2, otherwise normalise to
@@ -125,8 +123,8 @@ subroutine sw_misfit_ecs(C,az,inc,phi,dt,spol,misfit,t,phi_ecs,dt_ecs,t_scaled, 
       dt2 = maxval(dt)*dt2/maxval(dt2)
    endif
 
-   if (present(phi_ecs)) phi_ecs = phi2
-   if (present(dt_ecs)) dt_ecs = dt2
+   if (present(phi_ecs)) phi_ecs(1:n) = phi2
+   if (present(dt_ecs)) dt_ecs(1:n) = dt2
 
    do i=1,n
       misfit(i) = sw_misfit(real(phi(i),r4), real(dt(i),r4), real(phi2(i),r4), &
@@ -199,9 +197,6 @@ function sw_misfit(phi1,dt1,phi2,dt2,spol,freq,delta,noise,wavetype) result(misf
    call f90sac_covar2(N,e,c)
    eig = sw_eig2x2(c)
    misfit = (misfit + minval(eig)/maxval(eig))/2.
-   call f90sac_deletetrace(E)
-   call f90sac_deletetrace(N)
-   call f90sac_deletetrace(Z)
 
 contains
 
@@ -460,6 +455,7 @@ subroutine sw_splitN(t1,t2,t3,N,phi_in,dt_in,quiet)
    real :: dt, theta, sum_dt
    character(len=8) :: kcmpnm1, kcmpnm2
    integer :: i
+   integer :: f90sac_suppress_warnings_previous
 
    ! See if we're being quiet or not: default to silet
    silent = .true.
@@ -470,6 +466,12 @@ subroutine sw_splitN(t1,t2,t3,N,phi_in,dt_in,quiet)
 
    !  Get old component names
    kcmpnm1 = t1 % kcmpnm   ;   kcmpnm2 = t2 % kcmpnm
+
+   ! Turn off warnings for f90sac for zero timeshift
+   f90sac_suppress_warnings_previous = f90sac_suppress_warnings
+   if (f90sac_suppress_warnings /= 1) then
+      f90sac_suppress_warnings = 1
+   endif
 
    sum_dt = 0.
    ! Loop over the splitting parameters
@@ -490,6 +492,9 @@ subroutine sw_splitN(t1,t2,t3,N,phi_in,dt_in,quiet)
       endif
       sum_dt = sum_dt + dt
    enddo
+
+   ! Revert warning status
+   f90sac_suppress_warnings = f90sac_suppress_warnings_previous
 
    !  Set window markers for SHEBA by moving end window along by the applied tshift
    t1%f = t1%f + sum_dt - modulo(sum_dt,t1%delta)
