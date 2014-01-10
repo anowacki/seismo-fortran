@@ -12,14 +12,14 @@ character(10) :: model
 real(8),parameter :: tol=5.  !  Accuracy of the solution / GPa
 real(8),parameter :: dz=100.
 
-if (iargc() /= 1 .and. iargc() /= 2) then
+if (command_argument_count() /= 1 .and. command_argument_count() /= 2) then
    write(0,'(a)') '  Usage: GPa2km [P / GPa] (PREM|AK135)'
    stop
 endif
 
-call getarg(1,model); read(model,*) P
+call get_command_argument(1,model); read(model,*) P
 model = 'AK135'
-if (iargc() == 2) call getarg(2,model)
+if (command_argument_count() == 2) call get_command_argument(2,model)
 
 !  Search for the depth which gives the correct pressure using Newton-Raphson
 !  f(x)=0: x_n+1 = x_n - f(x_n) / f'(x_n)

@@ -11,15 +11,15 @@ character(len=50),parameter :: hdr='#    vp     vs    rho'
 real(8) :: depth,vp,vs,rho,P,g
 integer :: iostatus
 
-if (iargc() > 1) then
+if (command_argument_count() > 1) then
    write(0,'(a)') '  Usage: Vprem [depth / km]'
    write(0,'(a)') '     or: reads series of depths from stdin'
    stop
 endif
 
 !  Use the argument on the command line
-if (iargc() == 1) then
-   call getarg(1,arg)
+if (command_argument_count() == 1) then
+   call get_command_argument(1,arg)
    read(arg,*) depth
    call prem(depth,vp=vp,vs=vs,rho=rho)
    write(*,'(a)') hdr

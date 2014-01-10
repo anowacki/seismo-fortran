@@ -11,15 +11,15 @@ character(len=50),parameter :: hdr='#    vp     vs    rho     P     g'
 real(8) :: depth,vp,vs,rho,P,g
 integer :: iostatus
 
-if (iargc() > 1) then
+if (command_argument_count() > 1) then
    write(0,'(a)') '  Usage: ak135 [depth / km]'
    write(0,'(a)') '     or: reads series of depths from stdin'
    stop
 endif
 
 !  Use the argument on the command line
-if (iargc() == 1) then
-   call getarg(1,arg)
+if (command_argument_count() == 1) then
+   call get_command_argument(1,arg)
    read(arg,*) depth
    call ak135(depth,vp=vp,vs=vs,rho=rho)
    P = pressure(depth,model='AK135')

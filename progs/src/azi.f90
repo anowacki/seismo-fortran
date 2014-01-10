@@ -10,7 +10,7 @@ integer, parameter :: rs = selected_real_kind(15,307)
 real(rs) :: lon1,lat1,lon2,lat2
 integer :: iostatus
 
-if (iargc() /= 0) then
+if (command_argument_count() /= 0) then
 	write(0,'(a)') 'Usage: azi < [stlon stlat evlon evlat]'
 	stop
 endif

@@ -10,7 +10,7 @@ real(rs) :: lon1,lat1,lon2,lat2,az,delta
 real(rs), parameter :: pi=3.14159265358979323846264338327950288D0
 integer :: iostatus
 
-if (iargc() /= 0) then
+if (command_argument_count() /= 0) then
 	write(0,'(a)') 'Usage: step < [lon] [lat] [azi] [delta]',&
                   'Reads a list of values from stdin and writes the endpoint lon,lat to stdout.'
 	stop
