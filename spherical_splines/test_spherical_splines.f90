@@ -23,14 +23,14 @@ program test_spherical_splines
    kernel = 'B'
    
 !  If requested, get the kernel name
-   if (iargc() == 1) call getarg(1,kernel)
+   if (command_argument_count() == 1) call get_command_argument(1,kernel)
    s%kernel = kernel
    
 !  If requested, we can determine the desired kernel width from the command line,
 !  otherwise set it to the spacing of the knots
    half_width = dd
-   if (iargc() == 2) then
-      call getarg(2,arg)
+   if (command_argument_count() == 2) then
+      call get_command_argument(2,arg)
       read(arg,*) half_width
       write(0,'(a,f0.3,a)') 'test_spherical_splines: Using kernel half-width of ',&
          half_width,' deg.'

@@ -15,7 +15,7 @@ program apm
    integer :: iostatus
    
 !  Check arguments
-   if (iargc() /= 0 .and. iargc() /= 3 .and. iargc() /= 4) then
+   if (command_argument_count() /= 0 .and. command_argument_count() /= 3 .and. command_argument_count() /= 4) then
       write(0,'(a)') 'Usage: apm [lon] [lat] [plate] (model)', &
                      '       For full list of plates and models, use command "plate_name_list"'
       stop
@@ -23,13 +23,13 @@ program apm
    
 !  If requested, get model; otherwise assume HS3-NUVEL1A
    model_name = 'HS3-NUVEL1A'
-   if (iargc() == 4) call getarg(4,model_name)
+   if (command_argument_count() == 4) call get_command_argument(4,model_name)
 
 !  Get arguments if we're doing a one-shot calculation
-   if (iargc() /= 0) then
-      call getarg(1,arg) ;  read(arg,*) lon
-      call getarg(2,arg) ;  read(arg,*) lat
-      call getarg(3,P%name)
+   if (command_argument_count() /= 0) then
+      call get_command_argument(1,arg) ;  read(arg,*) lon
+      call get_command_argument(2,arg) ;  read(arg,*) lat
+      call get_command_argument(3,P%name)
    
 !  Calculate relative motion of plate 1 wrt plate 2 and write results
       call absolute_plate_motion(lon,lat,P,model_name=model_name,az=az,rate=rate)

@@ -8,12 +8,12 @@ real(8) :: pI,pX,pT,pO,pM,pR
 real(8) :: rho
 character(len=250) :: fname,fmt1,fmt2
 
-if (iargc() /= 1) then
+if (command_argument_count() /= 1) then
    write(0,'(a)') 'Usage: test_CIJ_brow_chev [.ecs file]'
    stop
 endif
 
-call getarg(1,fname)
+call get_command_argument(1,fname)
 
 !  Load constants
 call CIJ_load(fname,C,rho)

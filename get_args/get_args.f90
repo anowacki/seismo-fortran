@@ -7,7 +7,7 @@ module get_args
 !  get_args is a module for reading the command line options used when running
 !  a Fortran program.  It uses the Fortran 2003 standard call get_command_arguments()
 !  to read the command line.  If you don't have a modern Fortran compiler, then
-!  you can use the call getarg() and iargc() commands.
+!  you can use the call get_command_argument() and iargc() commands.
 !  
 !  get_args takes a list of argument switch names (e.g., -r, -f) and the expected
 !  type  and number of associated arguments and passes back either an unchanged

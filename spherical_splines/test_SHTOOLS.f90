@@ -21,8 +21,8 @@ program test_SHTOOLS
    real(8),allocatable :: cilm(:,:,:)
 
 !  Get lmax from the command line, if supplied
-   if (iargc() > 0) then
-      call getarg(1,arg)
+   if (command_argument_count() > 0) then
+      call get_command_argument(1,arg)
       read(arg,*) lmax
    endif
    

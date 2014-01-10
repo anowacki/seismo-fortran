@@ -10,8 +10,8 @@ character(len=80) :: arg
 mu = 0.
 kappa = 1.
 
-if (iargc() == 1) then
-   call getarg(1,arg)
+if (command_argument_count() == 1) then
+   call get_command_argument(1,arg)
    read(arg,*) kappa
    if (kappa < 0.) then
       write(0,'(a)') 'von_Mieses: kappa must be >= 0'

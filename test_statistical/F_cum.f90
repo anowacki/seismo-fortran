@@ -8,14 +8,14 @@ program F_cum
    integer  :: m,n
    character(len=80) :: arg
    
-   if (iargc() /= 3) then
+   if (command_argument_count() /= 3) then
       write(*,'(a)') 'Usage: F_cum [x] [n] [m]'
       stop
    endif
    
-   call getarg(1,arg) ;  read(arg,*) x
-   call getarg(2,arg) ;  read(arg,*) n
-   call getarg(3,arg) ;  read(arg,*) m
+   call get_command_argument(1,arg) ;  read(arg,*) x
+   call get_command_argument(2,arg) ;  read(arg,*) n
+   call get_command_argument(3,arg) ;  read(arg,*) m
    
    write(*,*) f_dist_cum(n,m,x)
    

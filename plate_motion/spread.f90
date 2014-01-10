@@ -22,7 +22,7 @@ program spread
    integer :: iostatus
    
 !  Check arguments
-   if (iargc() /= 0 .and. iargc() /= 4 .and. iargc() /= 5) then
+   if (command_argument_count() /= 0 .and. command_argument_count() /= 4 .and. command_argument_count() /= 5) then
       write(0,'(a)') 'Usage: spread [lon] [lat] [plate1] [plate2] (model)', &
                      '       For full list of plates and models, use command "plate_name_list"'
       stop
@@ -30,14 +30,14 @@ program spread
    
 !  If requested, get model; otherwise assume HS3-NUVEL1A
    model_name = 'HS3-NUVEL1A'
-   if (iargc() == 5) call getarg(5,model_name)
+   if (command_argument_count() == 5) call get_command_argument(5,model_name)
 
 !  Get arguments if we're doing a one-shot calculation
-   if (iargc() /= 0) then
-      call getarg(1,arg) ;  read(arg,*) lon
-      call getarg(2,arg) ;  read(arg,*) lat
-      call getarg(3,P1%name)
-      call getarg(4,P2%name)
+   if (command_argument_count() /= 0) then
+      call get_command_argument(1,arg) ;  read(arg,*) lon
+      call get_command_argument(2,arg) ;  read(arg,*) lat
+      call get_command_argument(3,P1%name)
+      call get_command_argument(4,P2%name)
    
 !  Calculate relative motion of plate 1 wrt plate 2 and write results
       call relative_plate_motion(lon,lat,P1,P2,model_name=model_name,az=az,rate=rate)

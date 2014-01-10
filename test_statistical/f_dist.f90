@@ -8,13 +8,13 @@ program f_dist_prog
    real(rs) :: x,dx,x1
    character(len=25) :: arg
    
-   if (iargc() /= 3) then
+   if (command_argument_count() /= 3) then
       write(*,'(a)') 'Usage: f_dist [n] [m] [upper value]'
       stop
    endif
-   call getarg(1,arg) ;  read(arg,*) n
-   call getarg(2,arg) ;  read(arg,*) m
-   call getarg(3,arg) ;  read(arg,*) x1
+   call get_command_argument(1,arg) ;  read(arg,*) n
+   call get_command_argument(2,arg) ;  read(arg,*) m
+   call get_command_argument(3,arg) ;  read(arg,*) x1
    
    x  = 0._rs
    dx = 0.01_rs

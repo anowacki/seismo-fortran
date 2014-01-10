@@ -6,11 +6,11 @@ program factorial
    real(8) :: nfact
    character(len=80) :: arg
    
-   if (iargc() /= 1) then
+   if (command_argument_count() /= 1) then
       write(*,'(a)') 'Usage: fact [n]'
       stop
    endif
-   call getarg(1,arg) ; read(arg,*) n
+   call get_command_argument(1,arg) ; read(arg,*) n
    write(*,*) n,'factorial:'
    nfact = fact(n)
    write(*,*) nfact

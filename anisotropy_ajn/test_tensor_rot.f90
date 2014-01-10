@@ -16,8 +16,8 @@ program test_tensor_rot
    integer :: nrot=5000
    character(len=80) :: arg
    
-   if (iargc() == 1) then
-      call getarg(1,arg)
+   if (command_argument_count() == 1) then
+      call get_command_argument(1,arg)
       read(arg,*) nrot
    endif   
    

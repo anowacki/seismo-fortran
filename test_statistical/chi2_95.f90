@@ -9,12 +9,12 @@ program chi2_95
    real(rs) :: p,v,g
    character(20) :: arg
    
-   if (iargc() /= 1) then
+   if (command_argument_count() /= 1) then
       write(*,'(a)') 'Usage: chi2_95 [degrees of freedom]'
       stop
    endif
    
-   call getarg(1,arg) ; read(arg,*) v
+   call get_command_argument(1,arg) ; read(arg,*) v
    p = 0.05
    g = log_gamma(v/2._rs)
    
