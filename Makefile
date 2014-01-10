@@ -98,7 +98,7 @@ $(O)/splitwave.o: $(O)/f90sac.o $(O)/EmatrixUtils.o $(O)/FFFTW.o splitwave.f90
 	$(FC) -I$(M) ${SPLITWAVEOPTS} -o $(L)/libsplitwave.so.1 -shared $(O)/splitwave.o
 	ln -sf $(L)/libsplitwave.so.1 $(L)/libsplitwave.so
 	rm -f $(O)/lib$(nm).a
-	$(AR) $(AROPTS) $(L)/lib$(nm).a $(O)/$(nm).o
+	$(AR) $(AROPTS) $(L)/lib$(nm).a $(O)/$(nm).o $(O)/f90sac.o $(O)/f90sac_csubs.o $(O)/EmatrixUtils.o $(O)/FFFTW.o
 	$(RANLIB) $(L)/lib$(nm).a
 
 $(O)/f90sac.o: $(O)/f90sac_csubs.o f90sac/f90sac.F90
@@ -106,7 +106,7 @@ $(O)/f90sac.o: $(O)/f90sac_csubs.o f90sac/f90sac.F90
 	$(FC) -I$(M) ${F90SACOPTS} -o $(L)/libf90sac.so.1 -shared $(O)/f90sac.o $(O)/f90sac_csubs.o
 	ln -sf $(L)/libf90sac.so.1 $(L)/libf90sac.so
 	rm -f $(O)/lib$(nm).a
-	$(AR) $(AROPTS) $(L)/lib$(nm).a $(O)/$(nm).o
+	$(AR) $(AROPTS) $(L)/lib$(nm).a $(O)/$(nm).o $(O)/f90sac_csubs.o
 	$(RANLIB) $(L)/lib$(nm).a
 
 $(O)/f90sac_csubs.o: f90sac/f90sac_csubs.c
