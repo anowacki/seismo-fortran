@@ -53,28 +53,28 @@
 !===============================================================================
    module anisotropy_ajn
 !===============================================================================
-                                                                                
+
       implicit none
 
 !  ** size constants
-      integer, parameter, private :: i4 = selected_int_kind(9) ; ! long int
-      integer, parameter, private :: r4 = selected_real_kind(6,37) ; ! SP
-      integer, parameter, private :: r8 = selected_real_kind(15,307) ; ! DP
-      
+      integer, parameter, private :: i4 = selected_int_kind(9)       ! long int
+      integer, parameter, private :: r4 = selected_real_kind(6,37)   ! SP
+      integer, parameter, private :: r8 = selected_real_kind(15,307) ! DP
+
 !  ** precision selector
       integer, parameter, private :: rs = r8
       
 !  ** maths constants and other useful things
-      real(rs), parameter, private :: pi = 3.141592653589793238462643 ;
-      real(rs), parameter, private :: to_rad = 1.74532925199433e-002 ;  
-      real(rs), parameter, private :: to_deg = 57.2957795130823e0 ;  
-      real(rs), parameter, private :: to_km = 111.194926644559 ;      
+      real(rs), parameter, private :: pi = 3.141592653589793238462643_rs
+      real(rs), parameter, private :: to_rad = pi/180._rs
+      real(rs), parameter, private :: to_deg = 180._rs/pi
+      real(rs), parameter, private :: to_km = 111.194926644559_rs
 
-      real(rs), parameter, private :: big_number = 10.e36 ;      
+      real(rs), parameter, private :: big_number = 10.e36_rs
 
 !  ** Hide the helper functions and subroutines
       private :: inverse
-      
+
       CONTAINS
 
 !===============================================================================
@@ -791,6 +791,68 @@
       F(4,6) = -C(4,6);  F(6,4) = -C(6,4)
       F(5,6) = -C(5,6);  F(6,5) = -C(6,5)
    end function CIJ_flipz
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+   function CIJ_rotate_vec(CC,v,phi) result(CCrot)
+!===============================================================================
+! Rotate a tensor about an arbitrary axis and some angle phi.  The sense is
+! according to the right-hand rule, i.e., the rotation is anticlockwise when
+! looking down the axis.
+! INPUT:
+!  C(6,6) : Elasticity tensor
+!  V(3)   : Vector defining axis
+!  phi    : Rotation angle / degrees
+      implicit none
+      real(rs), intent(in) :: CC(6,6), v(3), phi
+      real(rs) :: CCrot(6,6)
+      real(rs) :: vnorm(3), R(3,3), a, b, c, d, phi2
+
+      ! Make sure the vector is a unit vector
+      vnorm = v/sqrt(sum(v**2))
+
+      ! Construct the rotation matrix using Euler-Rodrigues formula, noting
+      ! that the version used here is for passive rotations, hence we flip
+      ! the sign of the angle
+      phi2 = -to_rad*phi/2._rs
+      a = cos(phi2)
+      b = v(1)*sin(phi2)
+      c = v(2)*sin(phi2)
+      d = v(3)*sin(phi2)
+      R(1,:) = (/ a**2+b**2-c**2-d**2,  2._rs*(b*c+a*d),  2._rs*(b*d-a*c) /)
+      R(2,:) = (/ 2._rs*(b*c-a*d),  a**2+c**2-b**2-d**2,  2._rs*(c*d+a*b) /)
+      R(3,:) = (/ 2._rs*(b*d+a*c),  2._rs*(c*d-a*b),  a**2+d**2-b**2-c**2 /)
+      ! Perform the rotation
+      CCrot = CIJ_transform_M(CC, R)
+
+   end function CIJ_rotate_vec
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+   function CIJ_rotate_az_inc(C,azd,incd,phid) result(Crot)
+!===============================================================================
+! Rotate a tensor about an axis defined in CIJ_phasevels coordinates by azimuth
+! and inclination, and the angle of rotation.  This is according to the right-
+! hand rule, i.e., the rotation is anticlockwise when looking down the axis.
+! INPUT:
+!  C(6,6) : Elasticity tensor
+!  az     : Azimuth, measured from +x1 towards -x2 / degrees
+!  inc    : Inclination, measured from x1-x2 plane towards +x3 / degrees
+!  phi    : Rotation angle / degrees
+      implicit none
+      real(rs), intent(in) :: C(6,6), azd, incd, phid
+      real(rs) :: Crot(6,6)
+      real(rs) :: v(3), az, inc
+      ! Convert to radians
+      az = to_rad*azd
+      inc = to_rad*incd
+      ! Calculate axis vector
+      v(1) = cos(inc)*cos(-az)
+      v(2) = cos(inc)*sin(-az)
+      v(3) = sin(inc)
+      Crot = CIJ_rotate_vec(C, v, phid)
+
+   end function CIJ_rotate_az_inc
 !-------------------------------------------------------------------------------
 
 !===============================================================================

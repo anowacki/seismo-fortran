@@ -18,7 +18,9 @@ LIBS = \
     -lsplitwave
 BINDIR = ~/Applications/bin
 
-PROGS = $(B)/GPa2km \
+PROGS = $(B)/CIJ_rotV \
+        $(B)/CIJ_rot_azinc \
+        $(B)/GPa2km \
         $(B)/MT2rp \
         $(B)/Vak135 \
         $(B)/Vprem \
