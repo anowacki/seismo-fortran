@@ -38,6 +38,7 @@ PROGS = $(B)/CIJ_rotV \
         $(B)/prem \
         $(B)/project_to_gcp \
         $(B)/sdr2MT \
+        $(B)/sph_rand \
         $(B)/split_misfit \
         $(B)/split_misfit_ecs \
         $(B)/splitwave \

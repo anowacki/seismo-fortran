@@ -32,6 +32,9 @@ module spherical_geometry
    real(rs), parameter, private :: big_number = 10.e36
    real(rs), parameter, private :: angle_tol = 1.e-5
 
+   ! Random number sampler state
+   logical, save, private :: rng_initialised = .false.
+
    contains
    
 !------------------------------------------------------------------------------
@@ -1074,5 +1077,110 @@ function sg_angle_diff(a,b) result(diff)
    if (diff > 180._rs) diff = 360._rs - diff
 end function sg_angle_diff
 !-------------------------------------------------------------------------------
+
+!===============================================================================
+subroutine sg_initialise_rng()
+!===============================================================================
+! Initialise the random number generator.  This involves seeding the RNG with
+! an array of integers of a minimum length.  This is 12 with gfortran 4.6.
+   implicit none
+   integer :: values(8), n, i
+   integer, dimension(:), allocatable :: seed
+   if (.not. rng_initialised) then
+      call random_seed(size=n)  ! Find minimum size of array used to seed
+      allocate(seed(n))
+      call date_and_time(values=values)
+      seed = values(8) + values(7)*(/ (i-1, i=1,n) /)
+      call random_seed(put=seed)
+      deallocate(seed)
+      rng_initialised = .true.
+   endif
+end subroutine sg_initialise_rng
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+subroutine sg_random_points_sph(lon, colat, degrees)
+!===============================================================================
+! Return a set of points on a sphere randomly distributed, in spherical
+! coordinates.
+! From: http://mathworld.wolfram.com/SpherePointPicking.html
+! (NB: They use (to me) non-standard theta=lon and phi=colat!)
+   implicit none
+   real(rs), intent(out), dimension(:) :: lon, colat
+   logical, optional, intent(in) :: degrees
+   logical :: radians
+   ! Check array lengths
+   if (size(lon) /= size(colat)) then
+      write(0,'(a)') 'spherical_geometry: sg_random_points_sph: Error: arrays ' &
+         // 'for lon and colat are not the same length'
+      stop
+   endif
+   radians = .true.
+   if (present(degrees)) radians = .not.degrees
+   call sg_initialise_rng
+   call random_number(colat)
+   colat = acos(2._rs*colat - 1._rs)
+   call random_number(lon)
+   lon = twopi*lon
+
+   if (.not.radians) then
+      lon = to_deg*lon
+      colat = to_deg*colat
+   endif
+end subroutine sg_random_points_sph
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+subroutine sg_random_points_geog(lon, lat, degrees)
+!===============================================================================
+! Return a set of points on a sphere randomly distributed, in geographical
+! coordinates.
+   implicit none
+   real(rs), intent(out), dimension(:) :: lon, lat
+   logical, optional :: degrees
+   logical :: radians
+   radians = .true.
+   if (present(degrees)) radians = .not.degrees
+   call sg_random_points_sph(lon, lat)
+   lat = pi2 - lat
+   if (.not.radians) then
+      lon = to_deg*lon
+      lat = to_deg*lat
+   endif
+end subroutine sg_random_points_geog
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+subroutine sg_random_point_sph(lon, colat, degrees)
+!===============================================================================
+   implicit none
+   real(rs), intent(out) :: lon, colat
+   logical, optional, intent(in) :: degrees
+   logical :: radians
+   real(rs), dimension(1) :: alon, acolat
+   radians = .true.
+   if (present(degrees)) radians = .not.degrees
+   call sg_random_points_sph(alon, acolat, degrees=.not.radians)
+   lon = alon(1)
+   colat = acolat(1)
+end subroutine sg_random_point_sph
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+subroutine sg_random_point_geog(lon, lat, degrees)
+!===============================================================================
+   implicit none
+   real(rs), intent(out) :: lon, lat
+   logical, optional, intent(in) :: degrees
+   logical :: radians
+   real(rs), dimension(1) :: alon, alat
+   radians = .true.
+   if (present(degrees)) radians = .not.degrees
+   call sg_random_points_geog(alon, alat, degrees=.not.radians)
+   lon = alon(1)
+   lat = alat(1)
+end subroutine sg_random_point_geog
+!-------------------------------------------------------------------------------
+
 !______________________________________________________________________________
 end module spherical_geometry
