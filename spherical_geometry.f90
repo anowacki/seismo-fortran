@@ -1079,17 +1079,21 @@ end function sg_angle_diff
 !-------------------------------------------------------------------------------
 
 !===============================================================================
-subroutine sg_initialise_rng()
+subroutine sg_initialise_rng(s)
 !===============================================================================
 ! Initialise the random number generator.  This involves seeding the RNG with
 ! an array of integers of a minimum length.  This is 12 with gfortran 4.6.
+! OPTIONAL: Supply an integer to mix in to the seed.  This may be useful when
+! calling in parallel to make sure the PRNG state is initialised differently.
    implicit none
+   integer, optional, intent(in) :: s
    integer :: values(8), n, i
    integer, dimension(:), allocatable :: seed
    if (.not. rng_initialised) then
       call random_seed(size=n)  ! Find minimum size of array used to seed
       allocate(seed(n))
       call date_and_time(values=values)
+      if (present(s)) values(7) = s*values(7)
       seed = values(8) + values(7)*(/ (i-1, i=1,n) /)
       call random_seed(put=seed)
       deallocate(seed)
