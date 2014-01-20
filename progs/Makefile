@@ -15,7 +15,8 @@ LIBS = \
     -lglobal_1d_models \
     -lmoment_tensor \
     -lspherical_geometry \
-    -lsplitwave
+    -lsplitwave \
+    -lstatistical
 BINDIR = ~/Applications/bin
 
 PROGS = $(B)/CIJ_rotV \
@@ -27,6 +28,7 @@ PROGS = $(B)/CIJ_rotV \
         $(B)/ak135 \
         $(B)/azi \
         $(B)/baz \
+        $(B)/circ_test_orient \
         $(B)/create_wave \
         $(B)/fdsplitwaveN \
         $(B)/fp2ap \

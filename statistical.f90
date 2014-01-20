@@ -1195,6 +1195,103 @@ end function circ_von_mieses
 !-------------------------------------------------------------------------------
 
 !===============================================================================
+function circ_test_random_orient(theta,theta0,alpha,degrees) result(pass)
+!===============================================================================
+! Test whether a set of orientations (i.e., 180-degrees ambiguous), theta_i,
+! point in a certain direction, theta0, statistically differently from random,
+! using the V-test as modified by Rayleigh
+! (test 95 in: 100 Statistical Tests. G.K. Kanji, SAGE Publications.).
+   implicit none
+   real(rs), intent(in) :: theta(:), theta0
+   real(rs), intent(in), optional :: alpha
+   logical, optional, intent(in) :: degrees
+   real(rs) :: conversion, alpha_in
+   real(rs) :: r, mean, V
+   logical :: radians, pass
+   integer :: n
+   
+   n = size(theta)
+   if (n < 5) then
+      write(0,'(a)') 'statistical: circ_test_random_orient: Error: Cannot ' // &
+         'calculate significance for samples < 5'
+      stop
+   endif
+   
+   radians = .false.
+   alpha_in = 0.05_rs
+   if (present(alpha)) alpha_in = alpha
+   
+   if (present(degrees)) radians = .not.degrees
+   conversion = pi/180._rs
+   if (radians) conversion = 1._rs
+
+   mean = circ_mean(2._rs*theta, degrees=.not.radians)
+   r = circ_res_length(2._rs*theta, degrees=.not.radians)
+   V = 2._rs*sqrt(2._rs*size(theta))*r*cos(conversion*mean - 2._rs*conversion*theta0)
+   
+   ! Lookup values in table and decide on significance
+   pass = .false.
+   if (V > v_test_table()) pass = .true.
+   
+   contains
+      function v_test_table() result(value)
+         integer :: i
+         real(rs) :: value
+         integer, parameter, dimension(33) :: table_n = &
+            (/ 5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26, &
+            27,28,29,30,40,50,60,70,100,500,1000 /)
+         real(rs), parameter, dimension(6) :: table_alpha = &
+            (/ 0.1, 0.05, 0.01, 0.005, 0.001, 0.0001 /)
+         real(rs), parameter :: table(33,6) = transpose(reshape( (/ &
+            1.3051_rs, 1.6524_rs, 2.2505_rs, 2.4459_rs, 2.7938_rs, 3.0825_rs, & 
+            1.3009_rs, 1.6509_rs, 2.2640_rs, 2.4695_rs, 2.8502_rs, 3.2114_rs, & 
+            1.2980_rs, 1.6499_rs, 2.2734_rs, 2.4858_rs, 2.8886_rs, 3.2970_rs, & 
+            1.2958_rs, 1.6492_rs, 2.2803_rs, 2.4978_rs, 2.9164_rs, 3.3578_rs, & 
+            1.2942_rs, 1.6484_rs, 2.2856_rs, 2.5070_rs, 2.9375_rs, 3.4034_rs, & 
+            1.2929_rs, 1.6482_rs, 2.2899_rs, 2.5143_rs, 2.9540_rs, 3.4387_rs, & 
+            1.2918_rs, 1.6479_rs, 2.2933_rs, 2.5201_rs, 2.9672_rs, 3.4669_rs, & 
+            1.2909_rs, 1.6476_rs, 2.2961_rs, 2.5250_rs, 2.9782_rs, 3.4899_rs, & 
+            1.2902_rs, 1.6474_rs, 2.2985_rs, 2.5290_rs, 2.9873_rs, 3.5091_rs, & 
+            1.2895_rs, 1.6472_rs, 2.3006_rs, 2.5325_rs, 2.9950_rs, 3.5253_rs, & 
+            1.2890_rs, 1.6470_rs, 2.3023_rs, 2.5355_rs, 3.0017_rs, 3.5392_rs, & 
+            1.2885_rs, 1.6469_rs, 2.3039_rs, 2.5381_rs, 3.0075_rs, 3.5512_rs, & 
+            1.2881_rs, 1.6467_rs, 2.3052_rs, 2.5404_rs, 3.0126_rs, 3.5617_rs, & 
+            1.2877_rs, 1.6466_rs, 2.3064_rs, 2.5424_rs, 3.0171_rs, 3.5710_rs, & 
+            1.2874_rs, 1.6465_rs, 2.3075_rs, 2.5442_rs, 3.0211_rs, 3.5792_rs, & 
+            1.2871_rs, 1.6464_rs, 2.3085_rs, 2.5458_rs, 3.0247_rs, 3.5866_rs, & 
+            1.2868_rs, 1.6464_rs, 2.3093_rs, 2.5473_rs, 3.0279_rs, 3.5932_rs, & 
+            1.2866_rs, 1.6463_rs, 2.3101_rs, 2.5486_rs, 3.0308_rs, 3.5992_rs, & 
+            1.2864_rs, 1.6462_rs, 2.3108_rs, 2.5498_rs, 3.0335_rs, 3.6047_rs, & 
+            1.2862_rs, 1.6462_rs, 2.3115_rs, 2.5509_rs, 3.0359_rs, 3.6096_rs, & 
+            1.2860_rs, 1.6461_rs, 2.3121_rs, 2.5519_rs, 3.0382_rs, 3.6142_rs, & 
+            1.2858_rs, 1.6461_rs, 2.3127_rs, 2.5529_rs, 3.0402_rs, 3.6184_rs, & 
+            1.2856_rs, 1.6460_rs, 2.3132_rs, 2.5538_rs, 3.0421_rs, 3.6223_rs, & 
+            1.2855_rs, 1.6460_rs, 2.3136_rs, 2.5546_rs, 3.0439_rs, 3.6258_rs, & 
+            1.2853_rs, 1.6459_rs, 2.3141_rs, 2.5553_rs, 3.0455_rs, 3.6292_rs, & 
+            1.2852_rs, 1.6459_rs, 2.3145_rs, 2.5560_rs, 3.0471_rs, 3.6323_rs, & 
+            1.2843_rs, 1.6456_rs, 2.3175_rs, 2.5610_rs, 3.0580_rs, 3.6545_rs, & 
+            1.2837_rs, 1.6455_rs, 2.3193_rs, 2.5640_rs, 3.0646_rs, 3.6677_rs, & 
+            1.2834_rs, 1.6454_rs, 2.3205_rs, 2.5660_rs, 3.0689_rs, 3.6764_rs, & 
+            1.2831_rs, 1.6453_rs, 2.3213_rs, 2.5674_rs, 3.0720_rs, 3.6826_rs, & 
+            1.2826_rs, 1.6452_rs, 2.3228_rs, 2.5699_rs, 3.0775_rs, 3.6936_rs, & 
+            1.2818_rs, 1.6449_rs, 2.3256_rs, 2.5747_rs, 3.0877_rs, 3.7140_rs, & 
+            1.2817_rs, 1.6449_rs, 2.3260_rs, 2.5752_rs, 3.0890_rs, 3.7165_rs /), (/6,33/)))
+         ! The function just checks that the value you asked for alpha
+         ! is near to one of those we offer--if not, you get an error
+         do i = 1, size(table_alpha)
+            if (abs(table_alpha(i) - alpha_in)/table_alpha(i) < 0.1_rs) then
+               value = table(minloc(abs(n-table_n),1), i)
+               return
+            endif
+         enddo
+         write(0,'(a,f0.6,a)') 'statistical: circ_test_random_orient: v_test_table: ' &
+            //'Error: Cannot find a value for alpha near that requested (',alpha_in,')'
+         stop
+      end function v_test_table
+end function circ_test_random_orient
+!-------------------------------------------------------------------------------
+
+!===============================================================================
 
 
 
