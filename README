@@ -1,0 +1,63 @@
+modules
+=======
+
+Andy Nowacki
+andy.nowacki@bristol.ac.uk
+
+About
+-----
+This repo contains Fortran modules which I have adapted or written for use in
+my geophysics work, primarily dealing with seismic anisotropy.
+
+
+Installation
+------------
+A Fortran and C compiler are needed.
+
+The modules can be statically compiled directly into your own code like this:
+
+    $ $FC -o program module.f90 program.f90
+
+Typing `make' in the root directory builds the modules as shared and static
+libraries.  Edit the Makefile to reflect the compiler and options you need.
+
+
+Site specific notices
+---------------------
+The code has been developed using gfortran/gcc on Mac OS X, so some idiosyncracies
+of this platform may have crept in, though I've tried to make everything as
+portable as possible.  Current portability issues are as follows:
+
+. plate_motion.f90:  This won't compile with the Cray compilers, complaining about
+        the declaration of type parameters.  I don't know if this is a bug in
+		the compiler, or a violation of the standard.  A workaround is to simply
+		not build this module if you don't need it.
+. On ARCHER, when running any programs on the head node, you will see when using
+        the Cray compilers:
+            LIBDMAPP WARNING: Unable to open kgni version file 
+            /sys/class/gemini/kgni0/version errno 2
+		This is because the Cray communication libraries have been linked in but
+		are not accessible to serial programs on the head nodes.  You can silence
+		this (harmless) warning by compiling with
+		    -target=local_host
+		(From: https://bluewaters.ncsa.illinois.edu/faq)
+
+
+Acknowledgements
+----------------
+Some of the code is taken wholly or partly from other sources; see the licences
+within the source code files for more info.  These are:
+    - f90sac         (c) James Wookey
+	- EmatrixUtils   (c) David Mainprice and James Wookey
+
+
+Licence
+-------
+Copyright (c) Andy Nowacki 2008-2014.  All rights reserved.
+
+Permission to use, copy, modify and distribute this software and its
+documentation for any purpose is hereby granted without fee, provided that
+this copyright and notice appears in all copies, and provided that no
+fee is charged for its distribution.
+
+The author disclaims all warranties with regard to this software.
