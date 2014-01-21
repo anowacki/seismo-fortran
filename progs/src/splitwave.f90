@@ -1,5 +1,5 @@
 !===============================================================================
-program splitwave
+program splitwave_prog
 !===============================================================================
 
    use f90sac
@@ -54,5 +54,5 @@ program splitwave
    call f90sac_writetrace(f2,t2)
    call f90sac_writetrace(f3,t3)
 
-end program splitwave
+end program splitwave_prog
 !-------------------------------------------------------------------------------
