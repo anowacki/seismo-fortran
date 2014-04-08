@@ -30,6 +30,7 @@ PROGS = $(B)/CIJ_rotV \
         $(B)/baz \
         $(B)/circ_test_orient \
         $(B)/create_wave \
+	$(B)/delta \
         $(B)/fdsplitwaveN \
         $(B)/fp2ap \
         $(B)/gcp_from_point_azi \
