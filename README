@@ -30,17 +30,17 @@ portable as possible.  Current portability issues are as follows:
 
 . plate_motion.f90:  This won't compile with the Cray compilers, complaining about
         the declaration of type parameters.  I don't know if this is a bug in
-		the compiler, or a violation of the standard.  A workaround is to simply
-		not build this module if you don't need it.
+        the compiler, or a violation of the standard.  A workaround is to simply
+        not build this module if you don't need it.
 . On ARCHER, when running any programs on the head node, you will see when using
         the Cray compilers:
             LIBDMAPP WARNING: Unable to open kgni version file 
             /sys/class/gemini/kgni0/version errno 2
-		This is because the Cray communication libraries have been linked in but
-		are not accessible to serial programs on the head nodes.  You can silence
-		this (harmless) warning by compiling with
-		    -target=local_host
-		(From: https://bluewaters.ncsa.illinois.edu/faq)
+        This is because the Cray communication libraries have been linked in but
+        are not accessible to serial programs on the head nodes.  You can silence
+        this (harmless) warning by compiling with
+            -target=local_host
+        (From: https://bluewaters.ncsa.illinois.edu/faq)
 
 
 Acknowledgements
@@ -48,7 +48,6 @@ Acknowledgements
 Some of the code is taken wholly or partly from other sources; see the licences
 within the source code files for more info.  These are:
     - f90sac         (c) James Wookey
-	- EmatrixUtils   (c) David Mainprice and James Wookey
 
 
 Licence
