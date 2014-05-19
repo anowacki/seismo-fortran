@@ -53,6 +53,19 @@ test_splitwave/*BHZ
 test_splitwave/test_misfit
 test_splitwave/test_misfit_ecs
 test_splitwave/test_splitwave
+test_statistical/F_cum
+test_statistical/beta
+test_statistical/chi2_95
+test_statistical/circ_disp
+test_statistical/f
+test_statistical/f_dist
+test_statistical/fact
+test_statistical/incomp_beta
+test_statistical/reg_beta
+test_statistical/small_bootstrap
+test_statistical/von_Mieses
+test_statistical/sph_mean
+
 
 # Programs derived from module subroutines: ignore binaries but keep directories
 progs/bin/*
