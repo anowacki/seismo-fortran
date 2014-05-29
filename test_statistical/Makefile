@@ -10,8 +10,10 @@ PROGS = F_cum \
         chi2_95 \
         circ_disp \
         von_Mieses \
-        small_bootstrap
+        small_bootstrap \
+        sph_mean
 FC = gfortran
+FCOPTS = -O0 -g -ggdb
 
 all: ${PROGS}
 
@@ -50,6 +52,9 @@ von_Mieses: statistical.o von_Mieses.o
 	$(FC) ${FCOPTS} -o $@ statistical.o $@.o
 
 small_bootstrap: statistical.o small_bootstrap.o
+	$(FC) ${FCOPTS} -o $@ statistical.o $@.o
+
+sph_mean: statistical.o sph_mean.o
 	$(FC) ${FCOPTS} -o $@ statistical.o $@.o
 
 # Make object files

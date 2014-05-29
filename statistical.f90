@@ -12,7 +12,7 @@ module statistical
 
 !  Declare public functions
 !   public f_dist
-   
+
 !  Declare some internal constants
 !  ** size constants
       integer, parameter, private :: i4 = selected_int_kind(9) ; ! long int
@@ -20,14 +20,14 @@ module statistical
       integer, parameter, private :: r8 = selected_real_kind(15,307) ; ! DP
       integer, parameter, private :: c4 = r4
       integer, parameter, private :: c8 = r8
-      
+
 !  ** precision selector
       integer, parameter, private :: rs = r8
       integer, parameter, private :: cs = c8
-      
+
 !  ** maths constants and other useful things
       real(rs), parameter, private :: pi = 3.141592653589793238462643_rs
-      
+
 !  ** IO units
       integer, parameter, private :: lu_stdout = 5
       integer, parameter, private :: lu_stdin  = 6
@@ -42,7 +42,7 @@ function fact12(n)
    implicit none
    integer,intent(in) :: n
    integer            :: fact12,i
-   
+
    if (n < 0) then
       write(lu_stderr,'(a)') 'statistical: fact: error: n must be >= 0.'
       stop
@@ -71,7 +71,7 @@ function fact(n)
    implicit none
    integer,intent(in) :: n
    real(rs)           :: fact,rn
-   
+
    if (n == 0) then
       fact = 1._rs
       return
@@ -85,7 +85,7 @@ function fact(n)
       write(lu_stderr,'(a)') 'statistical: fact: error: cannot represent n! in double precision for n > 170.'
       stop
    endif
-   
+
    rn = real(n)
    fact = exp(n*log(rn) - rn + log(rn*(1._rs + 4._rs*rn*(1._rs + 2._rs*rn)))/6._rs &
                                                          + log(pi)/2._rs)
@@ -100,7 +100,7 @@ function beta_func(p,q)
    implicit none
    real(rs),intent(in) :: p,q
    real(rs)            :: beta_func,rp,rq
-   
+
    rp = real(p)  ;  rq = real(q)
    beta_func = gamma(rp) * gamma(rq) / gamma(rp + rq)
    return
@@ -116,7 +116,7 @@ function incomp_beta_func(z,a,b)
    real(rs)            :: incomp_beta_func,ra,rb,rn
    real(rs)            :: u,du   ! Dummy variable of integration
    integer             :: n
-   
+
    ra = real(a)
    rb = real(b)
    if (z <= 0. .or. z > 1.) then
@@ -142,7 +142,7 @@ function reg_beta_func(z,a,b)
    implicit none
    real(rs),intent(in) :: z,a,b
    real(rs)            :: reg_beta_func
-   
+
    reg_beta_func = incomp_beta_func(z,a,b) / beta_func(a,b)
    return
 end function reg_beta_func
@@ -156,7 +156,7 @@ function pochhammer(x,n)
    real(rs),intent(in) :: x
    integer,intent(in)  :: n
    real(rs)            :: pochhammer,rn
-   
+
    rn = real(n)
    pochhammer = gamma(x+rn)/gamma(x)
    return
@@ -172,18 +172,18 @@ function f_dist(n,m,x)
    real(rs)            :: x
    real(rs)            :: f_dist
    real(rs)            :: rn,rm,half,one
-   
+
    if (x <= 0.) then
       write(lu_stderr,'(a)') 'statistical: f_dist: error: x must be > 0.'
       stop
    endif
-   
+
 !  Convert input integers into real values and set value of half
    rn = real(n)
    rm = real(m)
    half = 0.5_rs
    one = 1.0_rs
-   
+
    f_dist = gamma(half*(rn+rm)) * rn**(half*rn) * rm**(half*rm) * x**(half*rn - one) / &
             (gamma(half*rn) * gamma(half*rm) * (rm+rn*x)**(half*(rn + rm)))
    return
@@ -202,7 +202,7 @@ function f_dist_cum(n,m,x)
 !  Convert input integers into real values
    rm = real(m)
    rn = real(n)
-   
+
 !   f_dist_cum = reg_beta_func(rn*x/(rm+rn*x), rn*0.5_rs, rm*0.5_rs)
    f_dist_cum = 0._rs
    du = 0.0001_rs
@@ -249,13 +249,13 @@ function ppchi2(p, v, g) RESULT(fn_val)
 
    IMPLICIT NONE
    INTEGER, PARAMETER    :: dp = rs
-   
+
    REAL (dp), INTENT(IN)  :: p
    REAL (dp), INTENT(IN)  :: v
    REAL (dp), INTENT(IN)  :: g
    REAL (dp)              :: fn_val
 
-! AJN: don't need interface as we're in a module.   
+! AJN: don't need interface as we're in a module.
 !   INTERFACE
 !     FUNCTION gammad(x, p) RESULT(fn_val)
 !       IMPLICIT NONE
@@ -263,7 +263,7 @@ function ppchi2(p, v, g) RESULT(fn_val)
 !       REAL (dp), INTENT(IN) :: x, p
 !       REAL (dp)             :: fn_val
 !     END FUNCTION gammad
-!   
+!
 !     SUBROUTINE ppnd16 (p, normal_dev, ifault)
 !       IMPLICIT NONE
 !       INTEGER, PARAMETER      :: dp = rs
@@ -272,12 +272,12 @@ function ppchi2(p, v, g) RESULT(fn_val)
 !       REAL (dp), INTENT(OUT)  :: normal_dev
 !     END SUBROUTINE ppnd16
 !   END INTERFACE
-   
+
 ! Local variables
-   
+
    REAL (dp)  :: a, b, c, p1, p2, q, s1, s2, s3, s4, s5, s6, t, x, xx
    INTEGER    :: i, if1
-   
+
    INTEGER, PARAMETER    :: maxit = 20
    REAL (dp), PARAMETER  :: aa = 0.6931471806_dp, e = 0.5e-06_dp,         &
                             pmin = 0.000002_dp, pmax = 0.999998_dp,       &
@@ -296,7 +296,7 @@ function ppchi2(p, v, g) RESULT(fn_val)
                             c31 = 932.0_dp, c32 = 966.0_dp, c33 = 1141.0_dp, &
                             c34 = 1182.0_dp, c35 = 1278.0_dp, c36 = 1740.0_dp, &
                             c37 = 2520.0_dp, c38 = 5040.0_dp
-   
+
 !  Test arguments and initialise
    fn_val = -one
    IF (p < pmin .OR. p > pmax) THEN
@@ -307,22 +307,22 @@ function ppchi2(p, v, g) RESULT(fn_val)
       WRITE(lu_stderr,'(a)') 'statistical: PPCHI2: error: Number of deg. of freedom <= 0'
       stop !RETURN
    END IF
-   
+
    xx = half * v
    c = xx - one
-   
+
 !  Starting approximation for small chi-squared
    IF (v < -c5 * LOG(p)) THEN
       fn_val = (p * xx * EXP(g + xx * aa)) ** (one/xx)
       IF (fn_val < e) GO TO 6
       GO TO 4
    END IF
-   
+
 !  Starting approximation for v less than or equal to 0.32
    IF (v > c3) GO TO 3
    fn_val = c4
    a = LOG(one-p)
-   
+
    2 q = fn_val
    p1 = one + fn_val * (c7+fn_val)
    p2 = fn_val * (c9 + fn_val * (c8 + fn_val))
@@ -330,23 +330,23 @@ function ppchi2(p, v, g) RESULT(fn_val)
    fn_val = fn_val - (one - EXP(a + g + half * fn_val + c * aa) * p2 / p1) / t
    IF (ABS(q / fn_val - one) > c1) GO TO 2
    GO TO 4
-   
+
 !  Call to algorithm AS 241 - note that p has been tested above.
    3 CALL ppnd16(p, x, if1)
-   
+
 !  Starting approximation using Wilson and Hilferty estimate
    p1 = c2 / v
    fn_val = v * (x * SQRT(p1) + one - p1) ** 3
-   
+
 !  Starting approximation for p tending to 1
    IF (fn_val > c6 * v + six) fn_val = -two * (LOG(one-p) - c * LOG(half * fn_val) + g)
-   
+
 !  Call to algorithm AS 239 and calculation of seven term Taylor series
    4 DO i = 1, maxit
       q = fn_val
       p1 = half * fn_val
       p2 = p - gammad(p1, xx)
-    
+
       t = p2 * EXP(xx * aa + g + p1 - c * LOG(fn_val))
       b = t / fn_val
       a = half * t - b * c
@@ -360,10 +360,10 @@ function ppchi2(p, v, g) RESULT(fn_val)
                (s2 - b * (s3 - b * (s4 - b * (s5 - b * s6))))))
       IF (ABS(q / fn_val - one) > e) RETURN
    END DO
-   
+
    WRITE(lu_stderr,'(a)') 'statistical: PPCHI2: error: Max. number of iterations exceeded'
    stop
-   
+
    6 RETURN
 END FUNCTION ppchi2
 !-------------------------------------------------------------------------------
@@ -389,7 +389,7 @@ function gammad(x, p) RESULT(fn_val)
    INTEGER, PARAMETER    :: dp = rs
    REAL (dp), INTENT(IN) :: x, p
    REAL (dp)             :: fn_val
-   
+
    ! Local variables
    REAL (dp)             :: pn1, pn2, pn3, pn4, pn5, pn6, arg, c, rn, a, b, an
    REAL (dp), PARAMETER  :: zero = 0.d0, one = 1.d0, two = 2.d0, &
@@ -397,31 +397,31 @@ function gammad(x, p) RESULT(fn_val)
                             tol = 1.d-14, xbig = 1.d+8, plimit = 1000.d0, &
                             elimit = -88.d0
 ! EXTERNAL alogam, alnorm
-   
+
    fn_val = zero
-   
+
 !  Check that we have valid values for X and P
    IF (p <= zero .OR. x < zero) THEN
      WRITE(lu_stderr,'(a)') 'statistical: gammad(AS239): error: Either p <= 0 or x < 0'
      stop !RETURN
    END IF
    IF (x == zero) RETURN
-   
+
 !  Use a normal approximation if P > PLIMIT
    IF (p > plimit) THEN
      pn1 = three * SQRT(p) * ((x / p) ** (one / three) + one /(nine * p) - one)
      fn_val = alnorm(pn1, .false.)
      RETURN
    END IF
-   
+
 !  If X is extremely large compared to P then set fn_val = 1
    IF (x > xbig) THEN
      fn_val = one
      RETURN
    END IF
-   
+
    IF (x <= one .OR. x < p) THEN
-     
+
 !  Use Pearson's series expansion.
 !  (Note that P is not large enough to force overflow in ALOGAM).
 !  No need to test IFAULT on exit since P > 0.
@@ -437,9 +437,9 @@ function gammad(x, p) RESULT(fn_val)
      arg = arg + LOG(fn_val)
      fn_val = zero
      IF (arg >= elimit) fn_val = EXP(arg)
-     
+
    ELSE
-     
+
 !  Use a continued fraction expansion
 !     arg = p * LOG(x) - x - alogam(p, ifault)
      arg = p * LOG(x) - x - log_gamma(p)
@@ -462,13 +462,13 @@ function gammad(x, p) RESULT(fn_val)
        IF (ABS(fn_val - rn) <= MIN(tol, tol * rn)) GO TO 80
        fn_val = rn
      END IF
-     
+
      pn1 = pn3
      pn2 = pn4
      pn3 = pn5
      pn4 = pn6
      IF (ABS(pn5) >= oflo) THEN
-       
+
 !  Re-scale terms in continued fraction if terms are large
        pn1 = pn1 / oflo
        pn2 = pn2 / oflo
@@ -480,7 +480,7 @@ function gammad(x, p) RESULT(fn_val)
      fn_val = one
      IF (arg >= elimit) fn_val = one - EXP(arg)
    END IF
-   
+
    RETURN
 END FUNCTION gammad
 !-------------------------------------------------------------------------------
@@ -501,17 +501,17 @@ subroutine ppnd16 (p, normal_dev, ifault)
 ! N.B. The original algorithm is as a function; this is a subroutine
 
    IMPLICIT NONE
-   
+
    INTEGER, PARAMETER      :: dp = rs
    REAL (dp), INTENT(IN)   :: p
    INTEGER, INTENT(OUT)    :: ifault
    REAL (dp), INTENT(OUT)  :: normal_dev
-   
+
 ! Local variables
    REAL (dp) :: zero = 0.d0, one = 1.d0, half = 0.5d0,  &
                 split1 = 0.425d0, split2 = 5.d0, const1 = 0.180625d0, &
                 const2 = 1.6d0, q, r
-   
+
 ! Coefficients for P close to 0.5
    REAL (dp) :: a0 = 3.3871328727963666080D0, &
                 a1 = 1.3314166789178437745D+2, &
@@ -529,7 +529,7 @@ subroutine ppnd16 (p, normal_dev, ifault)
                 b6 = 2.8729085735721942674D+4, &
                 b7 = 5.2264952788528545610D+3
 ! HASH SUM AB    55.8831928806149014439
-   
+
 ! Coefficients for P not close to 0, 0.5 or 1.
    REAL (dp) :: c0 = 1.42343711074968357734D0, &
                 c1 = 4.63033784615654529590D0, &
@@ -547,7 +547,7 @@ subroutine ppnd16 (p, normal_dev, ifault)
                 d6 = 5.47593808499534494600D-4, &
                 d7 = 1.05075007164441684324D-9
 ! HASH SUM CD    49.33206503301610289036
-   
+
 ! Coefficients for P near 0 or 1.
    REAL (dp) :: e0 = 6.65790464350110377720D0, &
                 e1 = 5.46378491116411436990D0, &
@@ -565,7 +565,7 @@ subroutine ppnd16 (p, normal_dev, ifault)
                 f6 = 1.42151175831644588870D-7, &
                 f7 = 2.04426310338993978564D-15
 ! HASH SUM EF    47.52583317549289671629
-   
+
    ifault = 0
    q = p - half
    IF (ABS(q) <= split1) THEN
@@ -675,10 +675,10 @@ function circ_mean(angle,degrees)
    real(rs)            :: circ_mean
    logical,intent(in),optional :: degrees
    logical                     :: radians
-   
+
    radians = .false.
    if (present(degrees)) radians = .not.degrees
-   
+
    if (radians) then
       circ_mean = atan2(sum( sin( angle(1:size(angle)) ) ), &
                         sum( cos( angle(1:size(angle)) ) ) )
@@ -687,7 +687,7 @@ function circ_mean(angle,degrees)
                         sum( cos( angle(1:size(angle))*pi/180._rs ) ) )
       circ_mean = circ_mean*180._rs/pi
    endif
-   
+
    return
 end function circ_mean
 !-------------------------------------------------------------------------------
@@ -705,17 +705,17 @@ subroutine circ_mean_bootstrap(angle,mu,mu1,mu2,B,degrees)
    integer,intent(in),optional   :: B
    logical,intent(in),optional   :: degrees
    logical :: degrees_in
-   
+
    degrees_in = .true.
    if (present(degrees)) degrees_in = degrees
-   
+
    if (size(angle) <= 9) then  ! For small N, calculate all n**n samples
       call circ_mean_bootstrap_smallN(angle,mu,mu1,mu2,degrees=degrees_in)
    else
       write(lu_stderr,'(a)') 'statistical: circ_mean_bootstrap: only implemented for n<=9 at the moment.'
       stop
    endif
-   
+
    return
 end subroutine circ_mean_bootstrap
 !-------------------------------------------------------------------------------
@@ -738,7 +738,7 @@ subroutine circ_mean_bootstrap_smallN(angle,mu,mu1,mu2,degrees,force)
    real(r4),allocatable :: mean(:)  ! Use single preision for storage of bootstrap samples
    real(rs),allocatable :: rangle(:)
    integer :: n,i,i1,i2,i3,i4,i5,i6,i7,i8,i9
-   
+
 !  We're potentially allocating <=1.5 GB of memory, so make sure we know what
 !  we're doing.
    force_in = .false.
@@ -751,7 +751,7 @@ subroutine circ_mean_bootstrap_smallN(angle,mu,mu1,mu2,degrees,force)
          read(*,*)
       endif
    endif
-   
+
 !  Check we're only testing with small sample size
    n = size(angle)
    if (n > 9 .or. n == 1) then
@@ -762,7 +762,7 @@ subroutine circ_mean_bootstrap_smallN(angle,mu,mu1,mu2,degrees,force)
 
 !  Allocate memory for all n**n sample means: here we go!
    allocate(mean(n**n))
-   
+
 !  Convert angles into radians if necesary
    allocate(rangle(n))
    conversion = pi/180._rs
@@ -770,7 +770,7 @@ subroutine circ_mean_bootstrap_smallN(angle,mu,mu1,mu2,degrees,force)
       if (.not.degrees) conversion = 1._rs
    endif
    rangle = conversion*angle
-   
+
 !  Calculate sample mean for all possible bootstrap samples
    i = 1
    if (n == 2) then
@@ -782,7 +782,7 @@ subroutine circ_mean_bootstrap_smallN(angle,mu,mu1,mu2,degrees,force)
                i = i + 1
        enddo
       enddo
-      
+
    else if (n == 3) then
       do i1=1,n
        do i2=1,n
@@ -794,7 +794,7 @@ subroutine circ_mean_bootstrap_smallN(angle,mu,mu1,mu2,degrees,force)
         enddo
        enddo
       enddo
-      
+
    else if (n == 4) then
       do i1=1,n
        write(*,'(a,i0,a)') 'Executing ',i1,' of 8 passes.'
@@ -812,7 +812,7 @@ subroutine circ_mean_bootstrap_smallN(angle,mu,mu1,mu2,degrees,force)
        enddo
       enddo
 
-   
+
    else if (n == 5) then
       do i1=1,n
        write(*,'(a,i0,a)') 'Executing ',i1,' of 8 passes.'
@@ -890,10 +890,10 @@ subroutine circ_mean_bootstrap_smallN(angle,mu,mu1,mu2,degrees,force)
              do i8=1,n
                  Csum = cos(rangle(i1)) + cos(rangle(i2)) + cos(rangle(i3)) + &
                         cos(rangle(i4)) + cos(rangle(i5)) + cos(rangle(i6)) + &
-                        cos(rangle(i7)) + cos(rangle(i8)) 
+                        cos(rangle(i7)) + cos(rangle(i8))
                  Ssum = sin(rangle(i1)) + sin(rangle(i2)) + sin(rangle(i3)) + &
                         sin(rangle(i4)) + sin(rangle(i5)) + sin(rangle(i6)) + &
-                        sin(rangle(i7)) + sin(rangle(i8)) 
+                        sin(rangle(i7)) + sin(rangle(i8))
                  mean(i) = atan2(Ssum,Csum)
                  i = i + 1
              enddo
@@ -904,7 +904,7 @@ subroutine circ_mean_bootstrap_smallN(angle,mu,mu1,mu2,degrees,force)
         enddo
        enddo
       enddo
-         
+
    else if (n == 9) then
       do i1=1,n
        write(*,'(a,i0,a)') 'Executing ',i1,' of 9 passes.'
@@ -934,9 +934,9 @@ subroutine circ_mean_bootstrap_smallN(angle,mu,mu1,mu2,degrees,force)
        enddo
       enddo
    endif
-   
+
    mu = sum(mean)/(conversion*n**n)
-   
+
    return
 end subroutine circ_mean_bootstrap_smallN
 !-------------------------------------------------------------------------------
@@ -951,10 +951,10 @@ function circ_res_length(angle,degrees)
    real(rs)            :: circ_res_length
    logical,intent(in),optional :: degrees
    logical                     :: radians
-   
+
    radians = .false.
    if (present(degrees)) radians = .not.degrees
-   
+
    if (radians) then
       circ_res_length = sqrt((sum(sin(angle(1:size(angle)))))**2 + &
                              (sum(cos(angle(1:size(angle)))))**2) / real(size(angle))
@@ -970,19 +970,19 @@ end function circ_res_length
 !===============================================================================
 function circ_sd(angle,degrees)
 !===============================================================================
-!  Returns the circular standard deviation.  Input is a column vector of 
+!  Returns the circular standard deviation.  Input is a column vector of
 !  arbitrary length.  Default is for input in degrees.
    implicit none
    real(rs),intent(in) :: angle(:)
    real(rs)            :: circ_sd
    logical,intent(in),optional :: degrees
    logical                     :: degrees_in
-   
+
    degrees_in = .true.
    if (present(degrees)) degrees_in = degrees
-   
+
    circ_sd = sqrt(-2._rs*log(circ_res_length(angle,degrees=degrees_in)))
-   
+
    return
 end function circ_sd
 !===============================================================================
@@ -997,10 +997,10 @@ function circ_variance(angle,degrees)
    real(rs)            :: circ_variance,mean
    logical,intent(in),optional :: degrees
    logical                     :: radians
-   
+
    radians = .false.
    if (present(degrees)) radians = .not.degrees
-   
+
    if (radians) then
       mean = circ_mean(angle,degrees=.false.)
       circ_variance = 1._rs - sum(cos(angle - mean))/real(size(angle))
@@ -1008,7 +1008,7 @@ function circ_variance(angle,degrees)
       mean = circ_mean(angle,degrees=.true.) * pi/180._rs
       circ_variance = 1._rs - sum(cos(angle*pi/180._rs - mean))/real(size(angle))
    endif
-   
+
    return
 end function circ_variance
 !-------------------------------------------------------------------------------
@@ -1026,25 +1026,25 @@ function circ_uncent_trig_moment(angle,p,degrees)
    integer  :: n
    logical,intent(in),optional :: degrees
    real(rs) :: conversion
-   
+
 !  Check for valid p
    if (p < 1) then
       write(lu_stderr,'(a)') 'statistical: circ_uncent_trig_moment: p must be > 0.'
       stop
    endif
-   
+
 !  Convert from degrees to radians unless otherwise
    conversion = pi/180._rs
    if (present(degrees)) then
       if (.not.degrees) conversion = 1._rs
    endif
-   
+
    n = size(angle)
    Cp = sum(cos(real(p)*angle(1:n)*conversion))/real(n)
    Sp = sum(sin(real(p)*angle(1:n)*conversion))/real(n)
-   
+
    circ_uncent_trig_moment = cmplx(Cp, Sp)
-   
+
    return
 end function circ_uncent_trig_moment
 !-------------------------------------------------------------------------------
@@ -1061,24 +1061,24 @@ function circ_cent_trig_moment(angle,p,degrees)
    real(rs) :: Cp,Sp,mean,conversion
    integer  :: n
    logical,intent(in),optional :: degrees
-   
+
 !  Check for valid p
    if (p < 1) then
       write(lu_stderr,'(a)') 'statistical: circ_cent_trig_moment: P must be > 0.'
       stop
    endif
-   
+
 !  Convert from degrees to radians unless otherwise desired
    conversion = pi/180._rs
    if (present(degrees)) then;  if (.not.degrees) conversion = 1._rs; endif
-   
+
    n = size(angle)
    mean = circ_mean(angle,degrees=degrees)
    Cp = sum(cos(real(p)*conversion*(angle(1:n) - mean)))/real(n)
    Sp = sum(sin(real(p)*conversion*(angle(1:n) - mean)))/real(n)
-   
+
    circ_cent_trig_moment = cmplx(Cp, Sp)
-   
+
    return
 end function circ_cent_trig_moment
 !-------------------------------------------------------------------------------
@@ -1094,19 +1094,19 @@ function circ_dispers(angle,degrees)
    real(rs) :: mean,rho2,R,conversion
    integer :: n
    logical,intent(in),optional :: degrees
-   
+
 !  By default, convert from degrees to radians for calculations
    conversion = pi/180._rs
    if (present(degrees)) then
       if (.not.degrees) conversion = 1._rs
    endif
-   
+
    mean = circ_mean(angle,degrees=degrees)
    n = size(angle)
    R = sum(cos(conversion*(angle(1:n) - mean)))/real(n)
    rho2 = sum(cos(2._rs*conversion*(angle(1:n) - mean)))/real(n)
    circ_dispers = (1._rs - rho2)/(2._rs*R**2)
-   
+
    return
 end function circ_dispers
 !-------------------------------------------------------------------------------
@@ -1122,16 +1122,16 @@ function circ_correl(a,b,degrees)
    real(rs)            :: circ_correl, amean, bmean
    logical,intent(in),optional :: degrees
    logical                     :: radians
-   
+
 !  Check arrays are same length
    if (size(a) /= size(b)) then
       write(0,'(a)') 'Error: statistical: circ_correl: Input arrays are not same length.'
       stop
    endif
-   
+
    radians = .false.
    if (present(degrees)) radians = .not.degrees
-   
+
    if (radians) then
       amean = circ_mean(a,degrees=.false.)
       bmean = circ_mean(a,degrees=.false.)
@@ -1142,9 +1142,9 @@ function circ_correl(a,b,degrees)
       bmean = circ_mean(b,degrees=.true.) * pi/180._rs
       circ_correl = sum( sin(a*pi/180._rs - amean) * sin(b*pi/180._rs - bmean) )/ &
             sqrt( sum( sin(a*pi/180._rs-amean)*sin(a*pi/180._rs-amean) * &
-                  sin(b*pi/180._rs-bmean)*sin(b*pi/180._rs-bmean) ) )   
+                  sin(b*pi/180._rs-bmean)*sin(b*pi/180._rs-bmean) ) )
    endif
-   
+
    return
 end function circ_correl
 !-------------------------------------------------------------------------------
@@ -1158,14 +1158,14 @@ function circ_von_mieses(theta,mu,kappa,degrees)
    real(rs),intent(in) :: theta,mu,kappa
    real(rs)            :: circ_von_mieses,conversion
    logical,intent(in),optional :: degrees
-   
+
    conversion = pi/180._rs
    if (present(degrees)) then; if (.not.degrees) conversion = 1._rs; endif
-   
+
    circ_von_mieses = exp(kappa*cos(conversion*(theta - mu)))/(2._rs*pi*BessI0(kappa))
 
    return
-   
+
    contains
       function BessI0(x)
       !  Evaluates the modified Bessel function of the first kind at x.
@@ -1175,7 +1175,7 @@ function circ_von_mieses(theta,mu,kappa,degrees)
          real(rs),intent(in) :: x
          real(rs)            :: BessI0
          real(r8)            :: t
-         
+
          if (abs(x) < 3.75_r8) then
             t = abs(x/3.75_r8)
             BessI0 = 1._r8 + &
@@ -1209,18 +1209,18 @@ function circ_test_random_orient(theta,theta0,alpha,degrees) result(pass)
    real(rs) :: r, mean, V
    logical :: radians, pass
    integer :: n
-   
+
    n = size(theta)
    if (n < 5) then
       write(0,'(a)') 'statistical: circ_test_random_orient: Error: Cannot ' // &
          'calculate significance for samples < 5'
       stop
    endif
-   
+
    radians = .false.
    alpha_in = 0.05_rs
    if (present(alpha)) alpha_in = alpha
-   
+
    if (present(degrees)) radians = .not.degrees
    conversion = pi/180._rs
    if (radians) conversion = 1._rs
@@ -1228,11 +1228,11 @@ function circ_test_random_orient(theta,theta0,alpha,degrees) result(pass)
    mean = circ_mean(2._rs*theta, degrees=.not.radians)
    r = circ_res_length(2._rs*theta, degrees=.not.radians)
    V = 2._rs*sqrt(2._rs*size(theta))*r*cos(conversion*mean - 2._rs*conversion*theta0)
-   
+
    ! Lookup values in table and decide on significance
    pass = .false.
    if (V > v_test_table()) pass = .true.
-   
+
    contains
       function v_test_table() result(value)
          integer :: i
@@ -1243,38 +1243,38 @@ function circ_test_random_orient(theta,theta0,alpha,degrees) result(pass)
          real(rs), parameter, dimension(6) :: table_alpha = &
             (/ 0.1, 0.05, 0.01, 0.005, 0.001, 0.0001 /)
          real(rs), parameter :: table(33,6) = transpose(reshape( (/ &
-            1.3051_rs, 1.6524_rs, 2.2505_rs, 2.4459_rs, 2.7938_rs, 3.0825_rs, & 
-            1.3009_rs, 1.6509_rs, 2.2640_rs, 2.4695_rs, 2.8502_rs, 3.2114_rs, & 
-            1.2980_rs, 1.6499_rs, 2.2734_rs, 2.4858_rs, 2.8886_rs, 3.2970_rs, & 
-            1.2958_rs, 1.6492_rs, 2.2803_rs, 2.4978_rs, 2.9164_rs, 3.3578_rs, & 
-            1.2942_rs, 1.6484_rs, 2.2856_rs, 2.5070_rs, 2.9375_rs, 3.4034_rs, & 
-            1.2929_rs, 1.6482_rs, 2.2899_rs, 2.5143_rs, 2.9540_rs, 3.4387_rs, & 
-            1.2918_rs, 1.6479_rs, 2.2933_rs, 2.5201_rs, 2.9672_rs, 3.4669_rs, & 
-            1.2909_rs, 1.6476_rs, 2.2961_rs, 2.5250_rs, 2.9782_rs, 3.4899_rs, & 
-            1.2902_rs, 1.6474_rs, 2.2985_rs, 2.5290_rs, 2.9873_rs, 3.5091_rs, & 
-            1.2895_rs, 1.6472_rs, 2.3006_rs, 2.5325_rs, 2.9950_rs, 3.5253_rs, & 
-            1.2890_rs, 1.6470_rs, 2.3023_rs, 2.5355_rs, 3.0017_rs, 3.5392_rs, & 
-            1.2885_rs, 1.6469_rs, 2.3039_rs, 2.5381_rs, 3.0075_rs, 3.5512_rs, & 
-            1.2881_rs, 1.6467_rs, 2.3052_rs, 2.5404_rs, 3.0126_rs, 3.5617_rs, & 
-            1.2877_rs, 1.6466_rs, 2.3064_rs, 2.5424_rs, 3.0171_rs, 3.5710_rs, & 
-            1.2874_rs, 1.6465_rs, 2.3075_rs, 2.5442_rs, 3.0211_rs, 3.5792_rs, & 
-            1.2871_rs, 1.6464_rs, 2.3085_rs, 2.5458_rs, 3.0247_rs, 3.5866_rs, & 
-            1.2868_rs, 1.6464_rs, 2.3093_rs, 2.5473_rs, 3.0279_rs, 3.5932_rs, & 
-            1.2866_rs, 1.6463_rs, 2.3101_rs, 2.5486_rs, 3.0308_rs, 3.5992_rs, & 
-            1.2864_rs, 1.6462_rs, 2.3108_rs, 2.5498_rs, 3.0335_rs, 3.6047_rs, & 
-            1.2862_rs, 1.6462_rs, 2.3115_rs, 2.5509_rs, 3.0359_rs, 3.6096_rs, & 
-            1.2860_rs, 1.6461_rs, 2.3121_rs, 2.5519_rs, 3.0382_rs, 3.6142_rs, & 
-            1.2858_rs, 1.6461_rs, 2.3127_rs, 2.5529_rs, 3.0402_rs, 3.6184_rs, & 
-            1.2856_rs, 1.6460_rs, 2.3132_rs, 2.5538_rs, 3.0421_rs, 3.6223_rs, & 
-            1.2855_rs, 1.6460_rs, 2.3136_rs, 2.5546_rs, 3.0439_rs, 3.6258_rs, & 
-            1.2853_rs, 1.6459_rs, 2.3141_rs, 2.5553_rs, 3.0455_rs, 3.6292_rs, & 
-            1.2852_rs, 1.6459_rs, 2.3145_rs, 2.5560_rs, 3.0471_rs, 3.6323_rs, & 
-            1.2843_rs, 1.6456_rs, 2.3175_rs, 2.5610_rs, 3.0580_rs, 3.6545_rs, & 
-            1.2837_rs, 1.6455_rs, 2.3193_rs, 2.5640_rs, 3.0646_rs, 3.6677_rs, & 
-            1.2834_rs, 1.6454_rs, 2.3205_rs, 2.5660_rs, 3.0689_rs, 3.6764_rs, & 
-            1.2831_rs, 1.6453_rs, 2.3213_rs, 2.5674_rs, 3.0720_rs, 3.6826_rs, & 
-            1.2826_rs, 1.6452_rs, 2.3228_rs, 2.5699_rs, 3.0775_rs, 3.6936_rs, & 
-            1.2818_rs, 1.6449_rs, 2.3256_rs, 2.5747_rs, 3.0877_rs, 3.7140_rs, & 
+            1.3051_rs, 1.6524_rs, 2.2505_rs, 2.4459_rs, 2.7938_rs, 3.0825_rs, &
+            1.3009_rs, 1.6509_rs, 2.2640_rs, 2.4695_rs, 2.8502_rs, 3.2114_rs, &
+            1.2980_rs, 1.6499_rs, 2.2734_rs, 2.4858_rs, 2.8886_rs, 3.2970_rs, &
+            1.2958_rs, 1.6492_rs, 2.2803_rs, 2.4978_rs, 2.9164_rs, 3.3578_rs, &
+            1.2942_rs, 1.6484_rs, 2.2856_rs, 2.5070_rs, 2.9375_rs, 3.4034_rs, &
+            1.2929_rs, 1.6482_rs, 2.2899_rs, 2.5143_rs, 2.9540_rs, 3.4387_rs, &
+            1.2918_rs, 1.6479_rs, 2.2933_rs, 2.5201_rs, 2.9672_rs, 3.4669_rs, &
+            1.2909_rs, 1.6476_rs, 2.2961_rs, 2.5250_rs, 2.9782_rs, 3.4899_rs, &
+            1.2902_rs, 1.6474_rs, 2.2985_rs, 2.5290_rs, 2.9873_rs, 3.5091_rs, &
+            1.2895_rs, 1.6472_rs, 2.3006_rs, 2.5325_rs, 2.9950_rs, 3.5253_rs, &
+            1.2890_rs, 1.6470_rs, 2.3023_rs, 2.5355_rs, 3.0017_rs, 3.5392_rs, &
+            1.2885_rs, 1.6469_rs, 2.3039_rs, 2.5381_rs, 3.0075_rs, 3.5512_rs, &
+            1.2881_rs, 1.6467_rs, 2.3052_rs, 2.5404_rs, 3.0126_rs, 3.5617_rs, &
+            1.2877_rs, 1.6466_rs, 2.3064_rs, 2.5424_rs, 3.0171_rs, 3.5710_rs, &
+            1.2874_rs, 1.6465_rs, 2.3075_rs, 2.5442_rs, 3.0211_rs, 3.5792_rs, &
+            1.2871_rs, 1.6464_rs, 2.3085_rs, 2.5458_rs, 3.0247_rs, 3.5866_rs, &
+            1.2868_rs, 1.6464_rs, 2.3093_rs, 2.5473_rs, 3.0279_rs, 3.5932_rs, &
+            1.2866_rs, 1.6463_rs, 2.3101_rs, 2.5486_rs, 3.0308_rs, 3.5992_rs, &
+            1.2864_rs, 1.6462_rs, 2.3108_rs, 2.5498_rs, 3.0335_rs, 3.6047_rs, &
+            1.2862_rs, 1.6462_rs, 2.3115_rs, 2.5509_rs, 3.0359_rs, 3.6096_rs, &
+            1.2860_rs, 1.6461_rs, 2.3121_rs, 2.5519_rs, 3.0382_rs, 3.6142_rs, &
+            1.2858_rs, 1.6461_rs, 2.3127_rs, 2.5529_rs, 3.0402_rs, 3.6184_rs, &
+            1.2856_rs, 1.6460_rs, 2.3132_rs, 2.5538_rs, 3.0421_rs, 3.6223_rs, &
+            1.2855_rs, 1.6460_rs, 2.3136_rs, 2.5546_rs, 3.0439_rs, 3.6258_rs, &
+            1.2853_rs, 1.6459_rs, 2.3141_rs, 2.5553_rs, 3.0455_rs, 3.6292_rs, &
+            1.2852_rs, 1.6459_rs, 2.3145_rs, 2.5560_rs, 3.0471_rs, 3.6323_rs, &
+            1.2843_rs, 1.6456_rs, 2.3175_rs, 2.5610_rs, 3.0580_rs, 3.6545_rs, &
+            1.2837_rs, 1.6455_rs, 2.3193_rs, 2.5640_rs, 3.0646_rs, 3.6677_rs, &
+            1.2834_rs, 1.6454_rs, 2.3205_rs, 2.5660_rs, 3.0689_rs, 3.6764_rs, &
+            1.2831_rs, 1.6453_rs, 2.3213_rs, 2.5674_rs, 3.0720_rs, 3.6826_rs, &
+            1.2826_rs, 1.6452_rs, 2.3228_rs, 2.5699_rs, 3.0775_rs, 3.6936_rs, &
+            1.2818_rs, 1.6449_rs, 2.3256_rs, 2.5747_rs, 3.0877_rs, 3.7140_rs, &
             1.2817_rs, 1.6449_rs, 2.3260_rs, 2.5752_rs, 3.0890_rs, 3.7165_rs /), (/6,33/)))
          ! The function just checks that the value you asked for alpha
          ! is near to one of those we offer--if not, you get an error
@@ -1292,8 +1292,44 @@ end function circ_test_random_orient
 !-------------------------------------------------------------------------------
 
 !===============================================================================
+function sph_mean(x, y, z) result(mean)
+!===============================================================================
+! Compute the mean direction for a set of vectors representing the x, y and z
+! directions of points on the unit sphere.  Each input value is normalised to
+! the unit sphere even if it isn't on input.
+! Output is a three-vector giving the direction as (x,y,z)
+   real(rs), intent(in), dimension(:) :: x, y, z
+   real(rs) :: mean(3)
+   if (size(x) /= size(y) .or. size(y) /= size(z) .or. size(z) /= size(x)) then
+      write(0,'(a)') 'statistical: sph_mean: Input arrays must be same length'
+      stop
+   endif
+   mean = (/sum(x), sum(y), sum(z)/)/sph_resultant(x, y, z)
+end function sph_mean
+!-------------------------------------------------------------------------------
 
+!===============================================================================
+function sph_resultant(x, y, z) result(resultant)
+!===============================================================================
+! Compute the spherical resultant
+   real(rs), intent(in), dimension(:) :: x, y, z
+   real(rs) :: resultant(3)
+   if (size(x) /= size(y) .or. size(y) /= size(z) .or. size(z) /= size(x)) then
+      write(0,'(a)') 'statistical: sph_resultant: Input arrays must be same length'
+      stop
+   endif
+   resultant = sqrt(sum(x)**2 + sum(y)**2 + sum(z)**2)
+end function sph_resultant
+!-------------------------------------------------------------------------------
 
+!===============================================================================
+function sph_mean_resultant(x, y, z) result(mean_resultant)
+!===============================================================================
+   real(rs), intent(in), dimension(:) :: x, y, z
+   real(rs) :: mean_resultant(3)
+   mean_resultant = sph_resultant(x, y, z)/size(x)
+end function sph_mean_resultant
+!-------------------------------------------------------------------------------
 
 !_______________________________________________________________________________
 end module statistical
