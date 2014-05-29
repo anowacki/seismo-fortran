@@ -733,6 +733,56 @@
 !-------------------------------------------------------------------------------
 
 !===============================================================================
+   function CIJ_rot_euler(C,phi1,theta,phi2,passive,type) result(Crot)
+!===============================================================================
+! Rotate 6x6 Voigt tensors according to the Euler angles supplied.
+! The default is to use the z1,x2,z3 convention, where we rotate about the initial
+! z axis, then the new x axis, then the new z axis (hence z1x2z3).
+! Other notations can be used by supplying a corresponding name.
+! The rotation is active, so specify passive=.true. if a passive rotation is
+! preferred.  This is usually the case for Euler angles describing rock texture.
+! Angles are in degrees.  Rotations are in the right-hand sense, i.e., an active
+! rotation appears to rotate the body anticlockwise when looking down the axis.
+      real(rs), intent(in) :: C(6,6), phi1, theta, phi2
+      character(len=*), intent(in), optional :: type
+      logical, intent(in), optional :: passive
+      real(rs) :: phi1r, thetar, phi2r
+      real(rs) :: c1, c2, c3, s1, s2, s3
+      character(len=6) :: type_in
+      real(rs) :: Crot(6,6), R(3,3)
+
+      phi1r  = to_rad*phi1
+      thetar = to_rad*theta
+      phi2r  = to_rad*phi2
+      c1 = cos(phi1r);  c2 = cos(thetar);  c3 = cos(phi2r)
+      s1 = sin(phi1r);  s2 = sin(thetar);  s3 = sin(phi2r)
+
+      type_in = 'z1x2z3'
+      if (present(type)) type_in = type
+      select case(type)
+         case('z1x2z3')
+            R = transpose(reshape((/c1*c3 - c2*s1*s3,  -c1*s3 - c2*c3*s1,   s1*s2, &
+                                    c3*s1 + c1*c2*s3,   c1*c2*c3 - s1*s3,  -c1*s2, &
+                                               s2*s3,              c3*s2,      c2 /), &
+                                  (/3,3/) ))
+         case default
+            write(0,'(a)') 'anisotropy_ajn: CIJ_rot_euler: Error: rotation type "' &
+               // trim(type_in) // '" is not defined.'
+            stop
+      end select
+
+      ! If we want a passive rotation, just flip the matrix
+      if (present(passive)) then
+         if (passive) then
+            R = transpose(R)
+         endif
+      endif
+
+      Crot =  CIJ_transform_M(C, R)
+   end function CIJ_rot_euler
+!-------------------------------------------------------------------------------
+
+!===============================================================================
    function CIJ_flipx(C) result(F)
 !===============================================================================
 ! Transform a tensor so that it is its mirror image across the plane normal to x

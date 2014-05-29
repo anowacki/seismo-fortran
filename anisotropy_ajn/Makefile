@@ -16,10 +16,17 @@ test: test_CIJ_tandon_and_weng \
       test_flip \
       test_global_VTI \
       test_panning_VTI \
+      test_rot_euler \
       test_symm \
       test_disp \
       test_tensor_rot \
       test_transform_M
+
+%: anisotropy_ajn.o %.o
+	$(FC) $(FFLAGS) -o $@ $^
+
+%.o: %.f90
+	$(FC) $(FFLAGS) -c $^
 
 test_CIJ_tandon_and_weng: anisotropy_ajn.o test_CIJ_tandon_and_weng.o
 	$(FC) ${FFLAGS} -o test_CIJ_tandon_and_weng test_CIJ_tandon_and_weng.o \
