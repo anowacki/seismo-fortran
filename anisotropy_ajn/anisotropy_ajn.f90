@@ -737,12 +737,14 @@
 !===============================================================================
 ! Rotate 6x6 Voigt tensors according to the Euler angles supplied.
 ! The default is to use the z1,x2,z3 convention, where we rotate about the initial
-! z axis, then the new x axis, then the new z axis (hence z1x2z3).
+! z axis, then the new x axis, then the new z axis (hence z1x2z3 or xzx).
 ! Other notations can be used by supplying a corresponding name.
 ! The rotation is active, so specify passive=.true. if a passive rotation is
 ! preferred.  This is usually the case for Euler angles describing rock texture.
 ! Angles are in degrees.  Rotations are in the right-hand sense, i.e., an active
 ! rotation appears to rotate the body anticlockwise when looking down the axis.
+!
+! Formulae from http://en.wikipedia.org/wiki/Euler_angles
       real(rs), intent(in) :: C(6,6), phi1, theta, phi2
       character(len=*), intent(in), optional :: type
       logical, intent(in), optional :: passive
@@ -760,11 +762,36 @@
       type_in = 'z1x2z3'
       if (present(type)) type_in = type
       select case(type)
-         case('z1x2z3')
-            R = transpose(reshape((/c1*c3 - c2*s1*s3,  -c1*s3 - c2*c3*s1,   s1*s2, &
-                                    c3*s1 + c1*c2*s3,   c1*c2*c3 - s1*s3,  -c1*s2, &
-                                               s2*s3,              c3*s2,      c2 /), &
-                                  (/3,3/) ))
+         case('x1z2x3', 'xzx')
+            R = transpose(reshape( &
+               (/   c2,            -c3*s2,              s2*s3, &
+                 c1*s2,  c1*c2*c3 - s1*s3,  -c3*s1 - c1*c2*c3, &
+                 s1*s2,  c1*s3 + c2*c3*s1,   c1*c3 - c2*s1*s3 /), (/3,3/) ))
+         case('x1y2x3', 'xyx')
+            R = transpose(reshape( &
+               (/    c2,             s2*s3,              c3*s2, &
+                  s1*s2,  c1*c3 - c2*s1*s3,  -c1*s3 - c2*c3*s1, &
+                 -c1*s2,  c3*s1 + c1*c2*s3,   c1*c2*c3 - s1*s3 /), (/3,3/) ))
+         case('y1x2y3', 'yxy')
+            R = transpose(reshape( &
+               (/ c1*c3 - c2*s1*s3,  s1*s2,  c1*s3 + c2*c3*s1, &
+                             s2*s3,     c2,            -c3*s2, &
+                 -c3*s1 - c1*c2*s3,  c1*s2,  c1*c2*c3 - s1*s3 /), (/3,3/) ))
+         case('y1z2y3', 'yzy')
+            R = transpose(reshape( &
+               (/ c1*c2*c3 - s1*s3,  -c1*s2,  c3*s1 + c1*c2*s3, &
+                             c3*s2,      c2,             s2*s3, &
+                 -c1*s3 - c2*c3*s1,   s1*s2,  c1*c3 - c2*s1*s3 /), (/3,3/) ))
+         case('z1y2z3', 'zyz')
+            R = transpose(reshape( &
+               (/c1*c2*c3 - s1*s3,  -c3*s1 - c1*c2*s3, c1*s2, &
+                 c1*s3 + c2*c3*s1,   c1*c3 - c2*s1*s3, s1*s2, &
+                           -c3*s2,              s2*s3,    c2 /), (/3,3/) ))
+         case('z1x2z3', 'zxz')
+            R = transpose(reshape( &
+               (/c1*c3 - c2*s1*s3,  -c1*s3 - c2*c3*s1,   s1*s2, &
+                 c3*s1 + c1*c2*s3,   c1*c2*c3 - s1*s3,  -c1*s2, &
+                            s2*s3,              c3*s2,      c2 /), (/3,3/) ))
          case default
             write(0,'(a)') 'anisotropy_ajn: CIJ_rot_euler: Error: rotation type "' &
                // trim(type_in) // '" is not defined.'
