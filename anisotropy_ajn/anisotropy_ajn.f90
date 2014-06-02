@@ -807,7 +807,7 @@ end function CIJ_thom_st
          case('x1z2x3', 'xzx')
             R = transpose(reshape( &
                (/   c2,            -c3*s2,              s2*s3, &
-                 c1*s2,  c1*c2*c3 - s1*s3,  -c3*s1 - c1*c2*c3, &
+                 c1*s2,  c1*c2*c3 - s1*s3,  -c3*s1 - c1*c2*s3, &
                  s1*s2,  c1*s3 + c2*c3*s1,   c1*c3 - c2*s1*s3 /), (/3,3/) ))
          case('x1y2x3', 'xyx')
             R = transpose(reshape( &
