@@ -80,7 +80,9 @@
 !===============================================================================
    subroutine thom(vp,vs,rho,eps,gam,del,c)
 !===============================================================================
-!  Output the elastic tensor given a set of Thomsen parameters.
+!  Output the elastic tensor given a set of Thomsen parameters, assuming weak
+!  anisotropy:
+!     Thomsen (1986) Weak elastic anistropy.  Geophysics, 51, 10, 1954-1966).
 !  Input is in m/s and kg/m^3. 
 !  OUTPUT IS FULL ELASTICITY TENSOR, NOT DENSITY-NORMALISED TENSOR!!!!
 !  Remember to normalise by density if using other routines which require that.
@@ -134,6 +136,46 @@
      call thom(vp,vs,rho,eps,gam,del,CIJ_thom)
      
    end function CIJ_thom
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+function CIJ_thom_st(vp,vs,rho,eps,gam,delst) result(CC)
+!===============================================================================
+!  Output the elastic tensor given a set of Thomsen parameters, with no
+!  assumption about the strength of anisotropy (using delta^star):
+!     Thomsen (1986) Weak elastic anisotropy.  Geophysics, 51, 10, 1954-1966.
+!  Input is in m/s and kg/m^3.
+!  OUTPUT IS FULL ELASTICITY TENSOR, NOT DENSITY-NORMALISED TENSOR!!!!
+!  Remember to normalise by density if using other routines with require that.
+   implicit none
+   real(rs), intent(in) :: vp, vs ,rho, eps, gam, delst
+   real(rs) :: CC(6,6), a, b, c
+   integer :: i, j
+
+   CC = 0._rs
+   CC(3,3) = rho*vp**2
+   CC(4,4) = rho*vs**2
+   CC(1,1) = CC(3,3)*(2._rs*eps + 1._rs)
+   CC(6,6) = CC(4,4)*(2._rs*gam + 1._rs)
+
+   a = 2._rs
+   b = 4._rs*CC(4,4)
+   c = CC(4,4)**2 - 2._rs*delst*CC(3,3)**2 &
+      - (CC(3,3) - CC(4,4))*(CC(1,1) + CC(3,3) - 2._rs*CC(4,4))
+   if (b**2 - 4._rs*a*c < 0._rs) then
+      write(0,'(a)') 'anisotropy_ajn: CIJ_thom_st: Error: S velocity too high' &
+      //' or delta too negative.  Unstable tensor.'
+      stop
+   endif
+   CC(1,3) = (-b + sqrt(b**2 - 4._rs*a*c))/(2._rs*a)
+   CC(1,2) = CC(1,1) - 2._rs*CC(6,6)
+   CC(2,3) = CC(1,3)
+   CC(5,5) = CC(4,4)
+   CC(2,2) = CC(1,1)
+
+   ! Make symmetrical
+   do i=1,6; do j=i,6; CC(j,i) = CC(i,j); enddo; enddo
+end function CIJ_thom_st
 !-------------------------------------------------------------------------------
 
 !===============================================================================
