@@ -73,7 +73,8 @@
       real(rs), parameter, private :: big_number = 10.e36_rs
 
 !  ** Hide the helper functions and subroutines
-      private :: inverse
+      private :: inverse, &
+                 determinant
 
       CONTAINS
 
@@ -1982,6 +1983,42 @@ end function CIJ_thom_st
    end subroutine CIJ_disp
 !-------------------------------------------------------------------------------
 
+!===============================================================================
+   function CIJ_is_stable(C)
+!===============================================================================
+!  Check whether a tensor is dynamically stable (i.e., if its Voigt matrix is
+!  positive definite, which means all its eigenvalues are positive).
+!
+!  This routine uses Sylvester's criterion (en.wikipedia.org/wiki/Sylvester's_criterion)
+!  by calculating the determinants for all minors of the matrix; all determinants
+!  must be positive for the tensor to be stable.  This take about 3 ns per call.
+!
+!  Another option is to call LAPACK routine dsyevd, which compute eigenvalues for
+!  real, symmetric double precision matrices.  This takes about 1 ns per call, but
+!  would require linking with a LAPACK library.
+!  TODO: Add linking to LAPACK (and BLAS) as an option.  However, this would require
+!        a whole extra configuration stage.
+      real(rs), intent(in) :: C(6,6)
+      logical :: CIJ_is_stable
+      integer :: i, j
+      real(rs), parameter :: tol = tiny(0._rs)
+      do i = 1, 6
+         do j = i+1, 6
+            if (abs(C(i,j) - C(j,i)) > tol) then
+               write(0,'(a)') 'CIJ_test: Warning: Matrix is not symmetric'
+               call CIJ_disp(C)
+            endif
+         enddo
+      enddo
+      CIJ_is_stable = .false.
+      if (C(1,1) <= 0._rs) return
+      do i = 2, 6
+         if (determinant(C(1:i,1:i)) <= 0._rs) return
+      enddo
+      CIJ_is_stable = .true.
+   end function CIJ_is_stable
+!-------------------------------------------------------------------------------
+
 !==============================================================================
    subroutine inverse(n, sz, A, AI)
 ! inverse.f90  compute AI = A^-1  modified simeq.f90
@@ -2103,6 +2140,70 @@ end function CIJ_thom_st
    end subroutine inverse 
 !-------------------------------------------------------------------------------
 
+!===============================================================================
+   function determinant(A, exists) result(getdet)
+!===============================================================================
+!  Compute the determinant of a square matrix.  If there is no determinant, the
+!  returned value is zero.  Optionally supply the logical argument exists to
+!  check whether it is possible to compute the determinant.
+!  From: http://www.scribd.com/doc/46792210/FORTRAN77-Function-to-calculate-matrix-determinant
+!  Modified to use assumed-shape array to prevent the creation of an array
+!  temporary (speeds up by > 5x), but limits the maximum matrix size to 6x6.
+      implicit none
+      real(8), intent(in) :: A(:,:)
+      logical, optional, intent(out) :: exists
+      real(8) :: getdet, elem(6,6), m, temp
+      integer :: i, j, k, l, n
+      logical :: detexists
+      real(8), parameter :: tol = tiny(0._8)
+
+      n = size(A,1)
+      if (size(A,2) /= n) then
+         write(0,'(a)') 'anisotropy_ajn: determinant: Error: Must supply a square matrix'
+         stop
+      endif
+      elem(1:n,1:n) = A
+      detexists = .true.
+      l = 1
+
+      ! Convert to upper triangular form
+      do k = 1, n-1
+         if (abs(elem(k,k)) < tol) then
+            detexists = .false.
+            do i = k+1, n
+               if (elem(i,k) /= 0._8) then
+                  do j = 1, n
+                     temp = elem(i,j)
+                     elem(i,j) = elem(k,j)
+                     elem(k,j) = temp
+                  enddo
+                  detexists = .true.
+                  l = -l
+                  exit
+               endif
+            enddo
+            if (.not.detexists) then
+               getdet = 0._8
+               if (present(exists)) exists = detexists
+               return
+            endif
+         endif
+         do j = k+1, n
+            m = elem(j,k)/elem(k,k)
+            do i = k+1, n
+               elem(j,i) = elem(j,i) - m*elem(k,i)
+            enddo
+         enddo
+      enddo
+
+      ! Determinant is product of diagonal elements
+      getdet = real(l, kind=kind(getdet))
+      do i = 1, n
+         getdet = getdet*elem(i,i)
+      enddo
+      if (present(exists)) exists = detexists
+   end function determinant
+!-------------------------------------------------------------------------------
 
    end module anisotropy_ajn
 !=======================================================================================
