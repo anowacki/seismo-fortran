@@ -352,14 +352,14 @@ end function CIJ_thom_st
          endif
          if (average_type == 'r' .or. average_type == 'R' .or. &
             average_type == 'vrh' .or. average_type == 'VRH') then
-            call inverse(6,6,Crot,Srot)
+            Srot = CIJ_CtoS(Crot)
             Sout = Sout + Srot/real(nrotations,rs)
          endif
          a = a + da
       enddo
 
       if (average_type == 'vrh' .or. average_type == 'VRH') then
-         call inverse(6,6,Sout,Crot)
+         Crot = CIJ_StoC(Sout)
          Cout = (Cout + Crot)/2._rs
       endif
 
@@ -1124,8 +1124,8 @@ end function CIJ_thom_st
       VF1 = VF1 / (VF1 + VF2)   ;  VF2 = VF2 / (VF1 + VF2)
       
 !  Find inverse of Cs
-      call inverse(6,6,C1,C1_inv)
-      call inverse(6,6,C2,C2_inv)
+      C1_inv = CIJ_CtoS(C1)
+      C2_inv = CIJ_CtoS(C2)
       
 !  Initialise matrices to 0s
       voigt = 0.   ;   reuss = 0.
@@ -1133,7 +1133,7 @@ end function CIJ_thom_st
       
       voigt = C1*VF1 + C2*VF2
       reuss = C1_inv*VF1 + C2_inv*VF2
-      call inverse(6,6,reuss,reuss_inv)
+      reuss_inv = CIJ_StoC(reuss)
       rhave = rh1*VF1 + rh2*VF2
       
       Cave = (voigt + reuss_inv) /2.
@@ -1168,7 +1168,7 @@ end function CIJ_thom_st
       real(rs),intent(in)  :: VF_in(n),C_in(n,6,6),rh_in(n)
       real(rs),intent(out) :: Cave(6,6),rhave
       real(rs)             :: VF(n),C(n,6,6),C_inv(n,6,6),rh(n),&
-                              voigt(6,6),reuss(6,6),reuss_inv(6,6)
+                              voigt(6,6),reuss(6,6),reuss_inv(6,6),Ctemp(6,6)
       
 !  Normalise the volume fractions to sum to unity
       VF = VF_in / sum(VF_in)
@@ -1177,7 +1177,8 @@ end function CIJ_thom_st
       C = C_in
       rh = rh_in
       do i=1,n
-         call inverse(6,6,C(i,:,:),C_inv(i,:,:))
+         Ctemp = C(i,:,:)
+         C_inv(i,:,:) = CIJ_CtoS(Ctemp)
       enddo
 
 !  Initialise matrices to 0s
@@ -1189,7 +1190,7 @@ end function CIJ_thom_st
          rhave = rhave + VF(i) * rh(i)
       enddo
 
-      call inverse(6,6,reuss,reuss_inv)
+      reuss_inv = CIJ_StoC(reuss)
       
       Cave = (voigt + reuss_inv) / 2.
       
@@ -1254,14 +1255,14 @@ end function CIJ_thom_st
       do i=1,n
          !  Find compliance from input stiffness
          C_temp = C_in(i,:,:)
-         call inverse(6,6,C_temp,S_in)
+         S_in = CIJ_CtoS(C_temp)
          S = S + VF_in(i)*S_in/sum(VF_in)
          rhave = rhave + VF_in(i)*rh_in(i)/sum(VF_in)
       enddo
       
       
 !  Find stiffness from compliance
-      call inverse(6,6,S,Cave)
+      Cave = CIJ_StoC(S)
             
    end subroutine CIJ_Reuss_av
 !-------------------------------------------------------------------------------
@@ -1666,7 +1667,7 @@ end function CIJ_thom_st
      C = C_in
      
    !  Find stiffness from inverse
-     call inverse(6,6,C,S)
+     S = CIJ_CtoS(C)
      
    !  Calculate Voigt moduli
      Kv = (1._rs/9._rs) * (C(1,1) + C(2,2) + C(3,3) + 2._rs*(C(1,2) + C(2,3) + C(3,1)))
@@ -2017,6 +2018,129 @@ end function CIJ_thom_st
       enddo
       CIJ_is_stable = .true.
    end function CIJ_is_stable
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+   function CIJ_StoC(S) result(C)
+!===============================================================================
+!  Convert from compliance to stiffnes; as this is just a matrix inversion, we
+!  just call CIJ_CtoS.
+      real(rs), intent(in) :: S(6,6)
+      real(rs) :: C(6,6)
+      C = CIJ_CtoS(S)
+   end function CIJ_StoC
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+   function CIJ_CtoS(A) result(AI)
+!===============================================================================
+!  Convert from stiffness to compliance
+    real(rs), intent(in) :: A(6,6)
+    real(rs) :: AI(6,6)
+    integer, parameter :: n = 6
+    integer, dimension(n) :: ROW             ! ROW INTERCHANGE INDICIES
+    integer, dimension(n) :: COL             ! COL INTERCHANGE INDICIES
+    double precision, dimension(n) :: TEMP   ! INTERCHANGE VECTOR
+    integer :: HOLD , I_PIVOT, J_PIVOT       ! PIVOT INDICIES
+    double precision :: PIVOT                ! PIVOT ELEMENT VALUE
+    double precision :: ABS_PIVOT, NORM1
+    integer :: i, j, k
+
+    NORM1 = 0.0D0;
+    ! BUILD WORKING DATA STRUCTURE
+    do i=1,n
+      do j=1,n
+       AI(i,j) = A(i,j)
+       if( abs(AI(i,j)) > NORM1 ) then
+         NORM1 = abs(AI(i,j))
+       end if
+      end do ! j
+    end do ! i
+    ! SET UP ROW AND COL  INTERCHANGE VECTORS
+    do k=1,n
+      ROW(k) = k
+      COL(k) = k
+    end do ! k
+
+    ! BEGIN MAIN REDUCTION LOOP
+    do k=1,n
+      ! FIND LARGEST ELEMENT FOR PIVOT
+      PIVOT = AI(ROW(k), COL(k))
+      I_PIVOT = k
+      J_PIVOT = k
+      do i=k,n
+       do j=k,n
+         ABS_PIVOT = abs(PIVOT)
+         if( abs(AI(ROW(i), COL(j))) > ABS_PIVOT ) then
+          I_PIVOT = i
+          J_PIVOT = j
+          PIVOT = AI(ROW(i), COL(j))
+         end if
+       end do ! j
+      end do ! i
+      ABS_PIVOT = abs(PIVOT)
+
+      ! HAVE PIVOT, INTERCHANGE ROW, COL POINTERS
+      HOLD = ROW(k)
+      ROW(k) = ROW(I_PIVOT)
+      ROW(I_PIVOT) = HOLD
+      HOLD = COL(k)
+      COL(k) = COL(J_PIVOT)
+      COL(J_PIVOT) = HOLD
+
+      ! CHECK FOR NEAR SINGULAR
+      if( ABS_PIVOT < 1.0D-52*NORM1 ) then
+       do j=1,n
+         AI(ROW(k),j) = 0.0D0
+       end do ! j
+       do i=1,n
+         AI(i,COL(k)) = 0.0D0
+       end do ! i
+       print *, 'redundant row (singular) ', ROW(k)
+      else
+       !                            REDUCE ABOUT PIVOT
+       AI(ROW(k), COL(k)) = 1.0 / PIVOT
+       do j=1,n
+         if( j .ne. k ) then
+          AI(ROW(k), COL(j)) = AI(ROW(k), COL(j)) * AI(ROW(k), COL(k))
+         end if
+       end do ! j
+       !                            INNER REDUCTION LOOP
+       do i=1,n
+         if( k .ne. i ) then
+          do j=1,n
+            if( k .ne. j ) then
+             AI(ROW(i), COL(j)) = AI(ROW(i), COL(j)) - &
+                             AI(ROW(i), COL(k)) * AI(ROW(k), COL(j))
+            end if
+          end do ! j
+          AI(ROW(i), COL(k)) = - AI(ROW(i), COL(k)) * AI(ROW(k), COL(k))
+         end if
+       end do ! i
+      end if
+      ! FINISHED INNER REDUCTION
+    end do ! k
+    ! END OF MAIN REDUCTION LOOP
+
+    !                              UNSCRAMBLE ROWS
+    do j=1,n
+      do i=1,n
+       TEMP(COL(i)) = AI(ROW(i), j)
+      end do ! i
+      do i=1,n
+       AI(i,j)= TEMP(i)
+      end do !i
+    end do ! j
+    !                              UNSCRAMBLE COLUMNS
+    do i=1,n
+      do j=1,n
+       TEMP(ROW(j)) = AI(i,COL(j))
+      end do ! j
+      do j=1,n
+       AI(i,j)= TEMP(j)
+      end do ! j
+    end do ! i
+end function CIJ_CtoS
 !-------------------------------------------------------------------------------
 
 !==============================================================================
