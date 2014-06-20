@@ -12,13 +12,13 @@
 !  Department of Earth Sciences, University of Bristol
 !  j.wookey@bristol.ac.uk
 !
-!  (C) Andy Nowacki, October 2008 - 
+!  (C) Andy Nowacki, October 2008 -
 !  School of Earth Sciences, University of Bristol
 !  andy.nowacki@bristol.ac.uk
 !
 !-------------------------------------------------------------------------------
 !  This software is distributed in the hope that it will be useful, but WITHOUT
-!  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or 
+!  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 !  FITNESS FOR A PARTICULAR PURPOSE.
 !-------------------------------------------------------------------------------
 !
@@ -39,7 +39,7 @@
 !     conversion from Voigt matrices to elastic vector.
 !   * Added CIJ_isotropic_average for making tensors into       2011/11
 !     isotropic versions of themselves.
-!   * Replaced CIJ_VRH_ajn with CIJ_VRH; the former is 
+!   * Replaced CIJ_VRH_ajn with CIJ_VRH; the former is
 !     deprecated.                                               2012/02
 !   * Added CIJ_to_thom to calculate thomsen parameters for a
 !     TI tensor with rotational symmetry about x3               2012/02
@@ -63,7 +63,7 @@
 
 !  ** precision selector
       integer, parameter, private :: rs = r8
-      
+
 !  ** maths constants and other useful things
       real(rs), parameter, private :: pi = 3.141592653589793238462643_rs
       real(rs), parameter, private :: to_rad = pi/180._rs
@@ -84,7 +84,7 @@
 !  Output the elastic tensor given a set of Thomsen parameters, assuming weak
 !  anisotropy:
 !     Thomsen (1986) Weak elastic anistropy.  Geophysics, 51, 10, 1954-1966).
-!  Input is in m/s and kg/m^3. 
+!  Input is in m/s and kg/m^3.
 !  OUTPUT IS FULL ELASTICITY TENSOR, NOT DENSITY-NORMALISED TENSOR!!!!
 !  Remember to normalise by density if using other routines which require that.
 
@@ -94,7 +94,7 @@
       real(rs),intent(in)  :: eps,gam,del
       real(rs) :: term,btm,ctm,dsrmt
       integer  :: i,j
-      
+
       c = 0.
 
       c(3,3) = vp*vp*rho
@@ -111,8 +111,8 @@
        ' or delta too negative for Thomsen routine', &
        ' Re-input parameters'
          stop
-      endif   
-      c(1,3) = -btm/2.0 + sqrt(dsrmt)/2.0 
+      endif
+      c(1,3) = -btm/2.0 + sqrt(dsrmt)/2.0
 
       c(1,2) = c(1,1) - 2.0*c(6,6)
       c(2,3) = c(1,3)
@@ -121,7 +121,7 @@
 
 !     Make symmetrical
       do i=1,6; do j=1,6; c(j,i) = c(i,j); enddo; enddo
-     
+
    end subroutine thom
 !===============================================================================
 
@@ -133,9 +133,9 @@
      implicit none
      real(rs),intent(in) :: vp,vs,rho,eps,gam,del
      real(rs)            :: CIJ_thom(6,6)
-     
+
      call thom(vp,vs,rho,eps,gam,del,CIJ_thom)
-     
+
    end function CIJ_thom
 !-------------------------------------------------------------------------------
 
@@ -200,21 +200,21 @@ end function CIJ_thom_st
       real(rs),intent(in) :: vp,vs,rho,xi,phi,eta
       real(rs) :: C12,A,C,F,L,N
       real(rs),parameter :: O = 0._rs  ! Zero
-      
+
       ! Love parameters from Voigt isotropic velocities and dimensionless parameters
       L = 15._rs*rho*((3._rs*phi+8._rs+4._rs*eta)*vs**2 - &
             (phi+1._rs-2._rs*eta)*vp**2) &
          / ((6._rs+4._rs*eta+5._rs*xi)*(3._rs*phi+8._rs+4._rs*eta) &
             - 8._rs*(phi+1._rs-2._rs*eta)*(1._rs-eta))
-      
+
       A = (15._rs*rho*vp**2 - 8._rs*(1._rs-eta)*L) &
          / (3._rs*phi + 8._rs + 4._rs*eta)
-      
+
       F = eta*(A - 2._rs*L)
       C = phi*A
       N = xi*L
       C12 = A - 2._rs*N
-      
+
       CIJ_global_VTI = reshape( &
             (/ A , C12, F, O, O, O, &
               C12,  A , F, O, O, O, &
@@ -223,7 +223,7 @@ end function CIJ_thom_st
                O ,  O , O, O, L, O, &
                O ,  O , O, O, O, N  /), (/6,6/))
    end function CIJ_global_VTI
-!-------------------------------------------------------------------------------      
+!-------------------------------------------------------------------------------
 
 !===============================================================================
    function CIJ_panning_VTI(vp,vs,rho,xi,phi)
@@ -246,7 +246,7 @@ end function CIJ_thom_st
       real(rs),intent(in) :: vp,vs,rho,xi,phi
       real(rs) :: A,C,F,L,N,C12
       real(rs),parameter :: O = 0._rs
-      
+
       ! Love parameters from simplified Voigt isotropic average velocities
       L = rho*3._rs*vs**2/(2._rs + xi)
       N = xi*L
@@ -254,7 +254,7 @@ end function CIJ_thom_st
       C = phi*A
       F = A - 2._rs*L
       C12 = A - 2._rs*N
-      
+
       CIJ_panning_VTI = reshape( &
             (/ A , C12, F, O, O, O, &
               C12,  A , F, O, O, O, &
@@ -263,8 +263,8 @@ end function CIJ_thom_st
                O ,  O , O, O, L, O, &
                O ,  O , O, O, O, N  /), (/6,6/))
 
-   end function CIJ_panning_VTI      
-!-------------------------------------------------------------------------------      
+   end function CIJ_panning_VTI
+!-------------------------------------------------------------------------------
 
 !===============================================================================
    subroutine CIJ_VTI2thom(C,eps,gam,del)
@@ -275,7 +275,7 @@ end function CIJ_thom_st
       real(rs),intent(in) :: C(6,6)
       real(rs),intent(out) :: eps,gam,del
       real(rs) :: tol
-      
+
 !  Test for correct tensor input
       tol = 1._rs  ! Tolerance in tensor
       if (abs(C(1,1)-C(2,2)) > tol .or. abs(C(4,4)-C(5,5)) > tol .or. &
@@ -288,11 +288,11 @@ end function CIJ_thom_st
                          'Require TI with hexad // x3.'
          stop
       endif
-      
+
       eps = (C(1,1) - C(3,3))/(2._rs*C(3,3))
       gam = (C(6,6) - C(4,4))/(2._rs*C(4,4))
       del = ((C(1,3)+C(4,4))**2-(C(3,3)-C(4,4))**2)/(2._rs*C(3,3)*(C(3,3)-C(4,4)))
-   
+
    end subroutine CIJ_VTI2thom
 !-------------------------------------------------------------------------------
 
@@ -370,14 +370,14 @@ end function CIJ_thom_st
    subroutine isocij(vp,vs,C)
 !===============================================================================
 !
-!  Generate a set of elastic constants from isotropic velocities  
+!  Generate a set of elastic constants from isotropic velocities
 !  (input velocities in m/s)
 !-------------------------------------------------------------------------------
       implicit none
       real(rs) :: C(6,6) ! Voigt notation matrix
       real(rs) :: vp,vs
       integer  :: i,j
-      
+
       C(:,:) = 0.0
 
       C(3,3) = vp**2
@@ -387,9 +387,9 @@ end function CIJ_thom_st
       C(5,5) = C(4,4) ; C(6,6) = C(4,4)
       C(1,2) = (C(3,3)-2.d0*C(4,4))
       C(1,3) = C(1,2) ; C(2,3) = C(1,2)
-      
+
       do i=1,6; do j=1,6; C(j,i) = C(i,j); enddo; enddo
-      
+
    end subroutine isocij
 !-------------------------------------------------------------------------------
 
@@ -400,27 +400,27 @@ end function CIJ_thom_st
       implicit none
       real(rs),intent(in) :: vp,vs
       real(rs)            :: CIJ_iso(6,6)
-      
+
       call isocij(vp,vs,CIJ_iso)
-      
+
    end function CIJ_iso
-!-------------------------------------------------------------------------------  
-   
+!-------------------------------------------------------------------------------
+
 !===============================================================================
    subroutine CIJ_load_list(fname,nin,n,x,C,rho)
 !===============================================================================
 !
-!  Load a set of elastic constants varying with x (first column in file) 
-! 
+!  Load a set of elastic constants varying with x (first column in file)
+!
 !  Outputs
-!  x is the independent variable (the first column in the file, 
-!  of length n) 
-!  C is an array 6*6*n where n is the number of tensors loaded 
+!  x is the independent variable (the first column in the file,
+!  of length n)
+!  C is an array 6*6*n where n is the number of tensors loaded
 !  rho is a vector of length n, the last column in the file
 !  currently, only 21 constant elastic files can be loaded. Lines in the file
 !  should be of the form:
-! 
-!  x, c11,c12,...,c16,c22,...,c26,c33,...,c66,rho 
+!
+!  x, c11,c12,...,c16,c22,...,c26,c33,...,c66,rho
 !
 !-------------------------------------------------------------------------------
       implicit none
@@ -428,19 +428,19 @@ end function CIJ_thom_st
       real(rs) :: C(6,6,nin) ! Voigt notation matrix
       real(rs) :: Cin(21)
       real(rs) :: rho(nin),x(nin)
-      
+
       integer :: ioflag ! error flags
       integer :: i,j,itensor,icnt
-      
+
       character (len = 80) :: fname
-!  ** open the EC file and read in elastic constants      
-      C(:,:,:) = 0.0 
+!  ** open the EC file and read in elastic constants
+      C(:,:,:) = 0.0
 
       open(99,file=fname, iostat=ioflag, status='old')
       if (ioflag /= 0) then
          stop 'File not found'
       endif
-      
+
       itensor=1
       do ! forever
          read(99,*,iostat=ioflag) x(itensor),(Cin(i),i=1,21),rho(itensor)
@@ -451,13 +451,13 @@ end function CIJ_thom_st
                icnt=icnt+1
                C(i,j,itensor) = Cin(icnt)
                C(j,i,itensor) = Cin(icnt)
-            enddo   
+            enddo
          enddo
          itensor=itensor + 1
       enddo
-      
+
       n=itensor-1
-      
+
       close(99)
 
    end subroutine CIJ_load_list
@@ -468,25 +468,25 @@ end function CIJ_thom_st
    subroutine CIJ_load(fname,C,rho)
 !===============================================================================
 !
-!  Load a set of elastic constants  
+!  Load a set of elastic constants
 !
 !-------------------------------------------------------------------------------
       implicit none
       real(rs) :: C(6,6) ! Voigt notation matrix
-      real(rs) :: ec, rho      
+      real(rs) :: ec, rho
       integer :: ioflag ! error flags
       integer :: i,j,nec
-      
+
 !      character (len = 80) :: fname
       character(*) :: fname
-!  ** open the EC file and read in elastic constants      
+!  ** open the EC file and read in elastic constants
       C(:,:) = 0.0 ; nec = 0
 
       open(unit=99,file=fname, iostat=ioflag, status='old')
       if (ioflag /= 0) then
          stop 'File not found'
       endif
-      
+
       do ! forever
          read(99,*,iostat=ioflag) i,j,ec
          if (ioflag > 0) then ! Problem reading
@@ -497,18 +497,18 @@ end function CIJ_thom_st
          nec = nec + 1 ;
          if (i==7 .and. j==7) then
             rho = ec
-         else   
-            C(i,j) = ec ; C(j,i) = ec ; 
-         endif   
+         else
+            C(i,j) = ec ; C(j,i) = ec ;
+         endif
       enddo
 
       nec = nec - 1 ! account for density
 !      close(99)
 
-!  ** check for a valid number of elastic constants: ie 2, 9, 13 or 21      
+!  ** check for a valid number of elastic constants: ie 2, 9, 13 or 21
       if (nec/=2 .and. nec/=9 .and. nec/=13 .and. nec/=21) then
          write(0,*) 'Invalid number of elastic constants; need 2, 9, 13 or 21'
-         stop 
+         stop
       endif
 
 !  ** fill out the Cij matrix if isotropic
@@ -517,8 +517,8 @@ end function CIJ_thom_st
          C(5,5) = C(4,4) ; C(6,6) = C(4,4)
          C(1,2) = (C(3,3)-2.d0*C(4,4))
          C(1,3) = C(1,2) ; C(2,3) = C(1,2) ;
-      endif   
-      
+      endif
+
 !   ** Make symmetrical
       do i=1,6
          do j=i,6
@@ -527,7 +527,7 @@ end function CIJ_thom_st
       enddo
 
       close(99)
-      
+
    end subroutine CIJ_load
 !===============================================================================
 
@@ -542,7 +542,7 @@ end function CIJ_thom_st
       real(rs),intent(in) :: C(6,6),rho
       character(len=*),intent(in) :: fname
       integer :: i,j
-      
+
 !  ** Write constants out in format i j C(i,j)
       open(99,file=fname)
       do i=1,6
@@ -638,22 +638,22 @@ end function CIJ_thom_st
 !  approach contained in the new CIJ_rot3.  The new routine is about 15% faster.
 !-------------------------------------------------------------------------------
       implicit none
-      
+
       real(rs) :: C(6,6), CR(6,6) ! Voigt notation matrix
       real(rs) :: alp,bet,gam ! rotation (clockwise) about 1,2,3 axis respectively
-      real(rs) :: a,b,g     
+      real(rs) :: a,b,g
       real(rs) :: R(3,3), R1(3,3), R2(3,3), R3(3,3), R21(3,3)
-      
+
       integer :: i,j,k,l,m,n,lp,lq,lt
-            
+
       real(rs) :: x,y
-      
+
       integer :: l1(6), l2(6), ijkl(3,3)
       data ((ijkl(i,j),j=1,3),i=1,3)/1,6,5,6,2,4,5,4,3/
       data (l1(j),j=1,6)/1,2,3,2,3,1/
       data (l2(j),j=1,6)/1,2,3,3,1,2/
-      
-!  ** clone the Cij matrix      
+
+!  ** clone the Cij matrix
       CR(:,:) = 0._rs
 !  ** build the individual rotation matrices
       a = alp * pi/180._rs
@@ -673,7 +673,7 @@ end function CIJ_thom_st
       R3(3,1) =  0.     ; R3(3,2) =  0.     ; R3(3,3) =  1.
 
 !  ** build the compound matrix
-      R21 = matmul(R2,R1)             
+      R21 = matmul(R2,R1)
       R = matmul(R3,R21)
 
 !  ** rotate elastic constants form crystal to spacial coordinates
@@ -694,7 +694,7 @@ end function CIJ_thom_st
                      (R(k,1)*(R(l,1)*C(lt,1) + R(l,2)*C(lt,6) + R(l,3)*C(lt,5)) &
                     + R(k,2)*(R(l,1)*C(lt,6) + R(l,2)*C(lt,2) + R(l,3)*C(lt,4)) &
                     + R(k,3)*(R(l,1)*C(lt,5) + R(l,2)*C(lt,4) + R(l,3)*C(lt,3)))
-               enddo   
+               enddo
                x = x + R(i,lp)*y
             enddo
             CR(m,n) = x
@@ -702,7 +702,7 @@ end function CIJ_thom_st
             CR(n,m) = x
          enddo
       enddo
-      
+
    end subroutine CIJ_rot3_old
 !-------------------------------------------------------------------------------
 
@@ -715,17 +715,17 @@ end function CIJ_thom_st
       real(rs),intent(in) :: C(6,6)
       real(rs)            :: CIJ_rot90x(6,6),R(6,6)
       integer             :: i,j
-      
+
    R(1,1)=C(1,1); R(1,2)=C(1,3) ; R(1,3)=C(1,2) ; R(1,4)=-C(1,4); R(1,5)=-C(1,6); R(1,6)=C(1,5)
    R(2,2)=C(3,3); R(2,3)=C(2,3) ; R(2,4)=-C(3,4); R(2,5)=-C(3,6); R(2,6)=C(3,5)
    R(3,3)=C(2,2); R(3,4)=-C(2,4); R(3,5)=-C(2,6); R(3,6)=C(2,5)
    R(4,4)=C(4,4); R(4,5)=C(4,6) ; R(4,6)=-C(4,5)
    R(5,5)=C(6,6); R(5,6)=-C(5,6)
    R(6,6)=C(5,5)
-      
+
       do i=1,6; do j=1,6; R(j,i) = R(i,j); enddo; enddo
       CIJ_rot90x = R
-      
+
    end function CIJ_rot90x
 !-------------------------------------------------------------------------------
 
@@ -738,17 +738,17 @@ end function CIJ_thom_st
       real(rs),intent(in) :: C(6,6)
       real(rs)            :: CIJ_rot90y(6,6),R(6,6)
       integer             :: i,j
-      
+
    R(1,1)=C(3,3); R(1,2)=C(2,3) ; R(1,3)=C(1,3) ; R(1,4)=C(3,6) ; R(1,5)=-C(3,5); R(1,6)=-C(3,4)
    R(2,2)=C(2,2); R(2,3)=C(1,2) ; R(2,4)=C(2,6) ; R(2,5)=-C(2,5); R(2,6)=-C(2,4)
    R(3,3)=C(1,1); R(3,4)=C(1,6) ; R(3,5)=-C(1,5); R(3,6)=-C(1,4)
    R(4,4)=C(6,6); R(4,5)=-C(5,6); R(4,6)=-C(4,6)
    R(5,5)=C(5,5); R(5,6)=C(4,5)
    R(6,6)=C(4,4)
-      
+
       do i=1,6; do j=1,6; R(j,i) = R(i,j); enddo; enddo
       CIJ_rot90y = R
-            
+
    end function CIJ_rot90y
 !-------------------------------------------------------------------------------
 
@@ -761,17 +761,17 @@ end function CIJ_thom_st
       real(rs),intent(in) :: C(6,6)
       real(rs)            :: CIJ_rot90z(6,6),R(6,6)
       integer             :: i,j
-      
+
    R(1,1)=C(2,2); R(1,2)=C(1,2) ; R(1,3)=C(2,3) ; R(1,4)=-C(2,5); R(1,5)=C(2,4); R(1,6)=-C(2,6)
    R(2,2)=C(1,1); R(2,3)=C(1,3) ; R(2,4)=-C(1,5); R(2,5)=C(1,4) ; R(2,6)=-C(1,6)
    R(3,3)=C(3,3); R(3,4)=-C(3,5); R(3,5)=C(3,4) ; R(3,6)=-C(3,6)
    R(4,4)=C(5,5); R(4,5)=-C(4,5); R(4,6)=C(5,6)
    R(5,5)=C(4,4); R(5,6)=-C(4,6)
    R(6,6)=C(6,6)
-      
+
       do i=1,6; do j=1,6; R(j,i) = R(i,j); enddo; enddo
       CIJ_rot90z = R
-            
+
    end function CIJ_rot90z
 !-------------------------------------------------------------------------------
 
@@ -1033,7 +1033,7 @@ end function CIJ_thom_st
       real(rs) :: f ! dominant frequency
 !  ** arguments (outputs)
       real(rs) :: tlag_eff,fast_eff ! calculated effective splitting parameters
-!  ** locals      
+!  ** locals
       real(rs) :: w ! angular frequency
       real(rs) :: th1,th2,al1,al2,ap,app,Cc,Cs,ala,tha! see Silver and Savage (1994)
 
@@ -1044,7 +1044,7 @@ end function CIJ_thom_st
 
       al1 = 2.*fast1 * pi/180.0;
       al2 = 2.*fast2 * pi/180.0;
-   
+
       ap = cos(th1)*cos(th2) - sin(th1)*sin(th2)*cos(al2-al1) ;
       app = -sin(th1)*sin(th2)*sin(al2-al1) ;
       Cc = cos(th1)*sin(th2)*cos(al2) + cos(th2)*sin(th1)*cos(al1) ;
@@ -1052,10 +1052,10 @@ end function CIJ_thom_st
 
       ala = atan ( (app**2.+Cs**2.) / (app*ap + Cs*Cc) ) ;
       tha = atan ( (app) / (Cs*cos(ala)-Cc*sin(ala)) ) ;
-      
+
       fast_eff = (ala*180./pi) / 2.
       tlag_eff = 2.*tha/w
-      
+
 !  ** if tlag_eff is negative, add 90 to fast_eff and abs tlag_eff
 !  ** (just swapping descriptions of the fast and slow)
 
@@ -1063,8 +1063,8 @@ end function CIJ_thom_st
          fast_eff = fast_eff + 90.0
          call unwind_pm_90(fast_eff) ! unwind angle
          tlag_eff = abs(tlag_eff)
-      endif    
-      
+      endif
+
    end subroutine effective_splitting
 !===============================================================================
 
@@ -1082,9 +1082,9 @@ end function CIJ_thom_st
       do ! forever
          if (angle >= -90.0 .and. angle < 90.0) exit
          if (angle >= 90.0) angle = angle - 180.0
-         if (angle < -90.0) angle = angle + 180.0      
+         if (angle < -90.0) angle = angle + 180.0
       enddo
-      
+
    end subroutine unwind_pm_90
 !===============================================================================
 
@@ -1102,9 +1102,9 @@ end function CIJ_thom_st
       do ! forever
          if (angle >= .0 .and. angle < 180.0) exit
          if (angle >= 180.0) angle = angle - 180.0
-         if (angle < -180.0) angle = angle + 180.0      
+         if (angle < -180.0) angle = angle + 180.0
       enddo
-      
+
    end subroutine unwind_pm_180
 !===============================================================================
 
@@ -1115,29 +1115,29 @@ end function CIJ_thom_st
 ! f90 version by AJN from MATLAB code by JW 2010/10
 !
       implicit none
-      
+
       real(rs)   :: VF1,VF2,rh1,rh2,rhave,C1(6,6),C2(6,6),Cave(6,6)
       real(rs)   :: C1_inv(6,6),C2_inv(6,6),reuss_inv(6,6)
       real(rs)   :: voigt(6,6),reuss(6,6)
 
 !  Normalise the volume fractions to sum to unity
       VF1 = VF1 / (VF1 + VF2)   ;  VF2 = VF2 / (VF1 + VF2)
-      
+
 !  Find inverse of Cs
       C1_inv = CIJ_CtoS(C1)
       C2_inv = CIJ_CtoS(C2)
-      
+
 !  Initialise matrices to 0s
       voigt = 0.   ;   reuss = 0.
       rhave = 0.
-      
+
       voigt = C1*VF1 + C2*VF2
       reuss = C1_inv*VF1 + C2_inv*VF2
       reuss_inv = CIJ_StoC(reuss)
       rhave = rh1*VF1 + rh2*VF2
-      
+
       Cave = (voigt + reuss_inv) /2.
-      
+
    end subroutine CIJ_VRH
 !------------------------------------------------------------------------------
 
@@ -1148,7 +1148,7 @@ end function CIJ_thom_st
       implicit none
       real(rs),intent(in) :: VF1,C1(6,6),rh1,VF2,C2(6,6),rh2
       real(rs),intent(out) :: Cave(6,6),rhave
-      
+
       call CIJ_VRH(VF1,C1,rh1,VF2,C2,rh2,Cave,rhave)
    end subroutine CIJ_VRH_ajn
 !-------------------------------------------------------------------------------
@@ -1162,17 +1162,17 @@ end function CIJ_thom_st
 ! AJN 2011/02
 !
       implicit none
-      
+
       integer,intent(in)   :: n
       integer              :: i
       real(rs),intent(in)  :: VF_in(n),C_in(n,6,6),rh_in(n)
       real(rs),intent(out) :: Cave(6,6),rhave
       real(rs)             :: VF(n),C(n,6,6),C_inv(n,6,6),rh(n),&
                               voigt(6,6),reuss(6,6),reuss_inv(6,6),Ctemp(6,6)
-      
+
 !  Normalise the volume fractions to sum to unity
       VF = VF_in / sum(VF_in)
-      
+
 !  Find inverse of Cs
       C = C_in
       rh = rh_in
@@ -1183,7 +1183,7 @@ end function CIJ_thom_st
 
 !  Initialise matrices to 0s
       voigt = 0.   ;  reuss = 0.   ;   rhave = 0.   ;   Cave = 0.
-      
+
       do i=1,n
          voigt = voigt + VF(i) * C(i,:,:)
          reuss = reuss + VF(i) * C_inv(i,:,:)
@@ -1191,9 +1191,9 @@ end function CIJ_thom_st
       enddo
 
       reuss_inv = CIJ_StoC(reuss)
-      
+
       Cave = (voigt + reuss_inv) / 2.
-      
+
    end subroutine CIJ_VRH_n
 !------------------------------------------------------------------------------
 
@@ -1206,7 +1206,7 @@ end function CIJ_thom_st
       real(rs),intent(in) :: VF_in(:), C_in(:,:,:), rh_in(:)
       real(rs),intent(out) :: Cave(6,6), rhave
       integer :: i,n
-      
+
 !  Get size of arrays and check they're consistent
       n = size(VF_in)
       if (size(C_in,1) /= n .or. size(rh_in) /= n) then
@@ -1216,16 +1216,16 @@ end function CIJ_thom_st
          write(0,'(a)') 'anisotropy_ajn: CIJ_Voigt_av: C must be nx6x6 array.'
          stop
       endif
-      
+
 !  Construct Voigt average
       Cave = 0.  ;  rhave = 0.
       do i=1,n
          Cave = Cave + VF_in(i)*C_in(i,:,:)/sum(VF_in)
          rhave = rhave + VF_in(i)*rh_in(i)/sum(VF_in)
       enddo
-      
+
 !      deallocate(VF)
-      
+
    end subroutine CIJ_Voigt_av
 !-------------------------------------------------------------------------------
 
@@ -1239,7 +1239,7 @@ end function CIJ_thom_st
       real(rs),intent(out) :: Cave(6,6), rhave
       integer :: i,n
       real(rs) :: S(6,6), S_in(6,6), C_temp(6,6)
-      
+
 !  Get size of arrays and check they're consistent
       n = size(VF_in)
       if (size(C_in,1) /= n .or. size(rh_in) /= n) then
@@ -1249,7 +1249,7 @@ end function CIJ_thom_st
          write(0,'(a)') 'anisotropy_ajn: CIJ_Reuss_av: C must be nx6x6 array.'
          stop
       endif
-      
+
 !  Construct Reuss average
       Cave = 0.  ;  S = 0.;  rhave = 0.
       do i=1,n
@@ -1259,11 +1259,11 @@ end function CIJ_thom_st
          S = S + VF_in(i)*S_in/sum(VF_in)
          rhave = rhave + VF_in(i)*rh_in(i)/sum(VF_in)
       enddo
-      
-      
+
+
 !  Find stiffness from compliance
       Cave = CIJ_StoC(S)
-            
+
    end subroutine CIJ_Reuss_av
 !-------------------------------------------------------------------------------
 
@@ -1295,10 +1295,10 @@ end function CIJ_thom_st
       real(rs),intent(out) :: Cout(6,6),rhout
       real(rs) :: mu,lam,K,C0(6,6),mui,lami,ki,M,kappa,U1,U3,e,C1(6,6)
       integer :: i,j
-      
+
 !  Weighted average of densities
       rhout = (1._rs-phi)*rho + phi*rhoi
-      
+
 !  Properties of isotropic medium
       mu = rho*vs**2
       lam = rho*(vp**2 - 2*vs**2)
@@ -1314,25 +1314,25 @@ end function CIJ_thom_st
       C0(2,3) = C0(1,3)
       C0(1,2) = C0(1,3)
       do i=1,6; do j=1,6; C0(j,i) = C0(i,j); enddo; enddo
-      
+
 !  Properties of isotropic inclusions
       mui = rhoi*vsi**2
       lami = rhoi*(vpi**2 - 2._rs*vsi**2)
       Ki = rhoi*vpi**2 - (4._rs/3._rs)*mui
-      
+
       M = 4*mui*(lam + 2._rs*mu)/(pi*a*mu*(3._rs*lam + 4._rs*mu))
       kappa = (Ki + 4._rs*mui/3._rs)*(lam + 2._rs*mu)/(pi*a*mu*(lam + mu))
-      
+
       U1 = 16._rs*(lam + 2._rs*mu)/(3._rs*(3._rs*lam + 4._rs*mu)*(1._rs + M))
       U3 = 4._rs*(lam + 2._rs*mu)/(3._rs*(lam + mu)*(1._rs + kappa))
-      
+
 !  Calculate e and check it's valid; carry on with calculation, but warn.
       e = 3._rs*phi/(4._rs*pi*a)
       if (e > 0.1_rs) then
          write(0,'(a)') &
 'CIJ_hudson: warning: The theory of Hudson is only valid for e (crack density) < 0.1.  Output values will not be realistic.'
       endif
-      
+
 !  Construct first-order correction terms for matrix
       C1 = 0._rs
       C1(1,1) = -lam**2*e*U3/mu
@@ -1340,16 +1340,16 @@ end function CIJ_thom_st
       C1(3,3) = -(lam + 2._rs*mu)**2*e*U3/mu
       C1(4,4) = -mu*e*U1
       C1(6,6) = 0
-      
+
       C1(2,2) = C1(1,1)
       C1(5,5) = C1(4,4)
       C1(2,3) = C1(1,3)
       C1(1,2) = C1(1,3)
 !  Make symmetrical
       do i=1,6; do j=1,6; C1(j,i) = C1(i,j); enddo; enddo
-      
+
       Cout = (C0 + C1)/rhout
-   
+
    end subroutine CIJ_hudson
 !-------------------------------------------------------------------------------
 
@@ -1358,7 +1358,7 @@ end function CIJ_thom_st
                                   rhoi_in,C_out,rh_out)
 !==============================================================================
 !  Calculates the elatic constants using the theory of Tandon & Weng (1984)
-!  for an isotropic matrix (vp,vs,rho) and inclusions (vpi,vsi,rhoi) aligned with 
+!  for an isotropic matrix (vp,vs,rho) and inclusions (vpi,vsi,rhoi) aligned with
 !  rotational symmetry axis // 1-axis.
 !
 !  Taken from MATLAB code tandon_and_weng by James Wookey, which is
@@ -1375,7 +1375,7 @@ end function CIJ_thom_st
 !    rh_out:       effective density
 
       implicit none
-     
+
      real(rs),intent(in)   :: vp_in,vs_in,rho_in,del_in,c_in,vpi_in,vsi_in,rhoi_in
      real(rs),intent(out)  :: C_out(6,6),rh_out
      real(rs)              :: amu,amui,alam,alami,bmi,bmps,E0,anu,amu12,amu23,anu31,&
@@ -1385,7 +1385,7 @@ end function CIJ_thom_st
                               s31,s32,s33,s44,s55,s66
      real(rs)              :: A,A1,A2,A3,A4,A5,B1,B2,B3,B4,B5,E11,E22
      integer               :: i,j
-   
+
 !  Check input parameters
       if (c_in < 0. .or. c_in > 1.) then
          write(0,'(a)') &
@@ -1410,7 +1410,7 @@ end function CIJ_thom_st
          C_out = CIJ_iso(vp_in,vs_in)
          return
       endif
-      
+
 !  Initialise the elastic constant tensor
      CC = 0.
 !  weighted average density
@@ -1452,45 +1452,45 @@ end function CIJ_thom_st
       endif
 
 ! Eshelby's Sijkl tensor (appendix of Tandon and Weng 1984).
-     s11 = (t3 + (t4-1.0)/t1 - (t3 + t4/t1)*g)/(2.0*t2)              
-     s22 = (t4/(t1*2.0) + (t3 - 9.0/(4.0*t1))*g)/(4.0*t2)            
-     s33 = s22                                                       
-     s23 = (del_in**2/(2.0*t1) - (t3 + 3.0/(4.0*t1))*g)/(4.0*t2)       
-     s32 = s23                                                       
-     s21 = (-2.0*del_in*del_in/t1 + (t4/t1 - t3)*g)/(4.0*t2)               
-     s31 = s21                                                       
-     s12 = (-1.0*(t3 + 1.0/t1) + (t3 + 3.0/(2.0*t1))*g)/(2.0*t2)     
-     s13 = s12                                                       
-     s44 = (del_in*del_in/(2.0*t1) + (t3 - 3.0/(4.0*t1))*g)/(4.0*t2)       
+     s11 = (t3 + (t4-1.0)/t1 - (t3 + t4/t1)*g)/(2.0*t2)
+     s22 = (t4/(t1*2.0) + (t3 - 9.0/(4.0*t1))*g)/(4.0*t2)
+     s33 = s22
+     s23 = (del_in**2/(2.0*t1) - (t3 + 3.0/(4.0*t1))*g)/(4.0*t2)
+     s32 = s23
+     s21 = (-2.0*del_in*del_in/t1 + (t4/t1 - t3)*g)/(4.0*t2)
+     s31 = s21
+     s12 = (-1.0*(t3 + 1.0/t1) + (t3 + 3.0/(2.0*t1))*g)/(2.0*t2)
+     s13 = s12
+     s44 = (del_in*del_in/(2.0*t1) + (t3 - 3.0/(4.0*t1))*g)/(4.0*t2)
      s66 = (t3 - (t1+2.0)/t1 - (t3 - 3.0*(t1+2.0)/t1)*g/2.0)/(4.0*t2)
-     s55 = s66                                                       
-     
+     s55 = s66
+
 ! Tandon and Weng's B terms (after equation 17).
-     B1 = c_in*D1 + D2 + (1.0-c_in)*(D1*s11 + 2.0*s21)    
-     B2 = c_in + D3 + (1.0-c_in)*(D1*s12 + s22 + s23)     
-     B3 = c_in + D3 + (1.0-c_in)*(s11 + (1.0+D1)*s21)     
-     B4 = c_in*D1 + D2 + (1.0-c_in)*(s12 + D1*s22 + s23)  
-     B5 = c_in + D3 + (1.0-c_in)*(s12 + s22 + D1*s23)     
-     
+     B1 = c_in*D1 + D2 + (1.0-c_in)*(D1*s11 + 2.0*s21)
+     B2 = c_in + D3 + (1.0-c_in)*(D1*s12 + s22 + s23)
+     B3 = c_in + D3 + (1.0-c_in)*(s11 + (1.0+D1)*s21)
+     B4 = c_in*D1 + D2 + (1.0-c_in)*(s12 + D1*s22 + s23)
+     B5 = c_in + D3 + (1.0-c_in)*(s12 + s22 + D1*s23)
+
 ! Tandon and Weng's A terms (after equation 20).
-     A1 = D1*(B4 + B5) - 2.0*B2    
+     A1 = D1*(B4 + B5) - 2.0*B2
      A2 = (1.0 + D1)*B2 - (B4 + B5)
-     A3 = B1 - D1*B3               
-     A4 = (1.0 + D1)*B1 - 2.0*B3   
-     A5 = (1.0 - D1)/(B4 - B5)     
-     A = 2.0*B2*B3 - B1*(B4+B5)    
-     
-! Tandon and Weng (1984) equations (25) (28) (31) (32) 
+     A3 = B1 - D1*B3
+     A4 = (1.0 + D1)*B1 - 2.0*B3
+     A5 = (1.0 - D1)/(B4 - B5)
+     A = 2.0*B2*B3 - B1*(B4+B5)
+
+! Tandon and Weng (1984) equations (25) (28) (31) (32)
      E11 = E0 /(1.0+c_in*(A1+2.0*anu*A2)/A)
      E22 = E0 &
          /(1.0+c_in*(-2.0*anu*A3 + (1.0-anu)*A4 + (1.0+anu)*A5*A)/(2.0*A))
      amu12 = amu*(1.0 + c_in/(amu/(amui-amu) + 2.0*(1.0-c_in)*s66))
      amu23 = amu*(1.0 + c_in/(amu/(amui-amu) + 2.0*(1.0-c_in)*s44))
-     
+
 ! Sayers equation (36)
      anu31 = anu - c_in*(anu*(A1+2.0*anu*A2)+(A3-anu*A4)) &
                 /(A + c_in*(A1+2.0*anu*A2))
-     
+
 ! T&W equation (36)
 !     aK12 term; bmps=plane strain bulk modulus
      anum = (1.0+anu)*(1.0-2.0*anu)
@@ -1498,29 +1498,29 @@ end function CIJ_thom_st
       + c_in*(2.0*(anu31-anu)*A3 + (1.0-anu*(1.0+2.0*anu31))*A4)/A
      aK23 = bmps*anum/denom
      anu12tst = E11/E22 - (1.0/amu23 + 1.0/aK23)*E11/4.0
-     
+
 ! Cij - Sayers' (1992) equations (24)-(29).
-! Conversion 
-     CC(2,2) = amu23 + aK23                
-     CC(3,3) = CC(2,2)                     
-     CC(1,1) = E11 + 4.0*anu12tst*aK23     
-     CC(2,3) = -amu23 + aK23               
-     CC(1,2) = 2.0*anu31*aK23              
-     CC(1,3) = CC(1,2)                     
-     CC(5,5) = amu12                       
-     CC(6,6) = CC(5,5)                     
-     CC(4,4) = (CC(2,2)-CC(2,3))/2.0       
-     
+! Conversion
+     CC(2,2) = amu23 + aK23
+     CC(3,3) = CC(2,2)
+     CC(1,1) = E11 + 4.0*anu12tst*aK23
+     CC(2,3) = -amu23 + aK23
+     CC(1,2) = 2.0*anu31*aK23
+     CC(1,3) = CC(1,2)
+     CC(5,5) = amu12
+     CC(6,6) = CC(5,5)
+     CC(4,4) = (CC(2,2)-CC(2,3))/2.0
+
 ! Fill out matrix by symmetry
       do i=1,6
         do j=i,6
           CC(j,i) = CC(i,j)
         enddo
      enddo
-     
+
 ! apply density normalisation
      C_out = CC / rh
-     
+
    end subroutine CIJ_tandon_and_weng
 !------------------------------------------------------------------------------
 
@@ -1530,58 +1530,58 @@ end function CIJ_thom_st
 !  Convert 6x6 Cij matrix to 3x3x3x3 Cijkl tensor
 !  Lifted from J. Wookey's MATLAB codde cij2cijkl.
 !  2005/07/04 - fixed Vera Schulte-Pelkum's bug
-   
+
       implicit none
       real(rs),intent(in)  :: C(6,6)
       real(rs)             :: Cij2cijkl(3,3,3,3)
       real(rs)             :: CC(3,3,3,3)
-      
+
       CC = 0.
 
-     CC(1,1,1,1) = C(1,1)         ; CC(2,2,2,2) = C(2,2)       
-     CC(3,3,3,3) = C(3,3)         ; CC(2,3,2,3) = C(4,4)       
-     CC(3,2,3,2) = CC(2,3,2,3)    ; CC(2,3,3,2) = CC(2,3,2,3)  
-     CC(3,2,2,3) = CC(2,3,2,3)    ; CC(1,3,1,3) = C(5,5)       
-     CC(3,1,1,3) = CC(1,3,1,3)    ; CC(1,3,3,1) = CC(1,3,1,3)  
-     CC(3,1,3,1) = CC(1,3,1,3)    ; CC(1,1,2,2) = C(1,2)       
-     CC(2,2,1,1) = CC(1,1,2,2)    ; CC(1,1,3,3) = C(1,3)       
-     CC(3,3,1,1) = CC(1,1,3,3)    ; CC(1,1,2,3) = C(1,4)       
-     CC(1,1,3,2) = CC(1,1,2,3)    ; CC(2,3,1,1) = CC(1,1,2,3)  
-     CC(3,2,1,1) = CC(1,1,2,3)    ; CC(1,1,1,3) = C(1,5)       
-     CC(1,1,3,1) = CC(1,1,1,3)    ; CC(1,3,1,1) = CC(1,1,1,3)  
-     CC(3,1,1,1) = CC(1,1,1,3)    ; CC(1,1,1,2) = C(1,6)       
-     CC(1,1,2,1) = CC(1,1,1,2)    ; CC(1,2,1,1) = CC(1,1,1,2)  
-     CC(2,1,1,1) = CC(1,1,1,2)    ; CC(2,2,3,3) = C(2,3)       
-     CC(3,3,2,2) = CC(2,2,3,3)    ; CC(2,2,2,3) = C(2,4)       
-     CC(2,2,3,2) = CC(2,2,2,3)    ; CC(2,3,2,2) = CC(2,2,2,3)  
-     CC(3,2,2,2) = CC(2,2,2,3)    ; CC(2,2,1,3) = C(2,5)       
-     CC(2,2,3,1) = CC(2,2,1,3)    ; CC(1,3,2,2) = CC(2,2,1,3)  
-     CC(3,1,2,2) = CC(2,2,1,3)    ; CC(2,2,1,2) = C(2,6)       
-     CC(2,2,2,1) = CC(2,2,1,2)    ; CC(1,2,2,2) = CC(2,2,1,2)  
-     CC(2,1,2,2) = CC(2,2,1,2)    ; CC(3,3,2,3) = C(3,4)       
-     CC(3,3,3,2) = CC(3,3,2,3)    ; CC(2,3,3,3) = CC(3,3,2,3)  
-     CC(3,2,3,3) = CC(3,3,2,3)    ; CC(3,3,1,3) = C(3,5)       
-     CC(3,3,3,1) = CC(3,3,1,3)    ; CC(1,3,3,3) = CC(3,3,1,3)  
-     CC(3,1,3,3) = CC(3,3,1,3)    ; CC(3,3,1,2) = C(3,6)       
-     CC(3,3,2,1) = CC(3,3,1,2)    ; CC(1,2,3,3) = CC(3,3,1,2)  
-     CC(2,1,3,3) = CC(3,3,1,2)    ; CC(2,3,1,3) = C(4,5)       
-     CC(3,2,1,3) = CC(2,3,1,3)    ; CC(1,3,3,2) = CC(2,3,1,3)  
-     CC(1,3,2,3) = CC(2,3,1,3)    ; CC(2,3,3,1) = CC(2,3,1,3)  
-     CC(3,2,3,1) = CC(2,3,1,3)    ; CC(3,1,2,3) = CC(2,3,1,3)  
-     CC(3,1,3,2) = CC(2,3,1,3)    ; CC(2,3,1,2) = C(4,6)       
-     CC(3,2,1,2) = CC(2,3,1,2)    ; CC(1,2,2,3) = CC(2,3,1,2)  
-     CC(1,2,3,2) = CC(2,3,1,2)    ; CC(2,3,2,1) = CC(2,3,1,2)  
-     CC(3,2,2,1) = CC(2,3,1,2)    ; CC(2,1,2,3) = CC(2,3,1,2)  
-     CC(2,1,3,2) = CC(2,3,1,2)    ; CC(1,3,1,2) = C(5,6)       
-     CC(3,1,1,2) = CC(1,3,1,2)    ; CC(1,2,1,3) = CC(1,3,1,2)  
-     CC(1,2,3,1) = CC(1,3,1,2)    ; CC(1,3,2,1) = CC(1,3,1,2)  
-     CC(3,1,2,1) = CC(1,3,1,2)    ; CC(2,1,1,3) = CC(1,3,1,2)  
-     CC(2,1,3,1) = CC(1,3,1,2)    ; CC(1,2,1,2) = C(6,6)       
-     CC(2,1,1,2) = CC(1,2,1,2)    ; CC(1,2,2,1) = CC(1,2,1,2)  
-     CC(2,1,2,1) = CC(1,2,1,2)  
-      
+     CC(1,1,1,1) = C(1,1)         ; CC(2,2,2,2) = C(2,2)
+     CC(3,3,3,3) = C(3,3)         ; CC(2,3,2,3) = C(4,4)
+     CC(3,2,3,2) = CC(2,3,2,3)    ; CC(2,3,3,2) = CC(2,3,2,3)
+     CC(3,2,2,3) = CC(2,3,2,3)    ; CC(1,3,1,3) = C(5,5)
+     CC(3,1,1,3) = CC(1,3,1,3)    ; CC(1,3,3,1) = CC(1,3,1,3)
+     CC(3,1,3,1) = CC(1,3,1,3)    ; CC(1,1,2,2) = C(1,2)
+     CC(2,2,1,1) = CC(1,1,2,2)    ; CC(1,1,3,3) = C(1,3)
+     CC(3,3,1,1) = CC(1,1,3,3)    ; CC(1,1,2,3) = C(1,4)
+     CC(1,1,3,2) = CC(1,1,2,3)    ; CC(2,3,1,1) = CC(1,1,2,3)
+     CC(3,2,1,1) = CC(1,1,2,3)    ; CC(1,1,1,3) = C(1,5)
+     CC(1,1,3,1) = CC(1,1,1,3)    ; CC(1,3,1,1) = CC(1,1,1,3)
+     CC(3,1,1,1) = CC(1,1,1,3)    ; CC(1,1,1,2) = C(1,6)
+     CC(1,1,2,1) = CC(1,1,1,2)    ; CC(1,2,1,1) = CC(1,1,1,2)
+     CC(2,1,1,1) = CC(1,1,1,2)    ; CC(2,2,3,3) = C(2,3)
+     CC(3,3,2,2) = CC(2,2,3,3)    ; CC(2,2,2,3) = C(2,4)
+     CC(2,2,3,2) = CC(2,2,2,3)    ; CC(2,3,2,2) = CC(2,2,2,3)
+     CC(3,2,2,2) = CC(2,2,2,3)    ; CC(2,2,1,3) = C(2,5)
+     CC(2,2,3,1) = CC(2,2,1,3)    ; CC(1,3,2,2) = CC(2,2,1,3)
+     CC(3,1,2,2) = CC(2,2,1,3)    ; CC(2,2,1,2) = C(2,6)
+     CC(2,2,2,1) = CC(2,2,1,2)    ; CC(1,2,2,2) = CC(2,2,1,2)
+     CC(2,1,2,2) = CC(2,2,1,2)    ; CC(3,3,2,3) = C(3,4)
+     CC(3,3,3,2) = CC(3,3,2,3)    ; CC(2,3,3,3) = CC(3,3,2,3)
+     CC(3,2,3,3) = CC(3,3,2,3)    ; CC(3,3,1,3) = C(3,5)
+     CC(3,3,3,1) = CC(3,3,1,3)    ; CC(1,3,3,3) = CC(3,3,1,3)
+     CC(3,1,3,3) = CC(3,3,1,3)    ; CC(3,3,1,2) = C(3,6)
+     CC(3,3,2,1) = CC(3,3,1,2)    ; CC(1,2,3,3) = CC(3,3,1,2)
+     CC(2,1,3,3) = CC(3,3,1,2)    ; CC(2,3,1,3) = C(4,5)
+     CC(3,2,1,3) = CC(2,3,1,3)    ; CC(1,3,3,2) = CC(2,3,1,3)
+     CC(1,3,2,3) = CC(2,3,1,3)    ; CC(2,3,3,1) = CC(2,3,1,3)
+     CC(3,2,3,1) = CC(2,3,1,3)    ; CC(3,1,2,3) = CC(2,3,1,3)
+     CC(3,1,3,2) = CC(2,3,1,3)    ; CC(2,3,1,2) = C(4,6)
+     CC(3,2,1,2) = CC(2,3,1,2)    ; CC(1,2,2,3) = CC(2,3,1,2)
+     CC(1,2,3,2) = CC(2,3,1,2)    ; CC(2,3,2,1) = CC(2,3,1,2)
+     CC(3,2,2,1) = CC(2,3,1,2)    ; CC(2,1,2,3) = CC(2,3,1,2)
+     CC(2,1,3,2) = CC(2,3,1,2)    ; CC(1,3,1,2) = C(5,6)
+     CC(3,1,1,2) = CC(1,3,1,2)    ; CC(1,2,1,3) = CC(1,3,1,2)
+     CC(1,2,3,1) = CC(1,3,1,2)    ; CC(1,3,2,1) = CC(1,3,1,2)
+     CC(3,1,2,1) = CC(1,3,1,2)    ; CC(2,1,1,3) = CC(1,3,1,2)
+     CC(2,1,3,1) = CC(1,3,1,2)    ; CC(1,2,1,2) = C(6,6)
+     CC(2,1,1,2) = CC(1,2,1,2)    ; CC(1,2,2,1) = CC(1,2,1,2)
+     CC(2,1,2,1) = CC(1,2,1,2)
+
       Cij2cijkl = CC
-      
+
    end function Cij2cijkl
 !------------------------------------------------------------------------------
 
@@ -1590,13 +1590,13 @@ end function CIJ_thom_st
 !==============================================================================
 !  Convert a 3x3x3x3 elasticity tensor to a 6x6 tensor
 !  Lifted from cijkl2cij, MATLAB code by J. Wookey.
-   
+
      implicit none
      real(rs),intent(in)  :: CC(3,3,3,3)
      real(rs)             :: cijkl2Cij(6,6)
      real(rs)             :: C(6,6)
      integer              :: im,jm,km,lm,iv,jv
-     
+
      C = 0.
      do im=1,3
        do jm=1,3
@@ -1610,19 +1610,19 @@ end function CIJ_thom_st
          enddo
        enddo
      enddo
-   
+
      cijkl2cij = C
-     
+
      return
-   
+
 !  Declare internal utility function
    CONTAINS
-   
+
       subroutine ijkl2ij_local(ii,jj,kk,ll,iv,jv)
        implicit none
        integer, intent(in) :: ii,jj,kk,ll
        integer,intent(out) :: iv,jv
-       
+
        if (ii==1 .and. jj==1) iv=1
        if (ii==1 .and. jj==2) iv=6
        if (ii==1 .and. jj==3) iv=5
@@ -1641,10 +1641,10 @@ end function CIJ_thom_st
        if (kk==3 .and. ll==1) jv=5
        if (kk==3 .and. ll==2) jv=4
        if (kk==3 .and. ll==3) jv=3
-       
+
        return
-      end subroutine ijkl2ij_local 
-   
+      end subroutine ijkl2ij_local
+
    end function cijkl2Cij
 !------------------------------------------------------------------------------
 
@@ -1652,45 +1652,45 @@ end function CIJ_thom_st
    function CIJ_Au(C_in)
 !==============================================================================
 !  Compute the Universal Anisotropy Index for a set of elastic constants
-!  See: Ranganathan and Ostoja-Starzewski. Universal elastic anisotropy index. 
+!  See: Ranganathan and Ostoja-Starzewski. Universal elastic anisotropy index.
 !      Phys. Rev. Lett. (2008) vol. 101 (5) pp. 055504
-!  and: Hill, R. The elastic behaviour of a crystalline aggregate. 
+!  and: Hill, R. The elastic behaviour of a crystalline aggregate.
 !      P Phys Soc Lond A (1952) vol. 65 (389) pp. 349-355
-   
+
      implicit none
-     
+
      real(rs),intent(in) :: C_in(6,6)
      real(rs)            :: CIJ_Au
      real(rs)            :: C(6,6),S(6,6),Kv,Kr,Gv,Gr
-     
+
    !  Get input
      C = C_in
-     
+
    !  Find stiffness from inverse
      S = CIJ_CtoS(C)
-     
+
    !  Calculate Voigt moduli
      Kv = (1._rs/9._rs) * (C(1,1) + C(2,2) + C(3,3) + 2._rs*(C(1,2) + C(2,3) + C(3,1)))
-     
+
      Gv = (1._rs/15._rs) * (C(1,1) + C(2,2) + C(3,3) - (C(1,2) + C(2,3) + C(3,1)) + &
                   3._rs*(C(4,4) + C(5,5) + C(6,6)))
-     
+
    !  Calculate Reuss moduli
      Kr = 1._rs/(S(1,1) + S(2,2) + S(3,3) + 2._rs*(S(1,2) + S(2,3) + S(3,1)))
-     
+
      Gr = 15._rs/(4._rs*(S(1,1) + S(2,2) + S(3,3)) - 4._rs*(S(1,2) + S(2,3) + S(3,1)) + &
             3._rs*(S(4,4) + S(5,5) + S(6,6)))
-     
+
    !  Calculate Au
      CIJ_Au = 5._rs*(Gv/Gr) + (Kv/Kr) - 6._rs
-      
+
    end function CIJ_Au
 !------------------------------------------------------------------------------
 
 !===============================================================================
    subroutine CIJ_brow_chev(Cin,CI,CX,CT,CO,CM,CR) !,pI,pX,pT,pO,pM,pR)
 !===============================================================================
-!  Returns parts of the input elasticity tensor, decomposed a la Browaeys and 
+!  Returns parts of the input elasticity tensor, decomposed a la Browaeys and
 !  Chevrot, GJI, 2004
 !  Input is 6x6 Voigt Cij matrix
 !  Output is a selection of one or more the decomposed matrices:
@@ -1704,7 +1704,7 @@ end function CIJ_thom_st
 !  2011/08: values of pI, pX, etc., do not seem to be correct at the moment...
 !           This needs to be fixed.  Is this because pI == pi???
       implicit none
-      
+
       real(rs),intent(in)  :: Cin(6,6)
       real(rs),intent(out),dimension(6,6),optional :: CI,CX,CT,CO,CM,CR
 !      real(rs),intent(out),optional :: pI,pX,pT,pO,pM,pR
@@ -1712,7 +1712,7 @@ end function CIJ_thom_st
       real(rs) :: C(6,6)
       real(rs) :: X(21),XH(21),Xin(21),CH(6,6)
       integer  :: i
-      
+
 !  Input matrix and vector
       C = Cin
       Xin = CIJ2X(C)
@@ -1735,13 +1735,13 @@ end function CIJ_thom_st
                   1._rs/5._rs,          1._rs/5._rs,         1._rs/5._rs         /)
       M(8,:) = M(7,:)
       M(9,:) = M(7,:)
-      
+
       XH = matmul(M,X)
       CH = X2CIJ(XH)
       if (present(CI)) CI = CH
 !      if (present(pI)) pI = sum(XH**2)/sum(Xin**2)
       C = C - CH
-      
+
 !  Hexagonal part
       X = CIJ2X(C)
       M = 0._rs
@@ -1758,13 +1758,13 @@ end function CIJ_thom_st
       M(8,:) = M(7,:)
       M(9,1:9) = (/ 1._rs/4._rs, 1._rs/4._rs, 0._rs, 0._rs, 0._rs, &
                     -1._rs/(2._rs*sqrt(2._rs)), 0._rs, 0._rs, 1._rs/2._rs /)
-      
+
       XH = matmul(M,X)
       CH = X2CIJ(XH)
       if (present(CX)) CX = CH
 !      if (present(pX)) pX = sum(XH**2)/sum(Xin**2)
       C = C - CH
-      
+
 !  Tetragonal part
       X = CIJ2X(C)
       M = 0._rs
@@ -1774,37 +1774,37 @@ end function CIJ_thom_st
       M(5,5) = M(4,4)
       M(6,6) = 1._rs         ;  M(9,9) = 1._rs
       M(7,7) = M(1,1)   ;  M(7,8) = M(7,7)  ;  M(8,7) = M(7,8)  ;  M(8,8) = M(7,7)
-      
+
       XH = matmul(M,X)
       CH = X2CIJ(XH)
       if (present(CT)) CT = CH
 !      if (present(pT)) pT = sum(XH**2)/sum(Xin**2)
       C = C - CH
-      
+
 !  Orthorhombic part
       X = CIJ2X(C)
       M = 0._rs
       do i=1,9; M(i,i) = 1._rs; enddo
-      
+
       XH = matmul(M,X)
       CH = X2CIJ(XH)
       if (present(CO)) CO = CH
 !      if (present(pO)) pO = sum(XH**2)/sum(Xin**2)
       C = C - CH
-      
+
 !  Monoclinic part
       X = CIJ2X(C)
       M = 0._rs
       do i=1,21; M(i,i) = 1._rs; enddo
       M(10,10) = 0._rs  ;  M(11,11) = 0._rs  ;  M(13,13) = 0._rs  ;  M(14,14) = 0._rs
       M(16,16) = 0._rs  ;  M(17,17) = 0._rs  ;  M(19,19) = 0._rs  ;  M(20,20) = 0._rs
-      
+
       XH = matmul(M,X)
       CH = X2CIJ(XH)
       if (present(CM)) CM = CH
 !      if (present(pM)) pM = sum(XH**2)/sum(Xin**2)
       C = C - CH
-      
+
 !  Triclinc part(?)
       if (present(CR)) then
          write(0,'(a)') 'anisotropy_ajn: CIJ_brow_chev: WARNING: triclinic part not verified.'
@@ -1815,9 +1815,9 @@ end function CIJ_thom_st
 !         XH = CIJ2X(C)
 !         pR = sum(XH**2)/sum(Xin**2)
 !      endif
-         
+
    end subroutine CIJ_brow_chev
-!-------------------------------------------------------------------------------               
+!-------------------------------------------------------------------------------
 
 !===============================================================================
    function CIJ2X(C)
@@ -1826,7 +1826,7 @@ end function CIJ_thom_st
       implicit none
       real(rs),intent(in) :: C(6,6)
       real(rs)            :: CIJ2X(21)
-      
+
       CIJ2X(1)  = C(1,1)
       CIJ2X(2)  = C(2,2)
       CIJ2X(3)  = C(3,3)
@@ -1848,7 +1848,7 @@ end function CIJ_thom_st
       CIJ2X(19) = 2._rs*sqrt(2._rs)*C(5,6)
       CIJ2X(20) = 2._rs*sqrt(2._rs)*C(4,6)
       CIJ2X(21) = 2._rs*sqrt(2._rs)*C(4,5)
-      
+
    end function CIJ2X
 !-------------------------------------------------------------------------------
 
@@ -1861,7 +1861,7 @@ end function CIJ_thom_st
       real(rs), intent(in) :: X(21)
       real(rs)             :: X2CIJ(6,6)
       integer :: i,j
-      
+
       X2CIJ(1,1) = X(1)
       X2CIJ(2,2) = X(2)
       X2CIJ(3,3) = X(3)
@@ -1883,13 +1883,13 @@ end function CIJ_thom_st
       X2CIJ(5,6) = (1._rs/(2._rs*sqrt(2._rs)))*X(19)
       X2CIJ(4,6) = (1._rs/(2._rs*sqrt(2._rs)))*X(20)
       X2CIJ(4,5) = (1._rs/(2._rs*sqrt(2._rs)))*X(21)
-      
+
       do i=1,6
          do j=i,6
             X2CIJ(j,i) = X2CIJ(i,j)
          enddo
       enddo
-      
+
    end function X2CIJ
 !-------------------------------------------------------------------------------
 
@@ -1897,13 +1897,13 @@ end function CIJ_thom_st
 !   subroutine CIJ_isotropic_average(C,r,Ciso,Vp,Vs)
 !===============================================================================
 !      implicit none
-!      
+!
 !      real(rs), intent(in) :: C(6,6), r
 !      real(rs), intent(out), optional :: Ciso(6,6), Vp, Vs
-!      
+!
 !      write(0,'(a)') 'anisotropy_ajn: CIJ_isotropic_average is not working yet.'
 !      stop
-!      
+!
 !   end subroutine CIJ_isotropic_average
 !-------------------------------------------------------------------------------
 
@@ -1920,7 +1920,7 @@ end function CIJ_thom_st
             if (i /= j) C(i,j) = C(j,i)
          enddo
       enddo
-      
+
    end subroutine CIJ_symm
 !-------------------------------------------------------------------------------
 
@@ -1931,20 +1931,20 @@ end function CIJ_thom_st
 !  Can choose which power to divide through by and how many decimal places, or
 !  choose to show all values as exponentials.
       implicit none
-   
+
       real(rs), intent(in) :: C(6,6)
       integer, optional, intent(in) :: unit,power,ndp
       logical, optional, intent(in) :: expo
       integer :: iunit,ipower,indp
       logical :: autopower,iexpo
       character(len=80) :: fmt
-      
+
       ! Defaults
       iunit = 6   ! stdout
       autopower = .true. ! autodetermine in routine
       indp = 6    ! 4 decimal places
       iexpo = .false.
-      
+
       ! Get options
       if (present(unit)) iunit = unit
       if (iunit < 0) then
@@ -1960,13 +1960,13 @@ end function CIJ_thom_st
          iexpo = expo
          write(0,'(a)') 'Got expo = .true.'
       endif
-      
+
       ! Check that we haven't both specified a fixed power and exponential format
       if (present(expo) .and. present(power)) then
          write(0,'(a)') 'CIJ_disp: Cannot display in both fixed-power-of-10 and scientific notation'
          stop
       endif
-      
+
       ! Non-exponential display (all values on same scale)
       if (.not.iexpo) then
          ! If necessary, work out max for matrix
@@ -1974,13 +1974,13 @@ end function CIJ_thom_st
          write(fmt,'(a,i0.0,a,i0.0,a)') '(6(f',indp+3,'.',indp,',1x))'
          write(iunit,'(a,i0.0)') 'x 10^',ipower
          write(iunit,fmt) C/(10.**ipower)
-         
+
       ! Exponential display: all values are in scientific notation
       else
          write(fmt,'(a,i0.0,a,i0.0,a)') '(6(e',indp+7,'.',indp,',1x))'
          write(iunit,fmt) C
       endif
-      
+
    end subroutine CIJ_disp
 !-------------------------------------------------------------------------------
 
@@ -2151,24 +2151,24 @@ end function CIJ_CtoS
      integer, intent(in) :: sz ! dimension of arrays
      real(rs), dimension(sz,sz), intent(in) :: A
      real(rs), dimension(sz,sz), intent(out) :: AI
-   
+
 !      PURPOSE : COMPUTE INVERSE WITH REAL COEFFICIENTS  |AI| = |A|^-1
-!                                                                   
+!
 !      INPUT  : THE NUMBER OF ROWS  n
 !               THE DIMENSION OF A, sz
 !               THE REAL MATRIX  A
-!      OUTPUT : THE REAL MATRIX  AI                                  
+!      OUTPUT : THE REAL MATRIX  AI
 
-    integer, dimension(n) :: ROW             ! ROW INTERCHANGE INDICIES 
-    integer, dimension(n) :: COL             ! COL INTERCHANGE INDICIES 
+    integer, dimension(n) :: ROW             ! ROW INTERCHANGE INDICIES
+    integer, dimension(n) :: COL             ! COL INTERCHANGE INDICIES
     double precision, dimension(n) :: TEMP   ! INTERCHANGE VECTOR
-    integer :: HOLD , I_PIVOT, J_PIVOT       ! PIVOT INDICIES 
-    double precision :: PIVOT                ! PIVOT ELEMENT VALUE 
+    integer :: HOLD , I_PIVOT, J_PIVOT       ! PIVOT INDICIES
+    double precision :: PIVOT                ! PIVOT ELEMENT VALUE
     double precision :: ABS_PIVOT, NORM1
     integer :: i, j, k
-   
+
     NORM1 = 0.0D0;
-    ! BUILD WORKING DATA STRUCTURE 
+    ! BUILD WORKING DATA STRUCTURE
     do i=1,n
       do j=1,n
        AI(i,j) = A(i,j)
@@ -2177,15 +2177,15 @@ end function CIJ_CtoS
        end if
       end do ! j
     end do ! i
-    ! SET UP ROW AND COL  INTERCHANGE VECTORS 
+    ! SET UP ROW AND COL  INTERCHANGE VECTORS
     do k=1,n
       ROW(k) = k
       COL(k) = k
     end do ! k
-   
-    ! BEGIN MAIN REDUCTION LOOP 
+
+    ! BEGIN MAIN REDUCTION LOOP
     do k=1,n
-      ! FIND LARGEST ELEMENT FOR PIVOT 
+      ! FIND LARGEST ELEMENT FOR PIVOT
       PIVOT = AI(ROW(k), COL(k))
       I_PIVOT = k
       J_PIVOT = k
@@ -2200,16 +2200,16 @@ end function CIJ_CtoS
        end do ! j
       end do ! i
       ABS_PIVOT = abs(PIVOT)
-   
-      ! HAVE PIVOT, INTERCHANGE ROW, COL POINTERS 
+
+      ! HAVE PIVOT, INTERCHANGE ROW, COL POINTERS
       HOLD = ROW(k)
       ROW(k) = ROW(I_PIVOT)
       ROW(I_PIVOT) = HOLD
       HOLD = COL(k)
       COL(k) = COL(J_PIVOT)
       COL(J_PIVOT) = HOLD
-   
-      ! CHECK FOR NEAR SINGULAR 
+
+      ! CHECK FOR NEAR SINGULAR
       if( ABS_PIVOT < 1.0D-52*NORM1 ) then
        do j=1,n
          AI(ROW(k),j) = 0.0D0
@@ -2239,10 +2239,10 @@ end function CIJ_CtoS
          end if
        end do ! i
       end if
-      ! FINISHED INNER REDUCTION 
+      ! FINISHED INNER REDUCTION
     end do ! k
-    ! END OF MAIN REDUCTION LOOP 
-   
+    ! END OF MAIN REDUCTION LOOP
+
     !                              UNSCRAMBLE ROWS
     do j=1,n
       do i=1,n
@@ -2261,7 +2261,7 @@ end function CIJ_CtoS
        AI(i,j)= TEMP(j)
       end do ! j
     end do ! i
-   end subroutine inverse 
+   end subroutine inverse
 !-------------------------------------------------------------------------------
 
 !===============================================================================
