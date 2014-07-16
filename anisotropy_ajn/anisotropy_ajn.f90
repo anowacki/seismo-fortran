@@ -936,9 +936,9 @@ end function CIJ_thom_st
       ! the sign of the angle
       phi2 = -to_rad*phi/2._rs
       a = cos(phi2)
-      b = v(1)*sin(phi2)
-      c = v(2)*sin(phi2)
-      d = v(3)*sin(phi2)
+      b = vnorm(1)*sin(phi2)
+      c = vnorm(2)*sin(phi2)
+      d = vnorm(3)*sin(phi2)
       R(1,:) = (/ a**2+b**2-c**2-d**2,  2._rs*(b*c+a*d),  2._rs*(b*d-a*c) /)
       R(2,:) = (/ 2._rs*(b*c-a*d),  a**2+c**2-b**2-d**2,  2._rs*(c*d+a*b) /)
       R(3,:) = (/ 2._rs*(b*d+a*c),  2._rs*(c*d-a*b),  a**2+d**2-b**2-c**2 /)
