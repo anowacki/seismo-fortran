@@ -19,6 +19,12 @@ LIBS = \
     -lstatistical
 BINDIR = ~/Applications/bin
 
+# Extra libraries needed on Typhon
+# L += -L/share/apps/local/lib
+# LIBS += \
+#     -lfftw3 \
+#     -lfftw3f
+
 PROGS = $(B)/CIJ_rotV \
         $(B)/CIJ_rot_azinc \
         $(B)/GPa2km \
