@@ -36,7 +36,8 @@ MODS = $(O)/constants.o \
        $(O)/moment_tensor.o \
        $(O)/spherical_geometry.o \
        $(O)/splitwave.o \
-       $(O)/statistical.o 
+       $(O)/statistical.o \
+       $(O)/timing.o
 
 all: ${MODS} \
      $(O)/anisotropy_ajn.o \
