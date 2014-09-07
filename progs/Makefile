@@ -42,6 +42,7 @@ PROGS = $(B)/CIJ_rotV \
         $(B)/gcp_from_point_azi \
         $(B)/gcp_from_points \
         $(B)/gcp_points \
+        $(B)/lonlat2xyz \
         $(B)/km2GPa \
         $(B)/midpoint \
         $(B)/prem \
