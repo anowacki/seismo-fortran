@@ -21,7 +21,7 @@ SPLINEOPTS = -framework vecLib -llapack
 # Flags which work on Typhon:
 #FFFTWOPTS = -I/share/apps/local/include -L/share/apps/local/lib -lfftw3 -lfftw3f
 #SPLINEOPTS = -L/share/apps/local/lib -llapack
-SPLITWAVEOPTS = -L${L} -lFFFTW -lf90sac -lEmatrixUtils
+SPLITWAVEOPTS = -L${L} -lFFFTW -lf90sac -lanisotropy_ajn
 F90SACOPTS = -DFORCE_BIGENDIAN_SACFILES
 
 MODS = $(O)/constants.o \
@@ -94,12 +94,12 @@ $(O)/spherical_splines.o: spherical_splines/spherical_splines.f90
 	$(AR) $(AROPTS) $(L)/lib$(nm).a $(O)/$(nm).o
 	$(RANLIB) $(L)/lib$(nm).a
 
-$(O)/splitwave.o: $(O)/f90sac.o $(O)/EmatrixUtils.o $(O)/FFFTW.o splitwave.f90
+$(O)/splitwave.o: $(O)/f90sac.o $(O)/anisotropy_ajn.o $(O)/FFFTW.o splitwave.f90
 	$(FC) ${FCOPTS} ${LOPTS} -c -J$(M) -o $(O)/splitwave.o splitwave.f90
 	$(FC) -I$(M) ${SPLITWAVEOPTS} -o $(L)/libsplitwave.so.1 -shared $(O)/splitwave.o
 	ln -sf $(L)/libsplitwave.so.1 $(L)/libsplitwave.so
 	rm -f $(O)/lib$(nm).a
-	$(AR) $(AROPTS) $(L)/lib$(nm).a $(O)/$(nm).o $(O)/f90sac.o $(O)/f90sac_csubs.o $(O)/EmatrixUtils.o $(O)/FFFTW.o
+	$(AR) $(AROPTS) $(L)/lib$(nm).a $(O)/$(nm).o $(O)/f90sac.o $(O)/f90sac_csubs.o $(O)/anisotropy_ajn.o $(O)/FFFTW.o
 	$(RANLIB) $(L)/lib$(nm).a
 
 $(O)/f90sac.o: $(O)/f90sac_csubs.o f90sac/f90sac.F90

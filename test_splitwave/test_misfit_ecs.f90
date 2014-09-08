@@ -1,9 +1,8 @@
 program test
    ! Test that sw_misfit_ecs gives the correct answers
-   use EmatrixUtils
    use spherical_geometry, only: sphere_sample
    use splitwave
-   use anisotropy_ajn, only: CIJ_rot3
+   use anisotropy_ajn, only: CIJ_phase_vels, CIJ_rot3
    implicit none
 
    ! Constants for olivine (Abramson)
@@ -32,7 +31,7 @@ program test
 
    ! Compute splits for these orientations
    do i=1,n
-      call CIJ_phasevels(Col, rho_ol, lon(i), lat(i), pol=phi(i), vs1=vs1, vs2=vs2)
+      call CIJ_phase_vels(Col, lon(i), lat(i), pol=phi(i), vs1=vs1, vs2=vs2)
       dt(i) = t*(1._rs/vs2 - 1._rs/vs1)
    enddo
 

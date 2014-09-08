@@ -66,7 +66,7 @@ subroutine sw_misfit_ecs(C,az,inc,phi,dt,spol,misfit,t,phi_ecs,dt_ecs,t_scaled, 
 !  OPTIONAL OUTPUT:
 !     phi_ecs(:),dt_ecs(:) : Splits accrued in the elastic constants / deg, s
 !     t_scaled     : Thickness used as scaling when not specifying t above / km
-   use EmatrixUtils
+   use anisotropy_ajn, only: CIJ_phase_vels
 
    implicit none
 
@@ -110,7 +110,7 @@ subroutine sw_misfit_ecs(C,az,inc,phi,dt,spol,misfit,t,phi_ecs,dt_ecs,t_scaled, 
 
    ! Calculate splitting and misfit for each observation
    do i=1,n
-      call CIJ_phasevels(C, 1._rs, az(i), inc(i), pol=phi2(i), vs1=vs1, vs2=vs2)
+      call CIJ_phase_vels(C, az(i), inc(i), pol=phi2(i), vs1=vs1, vs2=vs2)
       dt2(i) = 1._rs/vs2 - 1._rs/vs1
    enddo
 
@@ -601,8 +601,8 @@ subroutine sw_fdrotate2d(f1,f2,n,theta,degrees)
 !===============================================================================
 !  Rotate a pair of frequency domain traces by theta degrees.  It is assumed that
 !  f2 has an azimuth 90 degrees clockwise from f1, e.g., f1 // N, f2 // E.
-!  The reference frame is rotated clockwise by theta, hence particle motion is
-!  rotated anticlockwise.
+!  The reference frame is rotated anticlockwise by theta, hence particle motion
+!  is rotated clockwise.
 !  INPUT:
 !     f1,f2     : Complex, frequency-domain traces
 !     n         : Length of traces
