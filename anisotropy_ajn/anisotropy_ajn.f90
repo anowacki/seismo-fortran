@@ -9,7 +9,7 @@
 !  MODULE : anisotropy_ajn
 !
 !  (C) James Wookey, September 2005 - 2008
-!  Department of Earth Sciences, University of Bristol
+!  School of Earth Sciences, University of Bristol
 !  j.wookey@bristol.ac.uk
 !
 !  (C) Andy Nowacki, October 2008 -
@@ -50,6 +50,7 @@
 !   * Removed the unnecessary rho from arguments to CIJ_VTI2thom
 !     WARNING: This will break codes which use this function,
 !     however none exist that I know of.                        2013/05
+!   * Added CIJ_phase_vels                                      2014/09
 !===============================================================================
    module anisotropy_ajn
 !===============================================================================
@@ -73,10 +74,161 @@
       real(rs), parameter, private :: big_number = 10.e36_rs
 
 !  ** Hide the helper functions and subroutines
-      private :: inverse, &
+      private :: cart2incaz, &
+                 cross_prod, &
+                 incaz2cart, &
+                 inverse, &
                  determinant
 
       CONTAINS
+
+!===============================================================================
+   subroutine CIJ_phase_vels(C, az, inc, pol, avs, vp, vs1, vs2, vsmean, &
+                             azp, incp, azs1, incs1, azs2, incs2)
+!===============================================================================
+!
+!  Calculate phase velocities for a given direction in an elasticity tensor
+!
+!  INPUT:
+!     C(6,6)       : Elasticity tensor, density-normalised (Aij) [m^2.s^-2]
+!     az           : Azimuth from the +x1 axis towards the -x2 axis
+!                    (When looking down the x3 axis towards the origin, azi is
+!                    +ve clockwise.) [degrees]
+!     inc          : Incidence measured from the x1-x2 axis towards x3 [degrees]
+!
+!  OUTPUT (all optional):
+!     pol          : Orientation of fast shear wave.  This is measured away from
+!                    the projection of the +ve x3 axis onto the plane normal to
+!                    the direction of interest.  Positive is clockwise when
+!                    looking DOWN the ray towards the origin.  (NB: This is in
+!                    the opposite way to the ray frame convention.) [degrees]
+!     avs          : Shear wave anisotropy, measured as 200*(Vs1-Vs2)/(Vs1+Vs2).
+!     vp           : P-wave phase velocity. [m.s^-1]
+!     vs1          : Shear wave velocity of fast shear wave. [m.s^-1]
+!     vs2          : Shear wave velocity of slow shear wave. [m.s^-1]
+!     vsmean       : Harmonic mean of the fast and slow shear wave velocities.
+!                    [m.s^-1]
+!     azp, incp    : Azimuth and inclination of P vibration [deg].
+!     azs1, incs1  : Same, but for fast S wave [deg].
+!     azs2, incs2  : Same, but for slow S wave [deg].
+      real(rs), intent(in) :: C(6,6), az, inc
+      real(rs), intent(out), optional :: pol, avs, vp, vs1, vs2, vsmean, &
+                                         azp, incp, azs1, incs1, azs2, incs2
+      real(rs) :: vp_in, vs1_in, vs2_in
+      real(rs) :: x(3)  ! Unit vector of interest
+      real(rs) :: T(3,3) ! Christoffel T matrix
+      real(rs) :: xp(3), xs1(3), xs2(3) ! Vibration polarisation vectors
+
+      ! Get direction vector
+      x = incaz2cart(inc, az)
+      ! Construct the Christoffel matrix
+      call make_T
+      ! Find eigenvalues and -vectors, which yield the velocities and pols
+      call T_eigs
+      ! Fill in needed outputs
+      ! Find polarisation of fast shear wave
+      if (present(pol)) call get_pol
+      if (present(vp)) vp = vp_in
+      if (present(vs1)) vs1 = vs1_in
+      if (present(vs2)) vs2 = vs2_in
+      if (present(avs)) avs = 200._rs*(vs1_in - vs2_in)/(vs1_in + vs2_in)
+      if (present(vsmean)) vsmean = 2._rs/(1._rs/vs1_in + 1._rs/vs2_in)
+      if (present(azp)) then
+         if (.not.present(incp)) then
+            write(0,'(a)') 'anisotropy_ajn: CIJ_phase_vels: Both azp and incp must be present'
+            stop 1
+         endif
+         call cart2incaz(xp, incp, azp)
+      endif
+      if (present(azs1)) then
+         if (.not.present(incs1)) then
+            write(0,'(a)') 'anisotropy_ajn: CIJ_phase_vels: Both azs1 and incs1 must be present'
+            stop 1
+         endif
+         call cart2incaz(xs1, incs1, azs1)
+      endif
+      if (present(azs2)) then
+         if (.not.present(incs2)) then
+            write(0,'(a)') 'anisotropy_ajn: CIJ_phase_vels: Both azs2 and incs2 must be present'
+            stop 1
+         endif
+         call cart2incaz(xs2, incs2, azs2)
+      endif
+
+   contains
+      subroutine make_T()
+      ! Create the Christoffel T matrix
+         integer, parameter :: ijkl(3,3) = reshape((/1, 6, 5,&
+                                                     6, 2, 4,&
+                                                     5, 4, 3/), (/3, 3/))
+         integer :: i, j, k, l, m, n
+         T = 0._rs
+         do i = 1, 3
+            do j = 1, 3
+               do k = 1, 3
+                  do l = 1, 3
+                     m = ijkl(i,j)
+                     n = ijkl(k,l)
+                     T(i,k) = T(i,k) + C(m,n)*x(j)*x(l)
+                  enddo
+               enddo
+            enddo
+         enddo
+      end subroutine make_T
+
+      subroutine T_eigs()
+      ! Compute eigenvalues of T and sort into decreasing order, filling in
+      ! the velocity and polarisation vectors for P, S1 and S2
+         real(rs) :: eigval(3), eigvec(3,3)
+         integer :: kp, ks1, ks2
+         call eig_jacobi(T, 3, eigval, eigvec)
+         kp = maxloc(eigval, 1)
+         ks2 = minloc(eigval, 1)
+         ks1 = 6 - kp - ks2
+         if (ks1 < 1 .or. ks1 > 3) then
+            write(0,'(a)') 'anisotropy_ajn: CIJ_phase_vels: Error: ks1 is not in range 1-3'
+            stop
+         endif
+         vp_in  = sqrt(eigval(kp))
+         vs1_in = sqrt(eigval(ks1))
+         vs2_in = sqrt(eigval(ks2))
+         xp  = eigvec(:,kp)
+         xs1 = eigvec(:,ks1)
+         xs2 = eigvec(:,ks2)
+      end subroutine T_eigs
+
+      subroutine get_pol()
+      ! Convert the S1 polarisation vector into a fast orientation
+         real(rs), dimension(3) :: u, xs1p, v
+         ! Project the fast vector onto the wavefront plane
+         xs1p = cross_prod(x, cross_prod(x, xs1))
+         xs1p = xs1p/sqrt(sum(xs1p**2))  ! Normalise
+         ! Local up vector
+         u = incaz2up(inc, az)
+         ! Angle between the projected polarisation and the up vector is pol
+         v = cross_prod(xs1p, u)
+         ! Use atan2 to get the correct quadrant (sin/cos = |a^b|/a.b)
+         pol = to_deg*atan2(sqrt(sum(v**2)), dot_product(xs1p, u))
+         ! If v is codirectional with x, then the angle is correct; otherwise,
+         ! we're measuring the angle the wrong way round
+         if (dot_product(x, v) < 0._rs) pol = -pol
+         pol = modulo(pol + 90._rs, 180._rs) - 90._rs
+      end subroutine get_pol
+
+      function incaz2up(inci, azi) result(u)
+         ! Return the local 'up' vector which is normal to x and points along
+         ! the unit sphere towards z
+         real(rs), intent(in) :: inci, azi
+         real(rs) :: u(3), raz, rinc, sini
+         raz = to_rad*azi
+         rinc = to_rad*inci
+         sini = sin(rinc)
+         u(1) =  cos(raz+pi)*sini
+         u(2) = -sin(raz+pi)*sini
+         u(3) =  cos(rinc)
+      end function incaz2up
+   end subroutine CIJ_phase_vels
+!-------------------------------------------------------------------------------
 
 !===============================================================================
    subroutine thom(vp,vs,rho,eps,gam,del,c)
@@ -2327,6 +2479,181 @@ end function CIJ_CtoS
       enddo
       if (present(exists)) exists = detexists
    end function determinant
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+   subroutine eig_jacobi(ain, n, d, v, niter)
+!===============================================================================
+! Compute eigenvalues and vectors of a real, symmetric matrix using Jacobi
+! iteration.  Note that the eigenvalues/vectors come out in no particular order.
+!
+! This routine is based on section 11.1 (pp. 456 ff.) of:
+!  Numerical Recipes in F77, 1992, CUP.
+! Changes include not relying on underflows being set to zero.  Instead,
+! convergence is set by the off-diagonal elements summing to less than or
+! equal to tol.  We set tol to tiny(precision) here, which is the smallest
+! number representable in the current precision.
+!
+! INPUT:
+!     ain(n,n) : Matrix from which to find eigenvalues and -vectors.
+!     n        : Matrix dimension.
+! OUTPUT:
+!     d(n)     : Eigenvalues.
+!     v(n,n)   : Matrix of eigenvectors.
+!                The ith eigenvector is placed in v(:,i) and corresponds to
+!                eigenvalue d(i).
+!     niter    : (Optional) The number of iterations required for convergence.
+
+      integer, parameter :: nmax = 100, max_iter = 50, rs = 8
+      real(rs), parameter :: tol = tiny(0._rs)
+      real(rs), intent(in) :: ain(n,n)
+      real(rs) :: a(n,n)
+      integer, intent(in) :: n
+      real(rs), intent(out) :: d(n), v(n,n)
+      integer, intent(out), optional :: niter
+      real(rs) :: b(nmax), z(nmax), sm, g, h, t, theta, thresh, c, s, tau
+      integer :: iter, p, q, i, j, niter_in
+
+      ! Initialise values
+      a = ain
+      v = 0._rs
+      z = 0._rs
+      do i = 1, n
+         v(i,i) = 1._rs
+         b(i) = a(i,i)
+      enddo
+      d = b(1:n)
+
+      niter_in = 0
+      do iter = 1, max_iter
+         ! Sum of off-diagonal elements is zero when matrix is diagonal
+         sm = 0._rs
+         do p = 1, n-1
+            do q = p+1, n
+               sm = sm + abs(a(p,q))
+            enddo
+         enddo
+         ! Convergence reached when we have a diagonal matrix
+         if (sm <= tol) then
+            if (present(niter)) niter = niter_in
+            return
+         endif
+         ! Set threshold to eq. (11.1.25) four first three iterations
+         if (iter <= 3) then
+            thresh = 0.2d0*sm/n**2
+         else
+            thresh = 0._rs
+         endif
+         do p = 1, n-1
+            do q = p+1, n
+               g = 100._rs*abs(a(p,q))
+
+               ! After four sweeps, skp the rotation if the off-diagonal
+               ! element is small.
+               if (iter > 4 .and. abs(d(p) - g) <= tol .and. &
+                                  abs(d(q) - g) <= tol) then
+                  a(p,q) = 0._rs
+
+               else if (abs(a(p,q)) > thresh) then
+                  h = d(q) - d(p)
+                  if (abs(h) + g == abs(h)) then
+                     t = a(p,q)/h
+                  else
+                     theta = 0.5_rs*h/a(p,q)
+                     t = 1._rs/(abs(theta) + sqrt(1._rs+theta**2))
+                     if (theta < 0._rs) t = -t
+                  endif
+
+                  c = 1._rs/sqrt(1._rs + t**2)
+                  s = t*c
+                  tau = s/(1._rs + c)
+                  h = t*a(p,q)
+                  z(p) = z(p) - h
+                  z(q) = z(q) + h
+                  d(p) = d(p) - h
+                  d(q) = d(q) + h
+                  a(p,q) = 0._rs
+                  ! Sweep across the matrix from left to right, then top to bottom
+                  do j = 1, p-1
+                     g = a(j,p)
+                     h = a(j,q)
+                     a(j,p) = g - s*(h+g*tau)
+                     a(j,q) = h + s*(g-h*tau)
+                  enddo
+                  do j = p+1, q-1
+                     g = a(p,j)
+                     h = a(j,q)
+                     a(p,j) = g - s*(h+g*tau)
+                     a(j,q) = h + s*(g-h*tau)
+                  enddo
+                  do j = q+1, n
+                     g = a(p,j)
+                     h = a(q,j)
+                     a(p,j) = g - s*(h+g*tau)
+                     a(q,j) = h + s*(g-h*tau)
+                  enddo
+                  do j = 1, n
+                     g = v(j,p)
+                     h = v(j,q)
+                     v(j,p) = g - s*(h+g*tau)
+                     v(j,q) = h + s*(g-h*tau)
+                  enddo
+                  niter_in = niter_in + 1
+               endif
+
+            enddo
+         enddo
+         ! Update eigenvalues
+         b(1:n) = b(1:n) + z(1:n)
+         d = b(1:n)
+         z(1:n) = 0._rs
+      enddo
+      ! Have finished the loop over i, so have reached max_iter.
+      write(0,'(a,i0.1,a)') 'eig_jacobi: error: ', max_iter, &
+         ' iterations occurred.  Matrix likely did not converge.'
+      stop 1
+   end subroutine eig_jacobi
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+   function cross_prod(a, b) result(C)
+!===============================================================================
+!  Compute the vector cross product between two three-vectors.
+      real(rs), intent(in) :: a(3), b(3)
+      real(rs) :: c(3)
+      c(1) = a(2)*b(3) - a(3)*b(2)
+      c(2) = a(3)*b(1) - a(1)*b(3)
+      c(3) = a(1)*b(2) - a(2)*b(1)
+   end function cross_prod
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+   function incaz2cart(i, a) result(vec)
+!===============================================================================
+!  Convert inclination and azimuth (degrees) into unit vector.
+!  Convention is as described for CIJ_phase_vels above.
+      real(rs), intent(in) :: i, a
+      real(rs) :: vec(3)
+      real(rs) :: ir, ar, cosi
+      ir = i*to_rad
+      ar = a*to_rad
+      cosi = cos(ir)
+      vec(1) =  cos(ar)*cosi
+      vec(2) = -sin(ar)*cosi
+      vec(3) =  sin(ir)
+   end function incaz2cart
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+   subroutine cart2incaz(x, inc, az)
+!===============================================================================
+!  Convert cartesian direction vector to inclination and azimuth (degrees).
+!  Convention is as described for CIJ_phase_vels above.
+      real(rs), intent(in) :: x(3)
+      real(rs), intent(out) :: inc, az
+      inc = to_deg*asin(x(3))
+      az = to_deg*atan2(-x(2), x(1))
+   end subroutine cart2incaz
 !-------------------------------------------------------------------------------
 
    end module anisotropy_ajn
