@@ -30,7 +30,6 @@ MODS = $(O)/constants.o \
        $(O)/EC_grid.o \
        $(O)/f90sac.o \
        $(O)/FFFTW.o \
-       $(O)/functions.o \
        $(O)/global_1d_models.o \
        $(O)/mod_raypaths.o \
        $(O)/moment_tensor.o \
