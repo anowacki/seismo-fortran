@@ -1,4 +1,11 @@
 !===============================================================================
+! One of Andy Nowacki's Fortran utility modules for dealing with seismic
+! anisotropy and other problems.
+!
+! Andy Nowacki <andy.nowacki@bristol.ac.uk>
+!
+! See the file LICENCE for licence details.
+!===============================================================================
 program gcp_points_prog
 !===============================================================================
 !  Wrapper program to gcp_points subroutine.  See 

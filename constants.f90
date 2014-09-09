@@ -1,32 +1,12 @@
 !===============================================================================
-!     Fortran 90/95 Source Code File
+! One of Andy Nowacki's Fortran utility modules for dealing with seismic
+! anisotropy and other problems.
+!
+! Andy Nowacki <andy.nowacki@bristol.ac.uk>
+!
+! See the file LICENCE for licence details.
 !===============================================================================
-!
-!     PROGRAM : useful_constants
-!     FILE    : useful_constants.f90
-!     AUTHOR  : James Wookey
-!     PLACE   : School of Earth Sciences, University of Leeds
-!     DATE    : July 2004
-!     PURPOSE : 
-!     VERSION : 0.1
-!     COMPLETE: No
-!     COMMENTS: 
-!
-!-------------------------------------------------------------------------------
-!     This software is distributed in the hope that it will be useful,
-!     but WITHOUT ANY WARRANTY; without even the implied warranty of
-!     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-!-------------------------------------------------------------------------------
-!
-!     A simple module of useful constants
-!
-!-------------------------------------------------------------------------------
-!     Changes log
-!-------------------------------------------------------------------------------
-!     2004-07-21     * Incept date
-!     2010-12-06     * Added Earth radius
-
-
+!  Module containting some physical and precision constants.
 !===============================================================================
    module constants
 !===============================================================================

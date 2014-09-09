@@ -1,4 +1,11 @@
 !===============================================================================
+! One of Andy Nowacki's Fortran utility modules for dealing with seismic
+! anisotropy and other problems.
+!
+! Andy Nowacki <andy.nowacki@bristol.ac.uk>
+!
+! See the file LICENCE for licence details.
+!===============================================================================
 program gcp_from_points_prog
 !===============================================================================
 ! Wrapper program for sg_gcp_from_s.  Given a point on a sphere and an

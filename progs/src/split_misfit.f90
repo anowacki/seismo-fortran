@@ -1,4 +1,11 @@
 !===============================================================================
+! One of Andy Nowacki's Fortran utility modules for dealing with seismic
+! anisotropy and other problems.
+!
+! Andy Nowacki <andy.nowacki@bristol.ac.uk>
+!
+! See the file LICENCE for licence details.
+!===============================================================================
 program split_misfit
 !===============================================================================
 !  split_misfit takes (sets) of two splitting parameters and gives a misfit

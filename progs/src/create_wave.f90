@@ -1,4 +1,11 @@
 !===============================================================================
+! One of Andy Nowacki's Fortran utility modules for dealing with seismic
+! anisotropy and other problems.
+!
+! Andy Nowacki <andy.nowacki@bristol.ac.uk>
+!
+! See the file LICENCE for licence details.
+!===============================================================================
 program create_wave
 !===============================================================================
 !  Creates a synthetic waveform polarised to taste, with the length and

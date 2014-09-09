@@ -1,3 +1,11 @@
+!===============================================================================
+! One of Andy Nowacki's Fortran utility modules for dealing with seismic
+! anisotropy and other problems.
+!
+! Andy Nowacki <andy.nowacki@bristol.ac.uk>
+!
+! See the file LICENCE for licence details.
+!===============================================================================
 program azi_prog
 ! Program to take two sets of spherical co-ordinates
 ! and write out an azimuth from the first to the second.

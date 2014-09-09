@@ -1,26 +1,14 @@
 !===============================================================================
-!-------------------------------------------------------------------------------
+! One of Andy Nowacki's Fortran utility modules for dealing with seismic
+! anisotropy and other problems.
 !
-!  Fortran 90/95 Source Code File
+! Andy Nowacki <andy.nowacki@bristol.ac.uk>
 !
-!-------------------------------------------------------------------------------
+! See the file LICENCE for licence details.
 !===============================================================================
-!
-!  MODULE : anisotropy_ajn
-!
-!  (C) James Wookey, September 2005 - 2008
+!  Portions (C) James Wookey, September 2005 - 2008
 !  School of Earth Sciences, University of Bristol
 !  j.wookey@bristol.ac.uk
-!
-!  (C) Andy Nowacki, October 2008 -
-!  School of Earth Sciences, University of Bristol
-!  andy.nowacki@bristol.ac.uk
-!
-!-------------------------------------------------------------------------------
-!  This software is distributed in the hope that it will be useful, but WITHOUT
-!  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-!  FITNESS FOR A PARTICULAR PURPOSE.
-!-------------------------------------------------------------------------------
 !
 !     A module of functions for handling elastic constants
 !

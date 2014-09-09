@@ -1,9 +1,13 @@
 !===============================================================================
+! One of Andy Nowacki's Fortran utility modules for dealing with seismic
+! anisotropy and other problems.
 !
-! FFTW - Fastest (Fortran) Fourier Transform in the West
+! Andy Nowacki <andy.nowacki@bristol.ac.uk>
 !
-! Andy Nowacki, University of Bristol
-! andy.nowacki@bristol.ac.uk
+! See the file LICENCE for licence details.
+!===============================================================================
+!
+! FFFTW - Fastest (Fortran) Fourier Transform in the West
 !
 !===============================================================================
 !

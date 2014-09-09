@@ -1,3 +1,11 @@
+!===============================================================================
+! One of Andy Nowacki's Fortran utility modules for dealing with seismic
+! anisotropy and other problems.
+!
+! Andy Nowacki <andy.nowacki@bristol.ac.uk>
+!
+! See the file LICENCE for licence details.
+!===============================================================================
 program step_prog
 ! Computes the endpoint given a starting point lon,lat, azimuth and angular distance
 

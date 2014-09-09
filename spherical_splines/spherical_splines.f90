@@ -1,4 +1,12 @@
 !===============================================================================
+! One of Andy Nowacki's Fortran utility modules for dealing with seismic
+! anisotropy and other problems.
+!
+! Andy Nowacki <andy.nowacki@bristol.ac.uk>
+!
+! See the file LICENCE for licence details.
+!===============================================================================
+!
 !  spherical splines contains a few functions for fitting and evaluating 
 !  spherical splines, as given by 
 !     Wang & Dahlen (1995)  Spherical-spline parameterization of three-dimensional

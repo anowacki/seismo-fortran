@@ -1,4 +1,11 @@
-!==============================================================================
+!===============================================================================
+! One of Andy Nowacki's Fortran utility modules for dealing with seismic
+! anisotropy and other problems.
+!
+! Andy Nowacki <andy.nowacki@bristol.ac.uk>
+!
+! See the file LICENCE for licence details.
+!===============================================================================
 program splitwaveN
 !==============================================================================
 !  'Split' an artificial shear wave 'wave.BH?' using J. Wookey's f90sac routines.
