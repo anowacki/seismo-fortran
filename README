@@ -6,8 +6,13 @@ andy.nowacki@bristol.ac.uk
 
 About
 -----
+http://github.com/anowacki/modules
+
 This repo contains Fortran modules which I have adapted or written for use in
 my geophysics work, primarily dealing with seismic anisotropy.
+
+Many command line utility programs wrap the functionality in these modules for
+use in scripting and quick processing of data.
 
 
 Installation
@@ -45,18 +50,31 @@ portable as possible.  Current portability issues are as follows:
 
 Acknowledgements
 ----------------
+The module anisotropy_ajn has benefited hugely from David Mainprice's
+expectionally clear articles, and from James Wookey and Andrew Walker's prowess
+with coding.
+
 Some of the code is taken wholly or partly from other sources; see the licences
-within the source code files for more info.  These are:
-    - f90sac         (c) James Wookey
+of the respective packages for more info.  These are:
+    - f90sac         (c) James Wookey (f90sac/f90sac.F90)
+    - SHTOOLS        (c) Mark Wieczorek (spherical_splines/SHTOOLS/LICENSE)
+
+Individual routines and modules contain references where appropriate to
+publications relevant.
+
+
+Notice about EmatrixUtils
+-------------------------
+The repo contains references to EmatrixUtils, a module which contained routines
+written by David Mainprice for his Ematrix CareWare programs
+(http://www.gm.univ-montp2.fr/PERSO/mainprice/W_data/CareWare_Unicef_Programs/)
+which I have replaced with my own routines.  This means that checking out older
+commits may lead to not being able to build some of the modules.  The offending
+routine will be CIJ_phasevels(), which has been replaced by CIJ_phase_vels().
+'use EmatrixUtils' statements can be replaced by 'use anisotropy_ajn' and
+changing the calling convention of the CIJ_phasevels() routine for the new one.
 
 
 Licence
 -------
-Copyright (c) Andy Nowacki 2008-2014.  All rights reserved.
-
-Permission to use, copy, modify and distribute this software and its
-documentation for any purpose is hereby granted without fee, provided that
-this copyright and notice appears in all copies, and provided that no
-fee is charged for its distribution.
-
-The author disclaims all warranties with regard to this software.
+See the LICENCE file for details.

@@ -1,0 +1,110 @@
+MODULES
+=======
+
+Andy Nowacki
+andy.nowacki@bristol.ac.uk
+
+
+This file contains outline information about each module contained in the repo.
+For more information about what the modules do, please look in the code.
+
+
+EC_grid
+-------
+Designed for handling models where sets of elastic constants are arranged on a
+cartesian grid.  Deals with files describing the models which are stored in a
+custom binary format for speed and size.
+
+
+EC_grid_assumed_int
+-------------------
+As above, but for grids where the coordinates can be assumed to be in integers
+(useful for some problems and reduces file complexity).
+
+
+FFFTW
+-----
+Modern Fortran 2003 wrapper for the FFTW3 fourier transform library
+(http://www.fftw.org).  It removes the need for quite a bit of surrounding code
+to create complex traces when transforming real ones.  (The name is short for
+'Fastest Fortran Fourier Transform in the West')
+
+
+anisotropy_ajn
+--------------
+Deal with generally-anisotropic elastic constants, including calculate seismic
+velocities in anisotropic media, create constants with certain symmetries, and
+more.  Meant to offer feature parity and similar calling convention to the
+popular MSAT Matlab toolbox (http://www1.gly.bris.ac.uk/MSAT/)
+
+
+constants
+---------
+Contains physical and Fortran real precision constants.  Much neglected.
+
+
+density_1d
+----------
+Density of a few seismic 1D Earth models.  Much neglected.
+
+
+f90sac
+------
+Deal with date in the Seismic Analysis Code (SAC) format.  Written by James
+Wookey (see source for licence).
+
+
+get_args
+--------
+Get command line arguments with relatively little fuss.
+
+
+global_1d_models
+----------------
+Get properties of varous seismic 1D Earth models, including pressure, density,
+velocity, and so on.
+
+
+mod_raypaths
+------------
+Describe and manipulate sets of numbers which describe the paths of rays in
+the Earth.
+
+
+moment_tensor
+-------------
+Seismic moment tensor manipulation, including produce the radiation pattern
+from an arbitrary moment tensor.
+
+
+plate_motion
+------------
+Use some current (absolute) plate motion models (e.g., NUVEL1A-HS3, MORVEL) to
+calculate absolute and relative plate motions on Earth.
+
+
+spherical_geometry
+------------------
+Convert from, to and between cartesian, spherical and geographic coordinate
+systems on the sphere.
+
+
+spherical_splines
+-----------------
+Fit and evaluate data on the sphere using spherical splines with variable
+spacing.
+
+
+splitwave
+---------
+Forward model shear wave splitting along defined raypaths.
+
+
+statistical
+-----------
+Assortment of statistical functions, including circular statistics.
+
+
+timing
+------
+Simple routines to make timing your Fortran codes easier.
