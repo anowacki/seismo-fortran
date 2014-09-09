@@ -26,6 +26,7 @@ BINDIR = ~/Applications/bin
 #     -lfftw3f
 
 PROGS = $(B)/CIJ_phase_vels \
+        $(B)/CIJ_pitl \
         $(B)/CIJ_rotV \
         $(B)/CIJ_rot_azinc \
         $(B)/GPa2km \

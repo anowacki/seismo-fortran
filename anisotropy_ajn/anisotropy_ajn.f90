@@ -407,6 +407,75 @@ end function CIJ_thom_st
 !-------------------------------------------------------------------------------
 
 !===============================================================================
+   function CIJ_pitl(d1, Vp1, Vs1, rho1, d2, Vp2, Vs2, rho2) result(C)
+!===============================================================================
+!  Return the elastic constants for a periodic thin-layered material made up of
+!  two types of isotropic layers, regularly repeated, where the layering is in
+!  the x-y plane (i.e., constants have symmetry about z or x3).
+!  See:
+!     G. W. Postma (1955).
+!     WAVE PROPAGATION IN A STRATIFIED MEDIUM, Geophysics, 20(4), 780-806.
+!     doi: 10.1190/1.1438187
+!  INPUT:
+!     d1, d2     : Relative widths of layers 1 and 2 (do not need to total 1)
+!                [unitless]
+!     Vp1, Vp2   : P-wave velocity of layers 1 and 2 [m/s]
+!     Vs1, Vs2   : S-wave velocity of layers 1 and 2 [m/s]
+!     rho1, rho2 : Densities of layers 1 and 2 [kg/m^3]
+!  OUTPUT:
+!     C(6,6)     : Voigt matrix of elastic constants, density-normalised [m^2/s^2]
+      real(rs), intent(in) :: d1, d2, Vp1, Vp2, Vs1, Vs2, rho1, rho2
+      real(rs) :: C(6,6)
+      real(rs) :: D, l1, l2, m1, m2, l1p2m1, l2p2m2
+      C = 0._rs
+      ! Check parameters
+      call check_positive('d1',  d1)
+      call check_positive('Vp1', vp1)
+      call check_positive('Vs',  vs1)
+      call check_positive('d2',  d2)
+      call check_positive('Vp2', vp2)
+      call check_positive('Vs2', vs2)
+      ! Get Lame parameters from velocities
+      m1 = rho1*Vs1**2
+      m2 = rho2*Vs2**2
+      l1 = rho1*Vp1**2 - 2._rs*m1
+      l2 = rho2*Vp2**2 - 2._rs*m2
+      ! Time-saving terms
+      l1p2m1 = l1 + 2._rs*m1
+      l2p2m2 = l2 + 2._rs*m2
+      ! D term, p. 785
+      D = (d1 + d2)*(d1*l2p2m2 + d2*l1p2m1)
+      ! Eq. (7)
+      C(1,1) = ((d1+d2)**2*l1p2m1*l2p2m2 + 4._rs*d1*d2*(m1 - m2) &
+               *((l1 + m1) - (l2 + m2)))/D
+      C(2,2) = C(1,1)
+      C(1,2) = ((d1 + d2)**2*l1*l2 + 2._rs*(l1*d1 + l2*d2)*(m2*d1 + m1*d2))/D
+      C(2,1) = C(1,2)
+      C(1,3) = ((d1 + d2)*(l1*d1*l2p2m2 + l2*d2*l1p2m1))/D
+      C(3,1) = C(1,3)
+      C(2,3) = C(1,3)
+      C(3,2) = C(2,3)
+      C(3,3) = ((d1 + d2)**2*l1p2m1*l2p2m2)/D
+      C(4,4) = (d1 + d2)*m1*m2/(d1*m2 + d2*m1)
+      C(5,5) = C(4,4)
+      C(6,6) = (m1*d1 + m2*d2)/(d1 + d2)
+      ! Normalise back to average density
+      C = C*(d1 + d2)/(d1*rho1 + d2*rho2)
+
+   contains
+      subroutine check_positive(name, var)
+         character(len=*), intent(in) :: name
+         real(rs), intent(in) :: var
+         if (var <= 0._rs) then
+            write(0,'(a)') 'anisotropy_ajn: CIJ_pitl: Error: '//trim(name) &
+               //' must be greater than zero'
+            stop
+         endif
+      end subroutine check_positive
+   end function CIJ_pitl
+!-------------------------------------------------------------------------------
+
+!===============================================================================
    subroutine CIJ_VTI2thom(C,eps,gam,del)
 !===============================================================================
 !  Given a normalised elasticity tensor and density, return the Thomsen (1986)
