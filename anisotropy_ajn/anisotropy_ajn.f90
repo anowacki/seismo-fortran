@@ -268,7 +268,19 @@
 !===============================================================================
    function CIJ_thom(vp,vs,rho,eps,gam,del)
 !===============================================================================
-!  Functional form of the subroutine thom
+!  Return the elastic tensor for a set of Thomsen parameters, assuming weak
+!  anisotropy:
+!     Thomsen (1986) Weak elastic anisotropy.  Geophysics, 51, 10, 1954-1966.
+!  INPUT:
+!     vp   : Vpv: P wave velocity for vertically travelling waves. [m/s]
+!     vs   : Vsh: S wave velocity for horzontally-polarised waves travelling
+!            horizontally. [m/s]
+!     rho  : Density. [kg/m^3]
+!     eps,gam,del : Thomsen's parameters epsilon, gamma and delta. [unitless]
+!  OUTPUT:
+!     C(6,6) : Elastic constants, NOT DENSITY NORMALISED! [Pa]
+!              (Remember to normalise by density if using other routines which
+!              assume that, which is most of those in this module.)
 
      implicit none
      real(rs),intent(in) :: vp,vs,rho,eps,gam,del
@@ -282,12 +294,20 @@
 !===============================================================================
 function CIJ_thom_st(vp,vs,rho,eps,gam,delst) result(CC)
 !===============================================================================
-!  Output the elastic tensor given a set of Thomsen parameters, with no
+!  Return the elastic tensor given a set of Thomsen parameters, with no
 !  assumption about the strength of anisotropy (using delta^star):
 !     Thomsen (1986) Weak elastic anisotropy.  Geophysics, 51, 10, 1954-1966.
-!  Input is in m/s and kg/m^3.
-!  OUTPUT IS FULL ELASTICITY TENSOR, NOT DENSITY-NORMALISED TENSOR!!!!
-!  Remember to normalise by density if using other routines with require that.
+!  INPUT:
+!     vp   : Vpv: P wave velocity for vertically travelling waves. [m/s]
+!     vs   : Vsh: S wave velocity for horzontally-polarised waves travelling
+!            horizontally. [m/s]
+!     rho  : Density. [kg/m^3]
+!     eps,gam,delst : Thomsen's parameters epsilon, gamma and delta^star.
+!                     [unitless]
+!  OUTPUT:
+!     C(6,6) : Elastic constants, NOT DENSITY NORMALISED! [Pa]
+!              (Remember to normalise by density if using other routines which
+!              assume that, which is most of those in this module.)
    implicit none
    real(rs), intent(in) :: vp, vs ,rho, eps, gam, delst
    real(rs) :: CC(6,6), a, b, c
@@ -326,13 +346,13 @@ end function CIJ_thom_st
 !  as used typically in global seismology.  Average velocities are given by:
 !        15*rho*<Vp>^2 = 3*C + (8 + 4*eta)*A + 8*(1 - eta)*L
 !        15*rho*<Vs>^2 =   C + (1 - 2*eta)*A + (6 + 4*eta)*L + 5*N
-!     vp:   Voigt average P wave velocity
-!     vs:   Voigt average shear wave velocity
-!     rho:  Density
-!     xi:   (Vsh^2/Vsv^2) of horizontal waves
-!     phi:  (Vpv^2/Vph^2)
-!     eta:  C13/(C11 - 2*C44)
-!  Input is in m/s and kg/m^3
+!  INPUT:
+!     vp:   Voigt average P wave velocity [m/s]
+!     vs:   Voigt average shear wave velocity [m/s]
+!     rho:  Density [kg/m^3]
+!     xi:   (Vsh^2/Vsv^2) of horizontal waves [unitless]
+!     phi:  (Vpv^2/Vph^2) [unitless]
+!     eta:  C13/(C11 - 2*C44) [unitless]
 !  Output is UNNORMALISED ELASTICITY TENSOR, not density-normalised
 
       implicit none
@@ -374,11 +394,11 @@ end function CIJ_thom_st
 !  to:
 !        <Vp>^2 = (1/5)*(Vpv^2 + 4*Vph^2)
 !        <Vs>^2 = (1/3)*(Vsh^2 + 2*Vsv^2)
-!     vp:   'Average' P-wave velocity
-!     vs:   'Average' S-wave velocity
-!     rho:  Density
+!  INPUT:
+!     vp:   'Average' P-wave velocity [m/s]
+!     vs:   'Average' S-wave velocity [m/s]
+!     rho:  Density [kg/m^3]
 !     xi,phi:  Dimensionaless radial anisotropy parameters
-!  Input is in m/s and kg/m^3
 !  Output is UNNORMALISED ELASTICITY TENSOR, not density normalised
 
       implicit none
@@ -480,6 +500,11 @@ end function CIJ_thom_st
 !===============================================================================
 !  Given a normalised elasticity tensor and density, return the Thomsen (1986)
 !  parameters.  The tensor must be VTI, symmetrical about x3.
+!  INPUT:
+!     C(6,6)    : Voigt-notation elasticity matrix.  Because outputs are
+!                 unitless, input can be in Pa or m^2/s^2.
+!  OUTPUT:
+!     eps,gam,del : Thomsen's parameters epsilon, gamma and delta. [unitless]
       implicit none
       real(rs),intent(in) :: C(6,6)
       real(rs),intent(out) :: eps,gam,del
@@ -511,6 +536,23 @@ end function CIJ_thom_st
 !  Give the average of a set of constants rotated about one of the principal
 !  axes.  The subroutine rotates the constants by 360/nrot each time and
 !  sums the constants with one's method of choise (V,R,VRH).
+!  INPUT:
+!     Cin(6,6)    : Voigt elasticity matrix [units determine output]
+!     axis        : [1,2,3] Axis about which to average:
+!                   1 => rotate about x1 (x).
+!                   2 => rotate about x2 (y).
+!                   3 => rotate about x3 (z).
+!  INPUT (OPTIONAL):
+!     ave_type    : ['v','r','vrh'] Type of averaging to use:
+!                   'v'   => Voigt averaging (mean of stiffness)
+!                   'r'   => Reuss averaging (mean of compliances)
+!                   'vrh' => Voigt-Reuss-Hill averaging (mean of Voigt and
+!                            Reuss average)
+!     nrot        : Number of different rotations to apply when averaging.
+!  OUTPUT:
+
+
+
       implicit none
       real(rs), intent(in) :: Cin(6,6)
       integer, intent(in) :: axis
@@ -528,7 +570,8 @@ end function CIJ_thom_st
       ! Check input options
       if (present(nrot)) then
          if (nrot <= 1) then
-            write(0,'(a)') 'anisotropy_ajn: CIJ_axial_average: nrot must be greater than 1'
+            write(0,'(a)') 'anisotropy_ajn: CIJ_axial_average: nrot must be ' &
+               // 'greater than 1'
             stop
          endif
          nrotations = nrot
@@ -536,13 +579,15 @@ end function CIJ_thom_st
       if (present(ave_type)) then
          if (ave_type /= 'v' .and. ave_type /= 'r' .and. ave_type /= 'vrh' .and. &
              ave_type /= 'V' .and. ave_type /= 'R' .and. ave_type /= 'VRH') then
-            write(0,'(a)') 'anisotropy_ajn: CIJ_axial_average: ave_type must be V(oigt), R(euss) or VRH (Voigt-Reuss-Hill)'
+            write(0,'(a)') 'anisotropy_ajn: CIJ_axial_average: ave_type must ' &
+               // 'be V(oigt), R(euss) or VRH (Voigt-Reuss-Hill)'
             stop
          endif
          average_type = ave_type
       endif
       if (axis < 1 .or. axis > 3) then
-         write(0,'(a)') 'anisotropy_ajn: CIJ_axial_average: iaxis must be 1, 2 or 3 (a, b or c axes)'
+         write(0,'(a)') 'anisotropy_ajn: CIJ_axial_average: iaxis must be 1, ' &
+            // '2 or 3 (a, b or c axes)'
          stop
       endif
 
@@ -605,7 +650,10 @@ end function CIJ_thom_st
 !===============================================================================
    function CIJ_iso(vp,vs)
 !===============================================================================
-!  Functional form of the subroutine isocij
+!  Return a set of isotropic elastic constants from Vp and Vs.
+!  INPUT:
+!     Vp, Vs : Isotropic velocity. [m/s]
+!  OUTPUT is density-normalised Voigt elasticity matrix. [m^2/s^2]
       implicit none
       real(rs),intent(in) :: vp,vs
       real(rs)            :: CIJ_iso(6,6)
@@ -672,21 +720,26 @@ end function CIJ_thom_st
    end subroutine CIJ_load_list
 !===============================================================================
 
-
 !===============================================================================
    subroutine CIJ_load(fname,C,rho)
 !===============================================================================
-!
-!  Load a set of elastic constants
-!
-!-------------------------------------------------------------------------------
+!  Read a set of elastic constants and density from a file in the following
+!  format:
+!     i j C(i,j)
+!  Each constant (21) is numbered according to its position in the Voigt matrix
+!  and the value for that constant follows.  Density is indicated by i=j=7.
+!  INPUT:
+!     fname  : Name of file
+!  OUTPUT:
+!     C(6,6) : Voigt elasticity matrix, density-normalised. [m^2/s^2]
+!     rho    : Density. [kg/m^3]
+
       implicit none
       real(rs) :: C(6,6) ! Voigt notation matrix
       real(rs) :: ec, rho
       integer :: ioflag ! error flags
       integer :: i,j,nec
 
-!      character (len = 80) :: fname
       character(*) :: fname
 !  ** open the EC file and read in elastic constants
       C(:,:) = 0.0 ; nec = 0
@@ -743,10 +796,15 @@ end function CIJ_thom_st
 !===============================================================================
   subroutine CIJ_save(fname,C,rho)
 !===============================================================================
-!
-!  Save a set of elastic constants
-!
-!-------------------------------------------------------------------------------
+!  Save a set of elastic constants to a file using the following format:
+!     i j C(i,j)
+!  Each constant (21) is numbered according to its position in the Voigt matrix
+!  and the value for that constant follows.  Density is indicated by i=j=7.
+!  INPUT:
+!     fname   : Name of file to write to.  Existing files are overwritten.
+!     C(6,6)  : Voigt elasticity matrix, density-normalised. [m^2/s^2]
+!     rho     : Density. [kg/m^3]
+
       implicit none
       real(rs),intent(in) :: C(6,6),rho
       character(len=*),intent(in) :: fname
@@ -782,6 +840,12 @@ end function CIJ_thom_st
 !          (+ve from 2 -> 1)
 !
 !  The rotations are applied in this order
+!
+!  INPUT:
+!     C(6,6)      : Voigt elasticity matrix. [units determine output]
+!     alp,bet,gam : Rotation angles alpha, beta and gamma. [degrees]
+!  OUTPUT:
+!     CR(6,6)     : Rotated matrix. [units same as C]
 !
 !-------------------------------------------------------------------------------
 !  This newer version uses the basis change formulae given by A.F. Bower,
@@ -997,6 +1061,17 @@ end function CIJ_thom_st
 ! rotation appears to rotate the body anticlockwise when looking down the axis.
 !
 ! Formulae from http://en.wikipedia.org/wiki/Euler_angles
+!
+!  INPUT:
+!     C(6,6)  : Voigt elasticity matrix. [units determine output units]
+!     phi1    : Angle of rotation about first axis. [degrees]
+!     theta   : Angle of rotation about second axis. [degrees]
+!     phi2    : Angle of rotation about third axis. [degrees]
+!  INPUT (OPTIONAL):
+!     passive : [T/F; default T] If .true., perform a passive rotation.
+!     type    : [default 'xzx' = 'x1z2x3'] Set type of rotation.
+!  OUTPUT is rotated tensor with same units as input.
+
       real(rs), intent(in) :: C(6,6), phi1, theta, phi2
       character(len=*), intent(in), optional :: type
       logical, intent(in), optional :: passive
@@ -1013,7 +1088,7 @@ end function CIJ_thom_st
 
       type_in = 'z1x2z3'
       if (present(type)) type_in = type
-      select case(type)
+      select case(type_in)
          case('x1z2x3', 'xzx')
             R = transpose(reshape( &
                (/   c2,            -c3*s2,              s2*s3, &
@@ -1192,6 +1267,12 @@ end function CIJ_thom_st
 ! Bowers, 'Applied mechanics of solids', section 3.2.11 (http://solidmechanics.org/),
 ! which appears to be faster by about 15% than the traditional tensor arithmetic
 ! as used by Mainprice and in CIJ_rot3_old.
+!
+!  INPUT:
+!     C(6,6) : Voigt elasticity matrix. [units determine output]
+!     M(3,3) : Transformation matrix. [unitless]
+!  OUTPUT is rotated Voigt matrix [units determined by input]
+
       implicit none
       real(rs), intent(in) :: C(6,6),M(3,3)
       real(rs) :: CT(6,6),K(6,6),K1(3,3),K2(3,3),K3(3,3),K4(3,3)
@@ -1234,7 +1315,15 @@ end function CIJ_thom_st
 !  Calculate the effective splitting for two anisotropic layers using the
 !  theory of Silver and Savage (1994). Implicitly assumes spol=0 (!)
 !
-!===============================================================================
+!  INPUT:
+!     fast1, fast2 : Orientation of fast shear wave in layers 1 and 2
+!                    respectively of two-layer medium. [degrees]
+!     tlag1, tlag2 : Delay time between shear waves in layesr 1 and 2
+!                    respectively of two-layer medium. [s]
+!  OUTPUT:
+!     fast_eff     : Effective fast orientation of medium. [degrees]
+!     tlag_eff     : Effective delay time of medium. [s]
+
       implicit none
 !  ** arguments (inputs)
       real(rs) :: tlag1,fast1 ! layer 1 splitting parameters (s,deg)
@@ -1320,9 +1409,17 @@ end function CIJ_thom_st
 !===============================================================================
    subroutine CIJ_VRH(VF1,C1,rh1,VF2,C2,rh2,Cave,rhave)
 !===============================================================================
-! Calculate the Voigt-Reuss-Hill average of two tensors and densities
-! f90 version by AJN from MATLAB code by JW 2010/10
-!
+! Calculate the Voigt-Reuss-Hill average of two tensors and densities.
+!  INPUT:
+!     VF1, VF2         : Volume fraction of two tensors.  Need not sum to 1. 
+!                        [unitless]
+!     C1(6,6), C2(6,6) : Voigt elasticity matrices of two tensors, density-
+!                        normalised. [m^2/s^2]
+!     rh1, rh2         : Density of two tensors. [kg/m^3]
+!  OUTPUT:
+!     Cave(6,6)        : VRH average of tensors. [m^s/s^2]
+!     rhave            : Average of densities.
+
       implicit none
 
       real(rs)   :: VF1,VF2,rh1,rh2,rhave,C1(6,6),C2(6,6),Cave(6,6)
@@ -1365,11 +1462,19 @@ end function CIJ_thom_st
 !==============================================================================
    subroutine CIJ_VRH_n(n,VF_in,C_in,rh_in,Cave,rhave)
 !==============================================================================
-! Calculate the Voigt-Reuss-Hill average of n tensors and densities
-! VF and rh are column vectors of length n
-! C is a tensor dimensions (n,6,6)
-! AJN 2011/02
-!
+! Calculate the Voigt-Reuss-Hill average of n tensors and densities.
+!  INPUT:
+!     n          : Number of tensors to average.
+!     VF_in(n)   : Array of volume fractions of each tensor. [unitless]
+!     C_in(n,6,6): Array of Voigt elasticity matrices, density-normalised.
+!                  The C(i,:,:) set of constants corresponds to volume fraction
+!                  VF_in(i) and density rh_in(i). [m^2/s^2]
+!     rh_in(n)   : Array of densities. [kg/m^3]
+!  OUTPUT:
+!     Cave(6,6)  : Voigt elasticity matrix, density-normalised, of VRH average
+!                  [m^2/s^2]
+!     rhave      : Average density. [kg/m^3]
+
       implicit none
 
       integer,intent(in)   :: n
@@ -1865,6 +1970,9 @@ end function CIJ_thom_st
 !      Phys. Rev. Lett. (2008) vol. 101 (5) pp. 055504
 !  and: Hill, R. The elastic behaviour of a crystalline aggregate.
 !      P Phys Soc Lond A (1952) vol. 65 (389) pp. 349-355
+!  INPUT:
+!     C(6,6) : Voigt elasticity matrix.  Units do not affect value of Au.
+!  OUTPUT is value of Universal Elastic Anisotropy Index, Au. [unitless]
 
      implicit none
 
@@ -2139,6 +2247,16 @@ end function CIJ_thom_st
 !  Show a pretty matrix for the values in C.
 !  Can choose which power to divide through by and how many decimal places, or
 !  choose to show all values as exponentials.
+!  INPUT:
+!     C(6,6) : Voigt elasticity matrix. [units determine display output]
+!  INPUT (OPTIONAL):
+!     unit   : Fortran logical unit to use for output. [default is 6 for stdout]
+!     power  : Display as real numbers divided through by 10^power.  Cannot be
+!              used with expo. [default determined automatically by largest value]
+!     ndp    : Number of decimal places to display. [default 6]
+!     expo   : [T/F] If .true., use scientific notation for all components of
+!              tensor. [default .false.]
+
       implicit none
 
       real(rs), intent(in) :: C(6,6)
@@ -2215,7 +2333,8 @@ end function CIJ_thom_st
       do i = 1, 6
          do j = i+1, 6
             if (abs(C(i,j) - C(j,i)) > tol) then
-               write(0,'(a)') 'CIJ_test: Warning: Matrix is not symmetric'
+               write(0,'(a)') 'anisotropy_ajn: CIJ_is_stable: Warning: Matrix ' &
+                  // 'is not symmetric'
                call CIJ_disp(C)
             endif
          enddo
@@ -2482,6 +2601,16 @@ end function CIJ_CtoS
 !  From: http://www.scribd.com/doc/46792210/FORTRAN77-Function-to-calculate-matrix-determinant
 !  Modified to use assumed-shape array to prevent the creation of an array
 !  temporary (speeds up by > 5x), but limits the maximum matrix size to 6x6.
+!
+!  INPUT:
+!     A(:,:)  : [dimensions <= (6,6)] Input matrix.
+!  OUTPUT (OPTIONAL):
+!     exists  : [T/F] Return whether or not the matrix has a determinant.
+!               If present, the routine will not stop if the matrix has no
+!               determinant and return 0.
+!  OUTPUT is value of determinant.  Routine will stop the program if the matrix
+!     has not determinant, unless one supplies the optional output argument exists.
+
       implicit none
       real(8), intent(in) :: A(:,:)
       logical, optional, intent(out) :: exists
@@ -2559,7 +2688,8 @@ end function CIJ_CtoS
 !     v(n,n)   : Matrix of eigenvectors.
 !                The ith eigenvector is placed in v(:,i) and corresponds to
 !                eigenvalue d(i).
-!     niter    : (Optional) The number of iterations required for convergence.
+! OUTPUT (OPTIONAL):
+!     niter    : The number of iterations required for convergence.
 
       integer, parameter :: nmax = 100, max_iter = 50, rs = 8
       real(rs), parameter :: tol = tiny(0._rs)
