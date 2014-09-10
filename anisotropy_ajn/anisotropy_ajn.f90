@@ -228,7 +228,6 @@
 !  OUTPUT IS FULL ELASTICITY TENSOR, NOT DENSITY-NORMALISED TENSOR!!!!
 !  Remember to normalise by density if using other routines which require that.
 
-   implicit none
       real(rs),intent(out) :: c(6,6)
       real(rs),intent(in)  :: vp,vs,rho
       real(rs),intent(in)  :: eps,gam,del
@@ -282,7 +281,6 @@
 !              (Remember to normalise by density if using other routines which
 !              assume that, which is most of those in this module.)
 
-     implicit none
      real(rs),intent(in) :: vp,vs,rho,eps,gam,del
      real(rs)            :: CIJ_thom(6,6)
 
@@ -308,7 +306,7 @@ function CIJ_thom_st(vp,vs,rho,eps,gam,delst) result(CC)
 !     C(6,6) : Elastic constants, NOT DENSITY NORMALISED! [Pa]
 !              (Remember to normalise by density if using other routines which
 !              assume that, which is most of those in this module.)
-   implicit none
+
    real(rs), intent(in) :: vp, vs ,rho, eps, gam, delst
    real(rs) :: CC(6,6), a, b, c
    integer :: i, j
@@ -355,7 +353,6 @@ end function CIJ_thom_st
 !     eta:  C13/(C11 - 2*C44) [unitless]
 !  Output is UNNORMALISED ELASTICITY TENSOR, not density-normalised
 
-      implicit none
       real(rs) :: CIJ_global_VTI(6,6)
       real(rs),intent(in) :: vp,vs,rho,xi,phi,eta
       real(rs) :: C12,A,C,F,L,N
@@ -401,7 +398,6 @@ end function CIJ_thom_st
 !     xi,phi:  Dimensionaless radial anisotropy parameters
 !  Output is UNNORMALISED ELASTICITY TENSOR, not density normalised
 
-      implicit none
       real(rs) :: CIJ_panning_VTI(6,6)
       real(rs),intent(in) :: vp,vs,rho,xi,phi
       real(rs) :: A,C,F,L,N,C12
@@ -505,7 +501,7 @@ end function CIJ_thom_st
 !                 unitless, input can be in Pa or m^2/s^2.
 !  OUTPUT:
 !     eps,gam,del : Thomsen's parameters epsilon, gamma and delta. [unitless]
-      implicit none
+
       real(rs),intent(in) :: C(6,6)
       real(rs),intent(out) :: eps,gam,del
       real(rs) :: tol
@@ -551,9 +547,6 @@ end function CIJ_thom_st
 !     nrot        : Number of different rotations to apply when averaging.
 !  OUTPUT:
 
-
-
-      implicit none
       real(rs), intent(in) :: Cin(6,6)
       integer, intent(in) :: axis
       real(rs), intent(out) :: Cout(6,6)
@@ -627,7 +620,7 @@ end function CIJ_thom_st
 !  Generate a set of elastic constants from isotropic velocities
 !  (input velocities in m/s)
 !-------------------------------------------------------------------------------
-      implicit none
+
       real(rs) :: C(6,6) ! Voigt notation matrix
       real(rs) :: vp,vs
       integer  :: i,j
@@ -654,7 +647,7 @@ end function CIJ_thom_st
 !  INPUT:
 !     Vp, Vs : Isotropic velocity. [m/s]
 !  OUTPUT is density-normalised Voigt elasticity matrix. [m^2/s^2]
-      implicit none
+
       real(rs),intent(in) :: vp,vs
       real(rs)            :: CIJ_iso(6,6)
 
@@ -680,7 +673,7 @@ end function CIJ_thom_st
 !  x, c11,c12,...,c16,c22,...,c26,c33,...,c66,rho
 !
 !-------------------------------------------------------------------------------
-      implicit none
+
       integer :: nin,n
       real(rs) :: C(6,6,nin) ! Voigt notation matrix
       real(rs) :: Cin(21)
@@ -734,7 +727,6 @@ end function CIJ_thom_st
 !     C(6,6) : Voigt elasticity matrix, density-normalised. [m^2/s^2]
 !     rho    : Density. [kg/m^3]
 
-      implicit none
       real(rs) :: C(6,6) ! Voigt notation matrix
       real(rs) :: ec, rho
       integer :: ioflag ! error flags
@@ -805,7 +797,6 @@ end function CIJ_thom_st
 !     C(6,6)  : Voigt elasticity matrix, density-normalised. [m^2/s^2]
 !     rho     : Density. [kg/m^3]
 
-      implicit none
       real(rs),intent(in) :: C(6,6),rho
       character(len=*),intent(in) :: fname
       integer :: i,j
@@ -857,7 +848,7 @@ end function CIJ_thom_st
 !  This routine has been tested and agrees to within 0.01% of the Mainprice
 !  version.
 !-------------------------------------------------------------------------------
-      implicit none
+
       real(rs), intent(in) :: C(6,6),alp,bet,gam
       real(rs), intent(out) :: CR(6,6)
       real(rs) :: a,b,g,R1(3,3),R2(3,3),R3(3,3),R21(3,3),R(3,3)
@@ -910,7 +901,6 @@ end function CIJ_thom_st
 !  This version is now deprecated in favour of the matrix multiplication
 !  approach contained in the new CIJ_rot3.  The new routine is about 15% faster.
 !-------------------------------------------------------------------------------
-      implicit none
 
       real(rs) :: C(6,6), CR(6,6) ! Voigt notation matrix
       real(rs) :: alp,bet,gam ! rotation (clockwise) about 1,2,3 axis respectively
@@ -984,7 +974,6 @@ end function CIJ_thom_st
 !===============================================================================
 !  Rotates 6x6 Voigt tensors about the 1-axis by 90 degrees (clockwise, looking
 !  at origin): for this special case we can simply subsitute values for speed.
-      implicit none
       real(rs),intent(in) :: C(6,6)
       real(rs)            :: CIJ_rot90x(6,6),R(6,6)
       integer             :: i,j
@@ -1007,7 +996,6 @@ end function CIJ_thom_st
 !===============================================================================
 !  Rotates 6x6 Voigt tensors about the 2-axis by 90 degrees (clockwise, looking
 !  at origin): for this special case we can simply subsitute values for speed.
-      implicit none
       real(rs),intent(in) :: C(6,6)
       real(rs)            :: CIJ_rot90y(6,6),R(6,6)
       integer             :: i,j
@@ -1030,7 +1018,6 @@ end function CIJ_thom_st
 !===============================================================================
 !  Rotates 6x6 Voigt tensors about the 3-axis by 90 degrees (clockwise, looking
 !  at origin): for this special case we can simply subsitute values for speed.
-      implicit none
       real(rs),intent(in) :: C(6,6)
       real(rs)            :: CIJ_rot90z(6,6),R(6,6)
       integer             :: i,j
@@ -1141,7 +1128,6 @@ end function CIJ_thom_st
 !===============================================================================
 ! Transform a tensor so that it is its mirror image across the plane normal to x
 ! This can be done by swapping values for speed for this simple case.
-      implicit none
       real(rs), intent(in) :: C(6,6)
       real(rs) :: F(6,6)
       integer :: i,j
@@ -1160,7 +1146,6 @@ end function CIJ_thom_st
 !===============================================================================
 ! Transform a tensor so that it is its mirror image across the plane normal to y
 ! This can be done by swapping values for speed for this simple case.
-      implicit none
       real(rs), intent(in) :: C(6,6)
       real(rs) :: F(6,6)
       integer :: i,j
@@ -1181,7 +1166,6 @@ end function CIJ_thom_st
 !===============================================================================
 ! Transform a tensor so that it is its mirror image across the plane normal to z
 ! This can be done by swapping values for speed for this simple case.
-      implicit none
       real(rs), intent(in) :: C(6,6)
       real(rs) :: F(6,6)
       integer :: i,j
@@ -1207,7 +1191,6 @@ end function CIJ_thom_st
 !  C(6,6) : Elasticity tensor
 !  V(3)   : Vector defining axis
 !  phi    : Rotation angle / degrees
-      implicit none
       real(rs), intent(in) :: CC(6,6), v(3), phi
       real(rs) :: CCrot(6,6)
       real(rs) :: vnorm(3), R(3,3), a, b, c, d, phi2
@@ -1243,7 +1226,7 @@ end function CIJ_thom_st
 !  az     : Azimuth, measured from +x1 towards -x2 / degrees
 !  inc    : Inclination, measured from x1-x2 plane towards +x3 / degrees
 !  phi    : Rotation angle / degrees
-      implicit none
+
       real(rs), intent(in) :: C(6,6), azd, incd, phid
       real(rs) :: Crot(6,6)
       real(rs) :: v(3), az, inc
@@ -1273,7 +1256,6 @@ end function CIJ_thom_st
 !     M(3,3) : Transformation matrix. [unitless]
 !  OUTPUT is rotated Voigt matrix [units determined by input]
 
-      implicit none
       real(rs), intent(in) :: C(6,6),M(3,3)
       real(rs) :: CT(6,6),K(6,6),K1(3,3),K2(3,3),K3(3,3),K4(3,3)
       integer :: i,j
@@ -1324,7 +1306,6 @@ end function CIJ_thom_st
 !     fast_eff     : Effective fast orientation of medium. [degrees]
 !     tlag_eff     : Effective delay time of medium. [s]
 
-      implicit none
 !  ** arguments (inputs)
       real(rs) :: tlag1,fast1 ! layer 1 splitting parameters (s,deg)
       real(rs) :: tlag2,fast2 ! layer 2 splitting parameters (s,deg)
@@ -1374,7 +1355,6 @@ end function CIJ_thom_st
 !
 !     angle :  (I/O) angle to unwind
 !
-      implicit none
       real(rs) :: angle
 
       do ! forever
@@ -1394,7 +1374,6 @@ end function CIJ_thom_st
 !
 !     angle :  (I/O) angle to unwind
 !
-      implicit none
       real(rs) :: angle
 
       do ! forever
@@ -1419,8 +1398,6 @@ end function CIJ_thom_st
 !  OUTPUT:
 !     Cave(6,6)        : VRH average of tensors. [m^s/s^2]
 !     rhave            : Average of densities.
-
-      implicit none
 
       real(rs)   :: VF1,VF2,rh1,rh2,rhave,C1(6,6),C2(6,6),Cave(6,6)
       real(rs)   :: C1_inv(6,6),C2_inv(6,6),reuss_inv(6,6)
@@ -1451,7 +1428,6 @@ end function CIJ_thom_st
    subroutine CIJ_VRH_ajn(VF1,C1,rh1,VF2,C2,rh2,Cave,rhave)
 !===============================================================================
 !  Deprecated synonym for CIJ_VRH
-      implicit none
       real(rs),intent(in) :: VF1,C1(6,6),rh1,VF2,C2(6,6),rh2
       real(rs),intent(out) :: Cave(6,6),rhave
 
@@ -1474,8 +1450,6 @@ end function CIJ_thom_st
 !     Cave(6,6)  : Voigt elasticity matrix, density-normalised, of VRH average
 !                  [m^2/s^2]
 !     rhave      : Average density. [kg/m^3]
-
-      implicit none
 
       integer,intent(in)   :: n
       integer              :: i
@@ -1516,7 +1490,6 @@ end function CIJ_thom_st
 !===============================================================================
 !  Calculate the Voigt average of n tensors and densities
 !  IO as for CIJ_VRH_n
-      implicit none
       real(rs),intent(in) :: VF_in(:), C_in(:,:,:), rh_in(:)
       real(rs),intent(out) :: Cave(6,6), rhave
       integer :: i,n
@@ -1548,7 +1521,6 @@ end function CIJ_thom_st
 !===============================================================================
 !  Calculate the Reuss average of n tensors and densities
 !  IO as for CIJ_VRH_n
-      implicit none
       real(rs),intent(in) :: VF_in(:), C_in(:,:,:), rh_in(:)
       real(rs),intent(out) :: Cave(6,6), rhave
       integer :: i,n
@@ -1604,7 +1576,6 @@ end function CIJ_thom_st
 !  The theory is only valid where e < 0.1 (i.e. phi > 0.4*a), so small aspect
 !  ratios must be accompanied by small volume fractions.
 
-   implicit none
       real(rs),intent(in) :: vp,vs,rho,a,phi,vpi,vsi,rhoi
       real(rs),intent(out) :: Cout(6,6),rhout
       real(rs) :: mu,lam,K,C0(6,6),mui,lami,ki,M,kappa,U1,U3,e,C1(6,6)
@@ -1687,8 +1658,6 @@ end function CIJ_thom_st
 !  Output:
 !    C_out:        ecs, density normalised
 !    rh_out:       effective density
-
-      implicit none
 
      real(rs),intent(in)   :: vp_in,vs_in,rho_in,del_in,c_in,vpi_in,vsi_in,rhoi_in
      real(rs),intent(out)  :: C_out(6,6),rh_out
@@ -1845,7 +1814,6 @@ end function CIJ_thom_st
 !  Lifted from J. Wookey's MATLAB codde cij2cijkl.
 !  2005/07/04 - fixed Vera Schulte-Pelkum's bug
 
-      implicit none
       real(rs),intent(in)  :: C(6,6)
       real(rs)             :: Cij2cijkl(3,3,3,3)
       real(rs)             :: CC(3,3,3,3)
@@ -1905,7 +1873,6 @@ end function CIJ_thom_st
 !  Convert a 3x3x3x3 elasticity tensor to a 6x6 tensor
 !  Lifted from cijkl2cij, MATLAB code by J. Wookey.
 
-     implicit none
      real(rs),intent(in)  :: CC(3,3,3,3)
      real(rs)             :: cijkl2Cij(6,6)
      real(rs)             :: C(6,6)
@@ -1933,7 +1900,6 @@ end function CIJ_thom_st
    CONTAINS
 
       subroutine ijkl2ij_local(ii,jj,kk,ll,iv,jv)
-       implicit none
        integer, intent(in) :: ii,jj,kk,ll
        integer,intent(out) :: iv,jv
 
@@ -1973,8 +1939,6 @@ end function CIJ_thom_st
 !  INPUT:
 !     C(6,6) : Voigt elasticity matrix.  Units do not affect value of Au.
 !  OUTPUT is value of Universal Elastic Anisotropy Index, Au. [unitless]
-
-     implicit none
 
      real(rs),intent(in) :: C_in(6,6)
      real(rs)            :: CIJ_Au
@@ -2020,7 +1984,6 @@ end function CIJ_thom_st
 !-------------------------------------------------------------------------------
 !  2011/08: values of pI, pX, etc., do not seem to be correct at the moment...
 !           This needs to be fixed.  Is this because pI == pi???
-      implicit none
 
       real(rs),intent(in)  :: Cin(6,6)
       real(rs),intent(out),dimension(6,6),optional :: CI,CX,CT,CO,CM,CR
@@ -2140,7 +2103,6 @@ end function CIJ_thom_st
    function CIJ2X(C)
 !===============================================================================
 !  Returns the elastic vector, as defined by Browaeys & Chevrot, GJI, 2004
-      implicit none
       real(rs),intent(in) :: C(6,6)
       real(rs)            :: CIJ2X(21)
 
@@ -2174,7 +2136,6 @@ end function CIJ_thom_st
 !===============================================================================
 !  Return the 6x6 Voigt elasticity matrix, given the elastic vector as defined by
 !  Browaeys & Chevrot, GJI, 2004
-      implicit none
       real(rs), intent(in) :: X(21)
       real(rs)             :: X2CIJ(6,6)
       integer :: i,j
@@ -2228,7 +2189,6 @@ end function CIJ_thom_st
    subroutine CIJ_symm(C)
 !===============================================================================
 !  Make a matrix symmetrical.  Assumes the upper diagonal is filled in
-      implicit none
       real(rs), intent(inout) :: C(6,6)
       integer :: i,j
 
@@ -2256,8 +2216,6 @@ end function CIJ_thom_st
 !     ndp    : Number of decimal places to display. [default 6]
 !     expo   : [T/F] If .true., use scientific notation for all components of
 !              tensor. [default .false.]
-
-      implicit none
 
       real(rs), intent(in) :: C(6,6)
       integer, optional, intent(in) :: unit,power,ndp
@@ -2474,7 +2432,6 @@ end function CIJ_CtoS
 !==============================================================================
    subroutine inverse(n, sz, A, AI)
 ! inverse.f90  compute AI = A^-1  modified simeq.f90
-     implicit none
      integer, intent(in) :: n  ! number of equations
      integer, intent(in) :: sz ! dimension of arrays
      real(rs), dimension(sz,sz), intent(in) :: A
@@ -2611,7 +2568,6 @@ end function CIJ_CtoS
 !  OUTPUT is value of determinant.  Routine will stop the program if the matrix
 !     has not determinant, unless one supplies the optional output argument exists.
 
-      implicit none
       real(8), intent(in) :: A(:,:)
       logical, optional, intent(out) :: exists
       real(8) :: getdet, elem(6,6), m, temp
