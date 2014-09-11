@@ -720,48 +720,65 @@ end function CIJ_thom_st
 !  format:
 !     i j C(i,j)
 !  Each constant (21) is numbered according to its position in the Voigt matrix
-!  and the value for that constant follows.  Density is indicated by i=j=7.
+!  and the value for that constant follows.  Density is indicated by i=j=7
+!  (or i=j=0).
+!  Comments are lines whose first character is a '%' or '#'.
 !  INPUT:
 !     fname  : Name of file
 !  OUTPUT:
 !     C(6,6) : Voigt elasticity matrix, density-normalised. [m^2/s^2]
 !     rho    : Density. [kg/m^3]
 
-      real(rs) :: C(6,6) ! Voigt notation matrix
-      real(rs) :: ec, rho
+      character(len=*), intent(in) :: fname
+      real(rs), intent(out) :: C(6,6), rho
+      real(rs) :: ec
       integer :: ioflag ! error flags
       integer :: i,j,nec
-
-      character(*) :: fname
+      character(len=250) :: line  ! Should be long enough to hold i, j and C(i,j)
 !  ** open the EC file and read in elastic constants
       C(:,:) = 0.0 ; nec = 0
 
       open(unit=99,file=fname, iostat=ioflag, status='old')
       if (ioflag /= 0) then
-         stop 'File not found'
+         write(0,'(a)') 'anisotropy_ajn: CIJ_load: Error: Cannot open file "' &
+            // trim(fname) // '" for reading'
+         stop
       endif
 
       do ! forever
-         read(99,*,iostat=ioflag) i,j,ec
+         ! Read line to skip comments
+         read(99,'(a)',iostat=ioflag) line
          if (ioflag > 0) then ! Problem reading
-            write(0,'(a)') 'anisotropy_ajn: CIJ_load: problem reading .ecs file.'
+            write(0,'(a)') 'anisotropy_ajn: CIJ_load: problem reading elastic' &
+               // 'constants from file"' //trim(fname) // '"'
             stop
          endif
          if (ioflag < 0) exit ! EOF
-         nec = nec + 1 ;
-         if (i==7 .and. j==7) then
+         line = adjustl(line) ! Remove leading spaces
+         if (line(1:1) == '%' .or. line(1:1) == '#') cycle ! Comment line
+         ! Get values from line if not a comment
+         read(line,*,iostat=ioflag) i,j,ec
+         if (ioflag /= 0) then
+            write(0,'(a)') 'anisotropy_ajn: CIJ_load: Error: Cannot get ' &
+               // 'i,j,ec from line "' // trim(line) // '"'
+            stop
+         endif
+         nec = nec + 1
+         if ((i==7 .and. j==7) .or. (i == 0 .and. j ==0)) then
             rho = ec
          else
-            C(i,j) = ec ; C(j,i) = ec ;
+            C(i,j) = ec
+            C(j,i) = ec
          endif
       enddo
 
       nec = nec - 1 ! account for density
-!      close(99)
+      close(99)
 
 !  ** check for a valid number of elastic constants: ie 2, 9, 13 or 21
       if (nec/=2 .and. nec/=9 .and. nec/=13 .and. nec/=21) then
-         write(0,*) 'Invalid number of elastic constants; need 2, 9, 13 or 21'
+         write(0,'(a)') 'anisotropy_ajn: CIJ_load: Error: Invalid number of ' &
+            // 'elastic constants supplied; need 2, 9, 13 or 21'
          stop
       endif
 
@@ -775,12 +792,10 @@ end function CIJ_thom_st
 
 !   ** Make symmetrical
       do i=1,6
-         do j=i,6
+         do j=i+1,6
             C(j,i) = C(i,j)
          enddo
       enddo
-
-      close(99)
 
    end subroutine CIJ_load
 !===============================================================================
