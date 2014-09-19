@@ -17,7 +17,7 @@ RANLIB = ranlib
 # Need to link FFFTW against FFTW3
 # Flags which work using MacPorts on OS X:
 FFFTWOPTS = -I/opt/local/include -L/opt/local/lib -lfftw3 -lfftw3f
-SPLINEOPTS = -framework vecLib -llapack
+SPLINEOPTS = -framework Accelerate -llapack
 # Flags which work on Typhon:
 #FFFTWOPTS = -I/share/apps/local/include -L/share/apps/local/lib -lfftw3 -lfftw3f
 #SPLINEOPTS = -L/share/apps/local/lib -llapack
