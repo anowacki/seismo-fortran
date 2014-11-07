@@ -83,6 +83,12 @@ Use some current (absolute) plate motion models (e.g., NUVEL1A-HS3, MORVEL) to
 calculate absolute and relative plate motions on Earth.
 
 
+sphere_tesselate
+----------------
+Evenly tesselate the sphere into triangular bins, starting with a (20-sided)
+icosahedron.
+
+
 spherical_geometry
 ------------------
 Convert from, to and between cartesian, spherical and geographic coordinate

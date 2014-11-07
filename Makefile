@@ -24,6 +24,8 @@ SPLINEOPTS = -framework vecLib -llapack
 SPLITWAVEOPTS = -L${L} -lFFFTW -lf90sac -lanisotropy_ajn
 F90SACOPTS = -DFORCE_BIGENDIAN_SACFILES
 
+TESSOPTS = -L$(L) -lspherical_geometry
+
 MODS = $(O)/constants.o \
        $(O)/density_1d.o \
        $(O)/EC_grid_assumed_int.o \
@@ -33,6 +35,7 @@ MODS = $(O)/constants.o \
        $(O)/global_1d_models.o \
        $(O)/mod_raypaths.o \
        $(O)/moment_tensor.o \
+       $(O)/sphere_tesselate.o \
        $(O)/spherical_geometry.o \
        $(O)/splitwave.o \
        $(O)/statistical.o \
@@ -83,6 +86,14 @@ $(O)/plate_motion.o: plate_motion/plate_motion.f90
 	ln -sf $(L)/libplate_motion.so.1 $(L)/libplate_motion.so
 	rm -f $(O)/lib$(nm).a
 	$(AR) $(AROPTS) $(L)/lib$(nm).a $(O)/$(nm).o
+	$(RANLIB) $(L)/lib$(nm).a
+
+$(O)/sphere_tesselate.o: $(O)/spherical_geometry.o sphere_tesselate.f90
+	$(FC) ${FCOPTS} ${LOPTS} -c -J$(M) -o $(O)/sphere_tesselate.o sphere_tesselate.f90
+	$(FC) -I$(M) ${TESSOPTS} -o $(L)/libsphere_tesselate.so.1 -shared $(O)/sphere_tesselate.o
+	ln -sf $(L)/libsphere_tesselate.so.1 $(L)/libsphere_tesselate.so
+	rm -f $(O)/lib$(nm).a
+	$(AR) $(AROPTS) $(L)/lib$(nm).a $(O)/$(nm).o $(O)/spherical_geometry.o
 	$(RANLIB) $(L)/lib$(nm).a
 
 $(O)/spherical_splines.o: spherical_splines/spherical_splines.f90
