@@ -14,6 +14,7 @@ LIBS = \
     -lget_args \
     -lglobal_1d_models \
     -lmoment_tensor \
+    -lsphere_tesselate \
     -lspherical_geometry \
     -lsplitwave \
     -lstatistical
@@ -52,6 +53,7 @@ PROGS = $(B)/CIJ_phase_vels \
         $(B)/sdr2MT \
         $(B)/sph \
         $(B)/sph_rand \
+        $(B)/sph_tess \
         $(B)/split_misfit \
         $(B)/split_misfit_ecs \
         $(B)/splitwave \
