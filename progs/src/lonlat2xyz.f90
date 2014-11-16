@@ -14,10 +14,10 @@ program lonlat2xyz
 
    implicit none
 
-   real(8) :: lon, lat, r, x, y, z
+   real(8) :: lon, lat, r, x, y, z, val
    character(len=250) :: arg
    integer :: iostat
-   logical :: fixed_rad = .false.
+   logical :: fixed_rad = .false., value = .false.
 
 !  Check input arguments
    call get_args
@@ -26,9 +26,17 @@ program lonlat2xyz
    iostat = 0
    do while (iostat == 0)
       if (fixed_rad) then
-         read(*,*,iostat=iostat) lon, lat
+         if (value) then
+            read(*,*,iostat=iostat) lon, lat, val
+         else
+            read(*,*,iostat=iostat) lon, lat
+         endif
       else
-         read(*,*,iostat=iostat) lon, lat, r
+         if (value) then
+            read(*,*,iostat=iostat) lon, lat, r, val
+         else
+            read(*,*,iostat=iostat) lon, lat, r
+         endif
       endif
       if (iostat < 0) exit
       if (iostat > 0) then
@@ -36,7 +44,11 @@ program lonlat2xyz
          stop 1
       endif
       call geog2cart(lon, lat, r, x, y, z, degrees=.true.)
-      write(*,*) x, y, z
+      if (value) then
+         write(*,*) x, y, z, val
+      else
+         write(*,*) x, y, z
+      endif
    enddo
 
 contains
@@ -60,6 +72,9 @@ contains
                endif
                fixed_rad = .true.
                iarg = iarg + 2
+            case('-v')
+               value = .true.
+               iarg = iarg + 1
             case('-h')
                call usage
             case default
@@ -73,9 +88,10 @@ contains
    subroutine usage()
    !===============================================================================
       write(0,'(a)') &
-         'Usage: lonlat2xyz (options) < [lon] [lat] [radius]', &
+         'Usage: lonlat2xyz (options) < [lon] [lat] [radius] (value)', &
          'Reads geographic coordinates from stdin and writes cartesian to stdout.', &
          'Options:', &
+         '   -v          : Output the value in the third/fourth column', &
          '   -r [radius] : Fix radius.  If not present, r must be on stdin.'
       stop 1
    end subroutine usage

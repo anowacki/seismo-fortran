@@ -20,6 +20,8 @@
 !===============================================================================
 module spherical_geometry
 
+   implicit none
+
 !  ** size constants
    integer, parameter, private :: i4 = selected_int_kind(9)       ! long int
    integer, parameter, private :: r4 = selected_real_kind(6,37)   ! SP
@@ -253,19 +255,15 @@ module spherical_geometry
      real(rs),intent(out) :: lon2,lat2
      real(rs)             :: lon1,lat1,az,delta
      logical,optional,intent(in) :: degrees
-     logical          :: using_deg,deg
+     logical          :: deg
 
      lon1=lon1_in ; lat1=lat1_in ; az=az_in ; delta=delta_in
 
-     using_deg = present(degrees)
-     if (using_deg) then
-        if (degrees) deg = degrees
-     else
-        deg = .false.
-     endif
+     deg = .false.
+     if (present(degrees)) deg = degrees
 
-     if (using_deg .and. deg) then
-       if (delta > 180.) then
+     if (deg) then
+       if (delta > 360.) then
           write(*,*)'spherical_geometry: step: Error: distance must be less than 180 degrees.'
           stop
        else if (lon1 <-180 .or. lon1 > 180) then
@@ -276,7 +274,7 @@ module spherical_geometry
           stop
        endif
      else
-       if (delta > pi) then
+       if (delta > twopi) then
             write(*,*)'spherical_geometry: step: Error: distance must be less than 2pi radians.'
             stop
         else if (lon1 < -pi .or. lon1 > pi) then
@@ -288,7 +286,7 @@ module spherical_geometry
         endif
      endif
 
-     if (using_deg .and. deg) then
+     if (deg) then
 !  Convert to radians
         lon1=lon1*pi/1.8D2 ; lat1=lat1*pi/1.8D2
         az=az*pi/1.8D2     ; delta=delta*pi/1.8D2
@@ -299,7 +297,7 @@ module spherical_geometry
      lon2 = lon1 + atan2(sin(az)*sin(delta)*cos(lat1),  &
                          cos(delta)-sin(lat1)*sin(lat2) )
 
-     if (using_deg .and. deg) then
+     if (deg) then
 !  Convert to degrees
         lat2=1.8D2*lat2/pi  ; lon2=1.8D2*lon2/pi
         if(lon2>1.8D2) lon2=lon2-3.6D2 ; if(lon2<-1.8D2) lon2=lon2+3.6D2
@@ -701,6 +699,7 @@ module spherical_geometry
 
       lat(n)=90.; lon(n)=0.
 
+      lon_i = 0.
       lat_i = lat(1) - dlat
       do while (lat_i > -90.)
          dlon_i = dlon/sin((90.-lat_i)*pi/180.)
@@ -1203,6 +1202,80 @@ subroutine sg_random_point_geog(lon, lat, degrees)
    lon = alon(1)
    lat = alat(1)
 end subroutine sg_random_point_geog
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+function sg_triangle_area(lon1i, lat1i, lon2i, lat2i, lon3i, lat3i, r, degrees, quiet)
+!===============================================================================
+! Return the area of a spherical triangle defined by the three geographic
+! coordinates.
+! Default is for input in radians; use degrees=.true. for degrees.
+! INPUT:
+!    {lon,lat}{1,2,3} : Coordinates of corners of triangles [radians by default]
+! INPUT (OPTIONAL):
+!    r                : Radius of sphere.  Area is for unit sphere by default.
+!    degrees          : Input coordinates are in radians by default; specify
+!                       .true. for degrees input.
+!    quiet            : If .true., do not complain with a warning about collinear
+!                       points.
+! OUTPUT              : Area of triangle.  Will be in units of r, which is 1
+!                       by default.
+!
+! Note: where two sides of the triangle are similar in length (and the third
+! is about half the other two), l'Huilier's formula becomes unstable.  To guard
+! against that case, we use a different expression; see:
+!   http://en.wikipedia.org/wiki/Spherical_trigonometry#Area_and_spherical_excess
+
+   real(rs), intent(in) :: lon1i, lat1i, lon2i, lat2i, lon3i, lat3i
+   real(rs), optional, intent(in) :: r
+   logical, optional, intent(in) :: degrees, quiet
+   real(rs) :: sg_triangle_area
+   real(rs) :: lon1, lat1, lon2, lat2, lon3, lat3
+   real(rs) :: arc1, arc2, r_in, az1, az2, c
+   real(rs), parameter :: tol = 2._rs*tiny(0._rs)
+   logical :: silent
+
+   silent = .false.
+   if (present(quiet)) silent = quiet
+
+   r_in = 1._rs
+   if (present(r)) r_in = r
+   lon1 = lon1i
+   lat1 = lat1i
+   lon2 = lon2i
+   lat2 = lat2i
+   lon3 = lon3i
+   lat3 = lat3i
+   if (present(degrees)) then
+      if (degrees) then
+         lon1 = to_rad*lon1i
+         lat1 = to_rad*lat1i
+         lon2 = to_rad*lon2i
+         lat2 = to_rad*lat2i
+         lon3 = to_rad*lon3i
+         lat3 = to_rad*lat3i
+      endif
+   endif
+   ! Get lengths of adjacent sides to point 3
+   arc1 = delta(lon2, lat2, lon3, lat3, degrees=.false.)/2._rs
+   arc2 = delta(lon3, lat3, lon1, lat1, degrees=.false.)/2._rs
+
+   ! Get the angle c which is subtended at point 3
+   az1 = azimuth(lon3, lat3, lon1, lat1, degrees=.false.)
+   az2 = azimuth(lon3, lat3, lon2, lat2, degrees=.false.)
+   c = abs(az1 - az2)
+   if (c > pi) c = twopi - c
+   ! If the azimuths to the other two sides are the same or opposite, then
+   ! the points are collinear
+   if (abs(c) < tol .or. abs(pi - c) < tol) then
+      sg_triangle_area = 0._rs
+      if (silent) &
+         write(0,'(a)') 'sg_triangle_area: Warning: points are collinear'
+      return
+   endif
+   sg_triangle_area = 2._rs*atan(tan(arc1)*tan(arc2)*sin(c) &
+      /(1._rs + tan(arc1)*tan(arc2)*cos(c)))*r_in**2
+end function sg_triangle_area
 !-------------------------------------------------------------------------------
 
 !______________________________________________________________________________
