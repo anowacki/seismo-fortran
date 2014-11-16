@@ -176,7 +176,7 @@ function st_icosahedron(pole) result(t)
 
    ! First orientation is the division of the octahedron into segments with the golden
    ! ratio, phi
-   if (.not.pole) then
+   if (.not.pole_in) then
       ! Vertices of triangles, unnormalised
       t%p(1)  = point( 0._rs,    phi,  1._rs)
       t%p(2)  = point( 0._rs,   -phi,  1._rs)
