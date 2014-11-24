@@ -14,7 +14,7 @@ program sph_tess
 
    call get_args
 
-   t = st_icosahedron()
+   t = st_icosahedron(pole=.true.)
    do i = 1, n
       call st_iterate_level(t)
    enddo
