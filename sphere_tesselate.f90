@@ -70,6 +70,7 @@ public :: &
    st_dump_triangles, &
    st_icosahedron, &
    st_iterate_level, &
+   st_new, &
    st_norm_p, &
    st_rotate
 
@@ -143,6 +144,46 @@ subroutine st_dump_triangles(t, geog)
       endif
    enddo
 end subroutine st_dump_triangles
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+function st_new(level, shape, pole) result(t)
+!===============================================================================
+!  Create a new tesselation at one's desired level, ranging from 0 upwards.
+!  Optionally, supply the name of a starting shape.  Current options are:
+!     'icosahedron' ('ico' or 'i') [default]
+!  Optionally, ask for a tesselation with points aligned on the poles with the
+!  pole=.true. argument.
+   implicit none
+   integer, intent(in) :: level
+   logical, intent(in), optional :: pole
+   character(len=*), intent(in), optional :: shape
+   character(len=50) :: shape_in
+   type(tesselation) :: t
+   logical :: pole_in
+   integer :: i
+
+   if (level < 0) then
+      write(0,'(a)') 'st_new: Error: level must be >= 0'
+      error stop
+   endif
+   pole_in = .false.
+   if (present(pole)) pole_in = pole
+   shape_in = 'icosahedron'
+   if (present(shape)) shape_in = tolower(shape)
+   ! Choose starting shape
+   select case(shape_in)
+      case('i', 'ico', 'icosahedron')
+         t = st_icosahedron(pole=pole_in)
+      case default
+         write(0,'(a)') 'st_new: Error: shape "'//trim(shape_in)//'" not recognised'
+         error stop
+   end select
+   ! Iterate to the desired level
+   do i = 1, level
+      call st_iterate_level(t)
+   enddo
+end function st_new
 !-------------------------------------------------------------------------------
 
 !===============================================================================
@@ -533,6 +574,24 @@ function st_rotmat(a, b, c) result(R)
                            0._rs, 0._rs, 1._rs], [3,3]))
    R = matmul(Rz, matmul(Ry, Rx))
 end function st_rotmat
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+function tolower(a) result(b)
+!===============================================================================
+!  Convert the uppercase characters in a string to lowercase
+   implicit none
+   character(len=*), intent(in) :: a
+   character(len=len(a)) :: b
+   integer, parameter :: capA = iachar('A'), capZ = iachar('Z')
+   integer :: i, ia
+   b = a
+   do i = 1, len_trim(a)
+      ia = iachar(a(i:i))
+      if (ia >= capA .and. ia <= capZ) &
+         b(i:i) = achar(iachar(a(i:i)) + 32)
+   enddo
+end function tolower
 !-------------------------------------------------------------------------------
 end module sphere_tesselate
 !-------------------------------------------------------------------------------
