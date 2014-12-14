@@ -37,6 +37,8 @@ PROGS = $(B)/CIJ_phase_vels \
         $(B)/ak135 \
         $(B)/azi \
         $(B)/baz \
+        $(B)/circ_correl \
+        $(B)/circ_stats \
         $(B)/circ_test_orient \
         $(B)/create_wave \
         $(B)/delta \
