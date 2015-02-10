@@ -95,6 +95,11 @@ $(O)/sphere_tesselate.o: $(O)/spherical_geometry.o sphere_tesselate.f90
 	rm -f $(O)/lib$(nm).a
 	$(AR) $(AROPTS) $(L)/lib$(nm).a $(O)/$(nm).o $(O)/spherical_geometry.o
 	$(RANLIB) $(L)/lib$(nm).a
+	@[ "${SEISMO_FORTRAN_DATA}" ] || { \
+		echo ""; echo "==== NOTICE ===="; \
+	    echo "sphere_tesselate: export the following environment variable for caching to work:"; \
+		echo "    SEISMO_FORTRAN_DATA=$(CURDIR)/data"; \
+		echo "================"; }
 
 $(O)/spherical_splines.o: spherical_splines/spherical_splines.f90
 	$(FC) ${FCOPTS} ${LOPTS} -c -J$(M) -o $(O)/spherical_splines.o spherical_splines/spherical_splines.f90
