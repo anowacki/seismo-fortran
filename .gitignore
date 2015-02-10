@@ -20,6 +20,7 @@ anisotropy_ajn/test_transform_M
 anisotropy_ajn/test_symm
 anisotropy_ajn/test_disp
 anisotropy_ajn/test_tensor_rot
+data/*
 plate_motion/apm
 plate_motion/plate_name
 plate_motion/plate_name_list
