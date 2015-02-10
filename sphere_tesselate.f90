@@ -49,6 +49,7 @@ end type triangle
 ! A tesselation of a sphere, with np vertices and nt triangles
 ! p contains all unique points in the tesselation
 ! t contains the indices of p which correspond to the vertices of each triangle
+! b contains the barycentric coordinates of each triangle
 ! Hence to get the corners of triangle i, you can say:
 !     pt = tess%p(tess%t(i))
 !     x = pt%x;  y = pt%y;  z = pt%z
@@ -57,6 +58,7 @@ type, public :: tesselation
    type(point), allocatable, dimension(:) :: p
    type(triangle), allocatable, dimension(:) :: t
    integer :: np, nt
+   type(point), allocatable, dimension(:) :: b
 end type tesselation
 
 
@@ -427,6 +429,27 @@ end subroutine st_iterate_level
 !-------------------------------------------------------------------------------
 
 !===============================================================================
+subroutine st_compute_barycentres(t)
+!===============================================================================
+!  Assuming the barycentring calculation has not been done, compute the barycentres
+!  of each triangle, filling in the t%b set of points
+   type(tesselation), intent(inout) :: t
+   integer :: i
+   if (allocated(t%b)) then
+      if (size(t%b) /= t%nt) then
+         deallocate(t%b)
+         allocate(t%b(t%nt))
+      endif
+   else
+      allocate(t%b(t%nt))
+   endif
+   do i = 1, t%nt
+      t%b(i) = st_barycentre([t%p(t%t(i)%a), t%p(t%t(i)%b), t%p(t%t(i)%c)])
+   enddo
+end subroutine st_compute_barycentres
+!-------------------------------------------------------------------------------
+
+!===============================================================================
 function st_point_exists(p, a, ip) result(exists)
 !===============================================================================
 !  Return .true. if point p exists in the array of points a.
@@ -574,6 +597,19 @@ function st_rotmat(a, b, c) result(R)
                            0._rs, 0._rs, 1._rs], [3,3]))
    R = matmul(Rz, matmul(Ry, Rx))
 end function st_rotmat
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+function st_barycentre(p)
+!===============================================================================
+!  Return the barycentre of an array of points, normalised to the radius of 1.
+   type(point), intent(in), dimension(:) :: p
+   type(point) :: st_barycentre
+   integer :: n
+   n = size(p)
+   st_barycentre = point(sum(p%x), sum(p%y), sum(p%z))
+   call st_norm_p(st_barycentre)
+end function st_barycentre
 !-------------------------------------------------------------------------------
 
 !===============================================================================
