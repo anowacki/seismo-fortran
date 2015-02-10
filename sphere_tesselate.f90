@@ -29,10 +29,21 @@ real(rs), parameter, private :: pi = 4._rs*atan2(1._rs,1._rs)
 ! Debugging variables
 logical, parameter, private :: debug = .false.
 
+! I/O unit for files
+integer, parameter, private :: lu = 10
+! File format version descriptor
+integer, parameter, private :: st_version = 1
+
 ! Tolerance for duplicate point searching; this must be less than the closest
 ! expected point spacing.  It is the 3D distance between the points
 real(rs), parameter, private :: point_tol = 1.e-4_rs
 
+! Location for cache files.  The directory is pre-set to a default location,
+! and routines look in the environment variable SEISMO_FORTRAN_DATA for the
+! data directory.  Routines can set st_cache_dir to fix where the files go,
+! but can't override the environment variable.
+character(len=250), parameter, private :: st_cache_env_var = 'SEISMO_FORTRAN_DATA'
+character(len=250), public :: st_cache_dir = '$HOME/Applications/modules/data'
 
 ! Public types exposed to calling routines
 ! A point in 3d space
@@ -72,12 +83,247 @@ public :: &
    st_dump_triangles, &
    st_icosahedron, &
    st_iterate_level, &
+   st_load_cache, &
+   st_load_tesselation, &
    st_new, &
    st_norm_p, &
+   st_save_cache, &
+   st_save_tesselation, &
    st_rotate
 
 
 contains
+
+!===============================================================================
+subroutine st_save_cache(t)
+!===============================================================================
+!  Save a tesselation to the default cache location.  This is read from the
+!  environment variable $SEISMO_FORTRAN_DATA, or defaults to st_cache_dir
+!  if that is not available.
+   type(tesselation), intent(inout) :: t
+   character(len=250) :: dir, file
+   logical :: dir_exists
+
+   call get_environment_variable(st_cache_env_var, dir)
+   if (dir == '') dir = st_cache_dir
+   ! Check that the directory exists
+   inquire(file=dir, exist=dir_exists)
+   if (.not.dir_exists) then
+      write(0,'(a)') 'st_save_cache: Error: Directory "' // trim(dir) // &
+         '" does not exist'
+      error stop
+   endif
+   write(file,'("ico_pole_",i0.1,".tess")') t%level
+   file = trim(dir) // '/' // trim(file)
+   call st_save_tesselation(t, file)
+end subroutine st_save_cache
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+subroutine st_load_cache(t, exists)
+!===============================================================================
+!  Load a tesselation from the default cache location.  The t%level value must
+!  be filled with the desired tesselation level.  At the moment, only polar,
+!  icosahedral tesselations are supported.
+!  Optionally, the exists argument specified whether the cache file exists.
+!  If this is supplied, the routine will not exit with an error when the file
+!  does not exist.
+   type(tesselation), intent(inout) :: t
+   logical, optional, intent(out) :: exists
+   logical :: file_exists
+   character(len=250) :: dir, file
+
+   call get_environment_variable(st_cache_env_var, dir)
+   if (dir == '') dir = st_cache_dir
+   if (t%level < 0 .or. t%level > 15) then
+      write(0,'(a,i0.1)') 'st_load_cache: Error: tesselation level is ', t%level
+      error stop
+   endif
+   write(file,'("ico_pole_",i0.1,".tess")') t%level
+   file = trim(dir) // '/' // trim(file)
+   inquire(file=file, exist=file_exists)
+   if (present(exists)) then
+      exists = file_exists
+      if (.not.file_exists) return
+   else
+      if (.not.file_exists) then
+         write(0,'(a)') 'st_load_cache: Error: Cache file "' // trim(file) &
+            // '" does not exist'
+         error stop
+      endif
+   endif
+   call st_load_tesselation(file, t)
+end subroutine st_load_cache
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+subroutine st_save_tesselation(t, file, ascii)
+!===============================================================================
+!  Save a tesselation to an output file.  This can be ASCII or Fortran binary;
+!  use ascii=.true. for the former.  These can then be re-read in later.
+!  Binary format is the default
+   type(tesselation), intent(inout) :: t
+   character(len=*), intent(in) :: file
+   logical, optional, intent(in) :: ascii
+   logical :: ascii_in
+   integer :: i, iostat
+   character(len=30) :: string
+
+   ascii_in = .false.
+   if (present(ascii)) ascii_in = ascii
+   if (.not.allocated(t%b)) call st_compute_barycentres(t)
+   ! ASCII file
+   if (ascii_in) then
+      open(lu, file=file, iostat=iostat)
+      call check_open
+      write(lu,'(a,i0.1)') '# sphere_tesselate version ', st_version
+      write(lu,'(i0.1," ",i0.1," ",i0.1)') t%level, t%np, t%nt ! Check on level and num points
+      do i = 1, t%np
+         write(lu,*) t%p(i)
+      enddo
+      do i = 1, t%nt
+         write(lu,*) t%t(i)
+      enddo
+      do i = 1, t%nt
+         write(lu,*) t%b(i)
+      enddo
+      close(lu)
+
+   ! Fortran binary
+   else
+      open(lu, file=file, form='unformatted', iostat=iostat)
+      call check_open
+      write(string,'(a,i0.1)') '# sphere_tesselate version ', st_version
+      write(lu) string
+      write(lu) st_version
+      write(lu) t%level
+      write(lu) t%np
+      write(lu) t%nt
+      write(lu) t%p
+      write(lu) t%t
+      write(lu) t%b
+      close(lu)
+   endif
+
+   contains
+      subroutine check_open
+         if (iostat /= 0) then
+            write(0,'(a)') 'st_save_tesselation: Error: Cannot open file "', &
+               trim(file), '" for reading'
+            error stop
+         endif
+      end subroutine check_open
+end subroutine st_save_tesselation
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+subroutine st_load_tesselation(file, t, ascii)
+!===============================================================================
+!  Read a previously-saved tesselation.  This can be ASCII or Fortran, the latter
+!  being the default.
+   character(len=*), intent(in) :: file
+   type(tesselation), intent(out) :: t
+   logical, intent(in), optional :: ascii
+   logical :: ascii_in
+   character(len=250) :: dummy1, dummy2, dummy3
+   character(len=30) :: version_string
+   integer :: i, iostat, version
+
+   ascii_in = .false.
+   if (present(ascii)) ascii_in = ascii
+   ! ASCII file
+   if (ascii_in) then
+      open(lu, file=file, iostat=iostat)
+      call check_open
+      read(lu,*) dummy1, dummy2, dummy3, version
+      call check_version
+      read(lu,*) t%level, t%np, t%nt
+      call check_num_points
+      call reallocate_arrays
+      do i = 1, t%np
+         read(lu,*) t%p(i)
+      enddo
+      do i = 1, t%nt
+         read(lu,*) t%t(i)
+      enddo
+      do i = 1, t%nt
+         read(lu,*) t%b(i)
+      enddo
+      close(lu)
+
+   ! Fortran binary
+   else
+      open(lu, file=file, form='unformatted', iostat=iostat)
+      call check_open
+      read(lu) version_string
+      read(lu) version
+      call check_version
+      read(lu) t%level
+      read(lu) t%np
+      read(lu) t%nt
+      call check_num_points
+      call reallocate_arrays
+      read(lu) t%p
+      read(lu) t%t
+      read(lu) t%b
+      close(lu)
+   endif
+
+   contains
+      subroutine reallocate_arrays
+         if (allocated(t%p)) then
+            if (size(t%p) /= t%np) then
+               deallocate(t%p)
+               allocate(t%p(t%np))
+            endif
+         else
+            allocate(t%p(t%np))
+         endif
+         if (allocated(t%t)) then
+            if (size(t%t) /= t%nt) then
+               deallocate(t%t)
+               allocate(t%t(t%nt))
+            endif
+         else
+            allocate(t%t(t%nt))
+         endif
+         if (allocated(t%b)) then
+            if (size(t%b) /= t%nt) then
+               deallocate(t%b)
+               allocate(t%b(t%nt))
+            endif
+         else
+            allocate(t%b(t%nt))
+         endif
+      end subroutine reallocate_arrays
+
+      subroutine check_open
+         if (iostat /= 0) then
+            write(0,'(a)') 'st_load_tesselation: Error: Cannot open file "', &
+               trim(file), '" for reading'
+            error stop
+         endif
+      end subroutine check_open
+
+      subroutine check_version
+         if (version /= st_version) then
+            write(0,'(2(a,i0.1),a)') 'st_load_tesselation: Error: Input file "' // &
+               trim(file) // '" has a different version (', version, &
+               ') to that expected (', st_version ,')'
+            error stop
+         endif
+      end subroutine check_version
+
+      subroutine check_num_points
+         if (t%np /= st_num_points(t%level) .or. t%nt /= st_num_faces(t%level)) then
+            write(0,'(5(a,i0.1),a)') 'st_load_tesselation: Error: Input file "' // &
+               trim(file) // '" has (np, nt) = (', t%np, ', ', t%nt, '), which is not ' &
+               // 'as expected for level ', t%level, '(', t%np, ', ', t%nt, ')'
+            error stop
+         endif
+      end subroutine check_num_points
+end subroutine st_load_tesselation
+!-------------------------------------------------------------------------------
 
 !===============================================================================
 subroutine st_dump_points(t, geog)
