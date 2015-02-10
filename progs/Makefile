@@ -56,6 +56,7 @@ PROGS = $(B)/CIJ_phase_vels \
         $(B)/sph \
         $(B)/sph_rand \
         $(B)/sph_tess \
+        $(B)/sph_tess_save \
         $(B)/split_misfit \
         $(B)/split_misfit_ecs \
         $(B)/splitwave \
