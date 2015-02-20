@@ -83,9 +83,12 @@ public :: &
    st_dump_triangles, &
    st_icosahedron, &
    st_iterate_level, &
+   st_level_from_points, &
    st_load_cache, &
    st_load_tesselation, &
    st_new, &
+   st_num_faces, &
+   st_num_points, &
    st_norm_p, &
    st_save_cache, &
    st_save_tesselation, &
@@ -751,6 +754,28 @@ function st_num_points(level) result(npoints)
    integer :: npoints
    npoints = 10*2**(2*level) + 2
 end function st_num_points
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+function st_level_from_points(n, warn) result(level)
+!===============================================================================
+!  Return the level of the tesselation from the number of points, and return
+!  -1 if the number of points does not match an expected tesselation level.
+   integer, intent(in) :: n
+   integer :: level
+   logical, intent(in), optional :: warn
+   logical :: warn_in
+   warn_in = .false.
+   if (present(warn)) warn_in = warn
+   level = 0
+   do while (level <= 10)
+      if (st_num_points(level) == n) return
+      level = level + 1
+   enddo
+   level = -1
+   if (warn_in) write(0,'(a,i0.1)') &
+      'st_level_from_points: Warning: Not an expected number of points: ', n
+end function st_level_from_points
 !-------------------------------------------------------------------------------
 
 !===============================================================================
