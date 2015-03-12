@@ -1642,9 +1642,9 @@ end function CIJ_thom_st
       C1(6,6) = 0
 
       C1(2,2) = C1(1,1)
+      C1(1,2) = C1(1,1)
       C1(5,5) = C1(4,4)
       C1(2,3) = C1(1,3)
-      C1(1,2) = C1(1,3)
 !  Make symmetrical
       do i=1,6; do j=1,6; C1(j,i) = C1(i,j); enddo; enddo
 
