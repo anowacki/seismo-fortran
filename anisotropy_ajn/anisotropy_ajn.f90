@@ -1055,7 +1055,7 @@ end function CIJ_thom_st
 !===============================================================================
 ! Rotate 6x6 Voigt tensors according to the Euler angles supplied.
 ! The default is to use the z1,x2,z3 convention, where we rotate about the initial
-! z axis, then the new x axis, then the new z axis (hence z1x2z3 or xzx).
+! z axis, then the new x axis, then the new z axis (hence z1x2z3 or zxz).
 ! Other notations can be used by supplying a corresponding name.
 ! The rotation is active, so specify passive=.true. if a passive rotation is
 ! preferred.  This is usually the case for Euler angles describing rock texture.
@@ -1071,7 +1071,7 @@ end function CIJ_thom_st
 !     phi2    : Angle of rotation about third axis. [degrees]
 !  INPUT (OPTIONAL):
 !     passive : [T/F; default T] If .true., perform a passive rotation.
-!     type    : [default 'xzx' = 'x1z2x3'] Set type of rotation.
+!     type    : [default 'zxz' = 'z1x2z3'] Set type of rotation.
 !  OUTPUT is rotated tensor with same units as input.
 
       real(rs), intent(in) :: C(6,6), phi1, theta, phi2
