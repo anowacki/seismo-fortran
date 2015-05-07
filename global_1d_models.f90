@@ -77,7 +77,10 @@ module global_1d_models
        r1 = real(ir)                ! Radius to top of shell
        z = 6371. - (r0 + r1)/2.     ! Depth to middle of shell
        if (trim(model_in) == 'AK135') call ak135(z,rho=rho)
-       if (trim(model_in) == 'PREM' ) call prem(z,rho=rho)
+       if (trim(model_in) == 'PREM' ) then
+          call prem(depth, g=gravity)
+          return
+       endif
        rho = rho * 1.e3             ! Convert to kg/m^3
        M = M + rho*(4./3.)*pi*((r1 * 1.e3)**3 - (r0 * 1.e3)**3) ! Add mass within shell
        r0 = r1                      ! Next layer upwards
@@ -125,9 +128,9 @@ module global_1d_models
       r1 = 6371.
       do while (r1 >= r)
          dep = 6371. - r1
-         if (trim(model_in) == 'PREM' ) call prem(dep,rho=rho)
          if (trim(model_in) == 'AK135') call ak135(dep,rho=rho)
-         P = P + gravity(dep)*(rho*1.e3)*(dr*1.e3)
+         if (trim(model_in) == 'PREM' ) call prem(dep,rho=rho)
+         P = P + gravity(dep,model=model)*(rho*1.e3)*(dr*1.e3)
          r1 = r1 - dr
       enddo
 
@@ -300,7 +303,7 @@ subroutine ak135(depth,vp,vs,rho)
 !-------------------------------------------------------------------------------
 
 !===============================================================================
-subroutine prem(depth,vp,vs,rho)
+subroutine prem_old(depth,vp,vs,rho)
 !===============================================================================
 !  AK135 model
    implicit none
@@ -415,7 +418,127 @@ subroutine prem(depth,vp,vs,rho)
    endif
 
    return
-   end subroutine prem
+   end subroutine prem_old
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+subroutine prem(depth,vp,vs,rho,Qmu,Qkappa,vpv,vph,vsv,vsh,eta,g)
+!===============================================================================
+! PREM model
+! Dziewonski & Anderson, 1981, Preliminary reference Earth model, PEPI, 25,
+! 297--356.
+! Parameterised in terms of normalised radius x = r/a, a = 6371 km
+! Output vp and vs are isotropic equivalent velocities; use v{p,s}{v,h} to get
+! the true model anisotropic output.
+   implicit none
+   integer, parameter :: nlayers = 13
+   real(rs), intent(in) :: depth
+   real(rs), intent(out), optional :: vp, vs, rho, Qmu, Qkappa, vpv, vph, vsv, &
+                                      vsh, eta, g
+   real(rs), dimension(nlayers), parameter :: &
+      r    = (/1221.5, 3480.0, 3630.0, 5600.0, 5701.0, 5771.0, 5971.0, 6151.0, &
+               6291.0, 6346.0, 6356.0, 6368.0, 6371.0/), &
+      rho0 = (/13.0885, 12.5815,  7.9565,  7.9565,  7.9565,  5.3197, 11.2494, &
+                7.1089,  2.6910,  2.6910,  2.9000,  2.6000,  1.0200/), &
+      rho1 = (/ 0.0000, -1.2638, -6.4761, -6.4761, -6.4761, -1.4836, -8.0298, &
+               -3.8045,  0.6924,  0.6924,  0.0000,  0.0000,  0.0000/), &
+      rho2 = (/-8.8381, -3.6426,  5.5283,  5.5283,  5.5283,  0.0000,  0.0000, &
+                0.0000,  0.0000,  0.0000,  0.0000,  0.0000,  0.0000/), &
+      rho3 = (/ 0.0000, -5.5281, -3.0807, -3.0807, -3.0807,  0.0000,  0.0000, &
+                0.0000,  0.0000,  0.0000,  0.0000,  0.0000,  0.0000/), &
+      vp0  = (/11.2622, 11.0487, 15.3891, 24.9520, 29.2766, 19.0957, 39.7027, &
+               20.3926,  4.1875,  4.1875,  6.8000,  5.8000,  1.4500/), &
+      vp1 =  (/ 0.0000, -4.0362, -5.3181,-40.4673,-23.6027, -9.8672,-32.6166, &
+              -12.2569,  3.9382,  3.9382,  0.0000,  0.0000,  0.0000/), &
+      vp2 =  (/-6.3640,  4.8023,  5.5242, 51.4832,  5.5242,  0.0000,  0.0000, &
+                0.0000,  0.0000,  0.0000,  0.0000,  0.0000,  0.0000/), &
+      vp3 =  (/ 0.0000,-13.5732, -2.5514,-26.6419, -2.5514,  0.0000,  0.0000, &
+                0.0000,  0.0000,  0.0000,  0.0000,  0.0000,  0.0000/), &
+      vs0 =  (/ 3.6678,  0.0000,  6.9254, 11.1671, 22.3459,  9.9839, 22.3512, &
+                8.9496,  2.1518,  2.1519,  3.9000,  3.2000,  0.0000/), &
+      vs1 =  (/ 0.0000,  0.0000,  1.4672,-13.7818,-17.2473, -4.9324,-18.5956, &
+               -4.4597,  2.3481,  2.3481,  0.0000,  0.0000,  0.0000/), &
+      vs2 =  (/-4.4475,  0.0000, -2.0834, 17.4575, -2.0834,  0.0000,  0.0000, &
+                0.0000,  0.0000,  0.0000,  0.0000,  0.0000,  0.0000/), &
+      vs3 =  (/ 0.0000,  0.0000,  0.9783, -9.2777,  0.9783,  0.0000,  0.0000, &
+                0.0000,  0.0000,  0.0000,  0.0000,  0.0000,  0.0000/), &
+      vpv0 = (/11.2622, 11.0487, 15.3891, 24.9520, 29.2766, 19.0957, 39.7027, &
+               20.3926,  0.8317,  0.8317,  6.8000,  5.8000,  1.4500/), &
+      vpv1 = (/ 0.0000, -4.0362, -5.3181,-40.4673,-23.6027, -9.8672,-32.6166, &
+              -12.2569,  7.2180,  7.2180,  0.0000,  0.0000,  0.0000/), &
+      vph0 = (/11.2622, 11.0487, 15.3891, 24.9520, 29.2766, 19.0957, 39.7027, &
+               20.3926,  3.5908,  3.5908,  6.8000,  5.8000,  1.4500/), &
+      vph1 = (/ 0.0000, -4.0362, -5.3181,-40.4673,-23.6027, -9.8672,-32.6166, &
+              -12.2569,  4.6172,  4.6172,  0.0000,  0.0000,  0.0000/), &
+      vsv0 = (/ 3.6678,  0.0000,  6.9254, 11.1671, 22.3459,  9.9839, 22.3512, &
+                8.9496,  5.8582,  5.8582,  3.9000,  3.2000,  0.0000/), &
+      vsv1 = (/ 0.0000,  0.0000,  1.4672,-13.7818,-17.2473, -4.9324,-18.5956, &
+               -4.4597, -1.4678, -1.4678,  0.0000,  0.0000,  0.0000/), &
+      vsh0 = (/ 3.6678,  0.0000,  6.9254, 11.1671, 22.3459,  9.9839, 22.3512, &
+                8.9496, -1.0839, -1.0839,  3.9000,  3.2000,  0.0000/), &
+      vsh1 = (/ 0.0000,  0.0000,  1.4672,-13.7818,-17.2473, -4.9324,-18.5956, &
+               -4.4597,  5.7176,  5.7176,  0.0000,  0.0000,  0.0000/), &
+      Qmu_model =  (/84.6, -1., 312., 312., 312., 143., 143., 143., 80., 600., &
+                     600., 600., -1./), &
+      Qkappa_model = (/1327.7, 57823., 57823., 57823., 57823., 57823., 57823., &
+                       57823., 57823., 57823., 57823., 57823., 57823./), &
+      eta0 = (/1., 1., 1., 1., 1., 1., 1., 1., 3.3687, 3.3687, 1., 1., 1./), &
+      eta1 = (/1., 1., 1., 1., 1., 1., 1., 1.,-2.4778,-2.4778, 1., 1., 1./)
+   real(rs), parameter :: a = r(nlayers)
+   real(rs), parameter, dimension(nlayers) :: rho0SI = rho0*1.e3, rho1SI = rho1/a, &
+                          rho2SI = rho2*1.e-3/a**2, rho3SI = rho3*1.e-6/a**3
+   real(rs) :: x, x0, M, r0, r1
+   integer :: i, j
+
+   if (depth > a) then
+      write(0,'(a,f9.1,a)') '  PREM: depth ',depth,' is too large.'
+      stop
+   else if (depth < 0.) then
+      write(0,'(a)') '  PREM: Depth cannot be negative.'
+      stop
+   endif
+
+   x = (a - depth)/a
+   i = 1
+   do while(i < nlayers)
+      if (x < r(i)/a) exit
+      i = i + 1
+   enddo
+
+   if (present(rho)) rho = rho0(i) + rho1(i)*x + rho2(i)*x**2 + rho3(i)*x**3
+   if (present(vp)) vp = vp0(i) + vp1(i)*x + vp2(i)*x**2 + vp3(i)*x**3
+   if (present(vs)) vs = vs0(i) + vs1(i)*x + vs2(i)*x**2 + vs3(i)*x**3
+   if (present(Qmu)) Qmu = Qmu_model(i)
+   if (present(Qkappa)) Qkappa = Qkappa_model(i)
+   ! Note for v{p,s}{v,h}, differences are only in x^0 and x^1, so we intentionally
+   ! use v{p,s}{2,3}(i)
+   if (present(vpv)) vpv = vpv0(i) + vpv1(i)*x + vp2(i)*x**2 + vp3(i)*x**3
+   if (present(vph)) vph = vph0(i) + vph1(i)*x + vp2(i)*x**2 + vp3(i)*x**3
+   if (present(vsv)) vsv = vsv0(i) + vsv1(i)*x + vs2(i)*x**2 + vs3(i)*x**3
+   if (present(vsh)) vsh = vsh0(i) + vsh1(i)*x + vs2(i)*x**2 + vs3(i)*x**3
+   if (present(eta)) eta = eta0(i) + eta1(i)*x
+
+   ! Calculate gravity by integrating the density upwards
+   if (present(g)) then
+      M = 0._rs
+      do j = 1, i
+         if (j == 1) then
+            r0 = 0._rs
+         else
+            r0 = r(j-1)*1.e3
+         endif
+         if (j < i) then
+            r1 = r(j)*1.e3
+         else
+            r1 = (a - depth)*1.e3
+         endif
+         M = M + rho0SI(j)*(r1**3 - r0**3)/3._rs + rho1SI(j)*(r1**4 - r0**4)/4._rs + &
+                 rho2SI(j)*(r1**5 - r0**5)/5._rs + rho3SI(j)*(r1**6 - r0**6)/6._rs
+      enddo
+      g = bigG*(4._rs*pi*M)/r1**2
+   endif
+
+end subroutine prem
 !-------------------------------------------------------------------------------
 
 !-------------------------------------------------------------------------------
