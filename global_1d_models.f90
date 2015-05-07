@@ -44,7 +44,6 @@ module global_1d_models
 !  Input depth in km, converted to m for calculation within the function.
 !  g = GM/r**2
 !  M = 4π∫ rho(r) r**2 dr
-     implicit none
 
      real(rs),intent(in) :: depth
      character(len=*),optional :: model
@@ -98,7 +97,6 @@ module global_1d_models
 !  Calculate pressure as a function of depth for a specified model.
 !  Assumes AK135 unless otherwise stated.
 !  Input depth in km.
-      implicit none
 
       real(rs),intent(in) :: depth
       real(rs)            :: pressure
@@ -143,7 +141,7 @@ module global_1d_models
 subroutine ak135(depth,vp,vs,rho)
 !===============================================================================
 !  AK135 model
-   implicit none
+
    real(rs),intent(in) :: depth
    real(rs),intent(out),optional :: vp,vs,rho
    integer, parameter :: nlayers = 136
@@ -306,7 +304,7 @@ subroutine ak135(depth,vp,vs,rho)
 subroutine prem_old(depth,vp,vs,rho)
 !===============================================================================
 !  AK135 model
-   implicit none
+
    real(rs),intent(in) :: depth
    real(rs),intent(out),optional :: vp,vs,rho
    integer, parameter :: nlayers = 88
@@ -430,7 +428,6 @@ subroutine prem(depth,vp,vs,rho,Qmu,Qkappa,vpv,vph,vsv,vsh,eta,g)
 ! Parameterised in terms of normalised radius x = r/a, a = 6371 km
 ! Output vp and vs are isotropic equivalent velocities; use v{p,s}{v,h} to get
 ! the true model anisotropic output.
-   implicit none
    integer, parameter :: nlayers = 13
    real(rs), intent(in) :: depth
    real(rs), intent(out), optional :: vp, vs, rho, Qmu, Qkappa, vpv, vph, vsv, &
