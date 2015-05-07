@@ -11,6 +11,8 @@ module global_1d_models
 !  Provides some global 1d isotropic velocity models and a few functions relating
 !  to 1d models
 
+      implicit none
+
 !  ** size constants
       integer, parameter, private :: i4 = selected_int_kind(9) ; ! long int
       integer, parameter, private :: r4 = selected_real_kind(6,37) ; ! SP
