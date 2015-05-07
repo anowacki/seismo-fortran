@@ -50,6 +50,7 @@ PROGS = $(B)/CIJ_phase_vels \
         $(B)/lonlat2xyz \
         $(B)/km2GPa \
         $(B)/midpoint \
+        $(B)/poisson_pmf \
         $(B)/prem \
         $(B)/project_to_gcp \
         $(B)/sdr2MT \

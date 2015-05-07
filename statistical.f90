@@ -101,6 +101,19 @@ end function fact
 !-------------------------------------------------------------------------------
 
 !===============================================================================
+function stat_poisson_pmf(lambda, k)
+!===============================================================================
+! Return the probability mass function for the Poisson distribution with mean
+! lambda at integer point k
+   implicit none
+   real(rs), intent(in) :: lambda
+   integer, intent(in) :: k
+   real(rs) :: stat_poisson_pmf
+   stat_poisson_pmf = lambda**k*exp(-lambda)/fact(k)
+end function stat_poisson_pmf
+!-------------------------------------------------------------------------------
+
+!===============================================================================
 function beta_func(p,q)
 !===============================================================================
 !  Returns the Beta function B(p,q) = Gamma(p)*Gamma(q) / Gamma(p+q)
