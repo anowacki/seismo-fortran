@@ -163,6 +163,7 @@
       public :: f90sac_getlhdr
       public :: f90sac_newtrace
       public :: f90sac_orient2d
+      public :: f90sac_orth2d
       public :: f90sac_readheader
       public :: f90sac_readtrace
       public :: f90sac_rotate2d
@@ -311,7 +312,7 @@
       end type SACxy
 
 !  ** tolerance for the comparison of angles
-      real, parameter :: f90sac_angle_tolerance = 0.001
+      real, parameter, public :: f90sac_angle_tolerance = 0.001
 
 !  ** NULL values set in SAC objects
       real, parameter, public :: SAC_rnull = -12345.0
