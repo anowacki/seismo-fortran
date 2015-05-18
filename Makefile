@@ -26,6 +26,9 @@ F90SACOPTS = -DFORCE_BIGENDIAN_SACFILES
 
 TESSOPTS = -L$(L) -lspherical_geometry
 
+# Defines for preprocessed source
+DEFINES += $(F90SACOPTS)
+
 MODS = $(O)/constants.o \
        $(O)/density_1d.o \
        $(O)/EC_grid_assumed_int.o \
@@ -114,20 +117,10 @@ $(O)/splitwave.o: $(O)/f90sac.o $(O)/anisotropy_ajn.o $(O)/FFFTW.o splitwave.f90
 	$(FC) -I$(M) ${SPLITWAVEOPTS} -o $(L)/libsplitwave.so.1 -shared $(O)/splitwave.o
 	ln -sf $(L)/libsplitwave.so.1 $(L)/libsplitwave.so
 	rm -f $(O)/lib$(nm).a
-	$(AR) $(AROPTS) $(L)/lib$(nm).a $(O)/$(nm).o $(O)/f90sac.o $(O)/f90sac_csubs.o $(O)/anisotropy_ajn.o $(O)/FFFTW.o
+	$(AR) $(AROPTS) $(L)/lib$(nm).a $(O)/$(nm).o $(O)/f90sac.o $(O)/anisotropy_ajn.o $(O)/FFFTW.o
 	$(RANLIB) $(L)/lib$(nm).a
 
-$(O)/f90sac.o: $(O)/f90sac_csubs.o f90sac/f90sac.F90
-	$(FC) ${FCOPTS} ${F90SACOPTS} ${LOPTS} -c -J$(M) -o $(O)/f90sac.o f90sac/f90sac.F90
-	$(FC) -I$(M) ${F90SACOPTS} -o $(L)/libf90sac.so.1 -shared $(O)/f90sac.o $(O)/f90sac_csubs.o
-	ln -sf $(L)/libf90sac.so.1 $(L)/libf90sac.so
-	rm -f $(O)/lib$(nm).a
-	$(AR) $(AROPTS) $(L)/lib$(nm).a $(O)/$(nm).o $(O)/f90sac_csubs.o
-	$(RANLIB) $(L)/lib$(nm).a
-
-$(O)/f90sac_csubs.o: f90sac/f90sac_csubs.c
-	$(CC) ${CCOPTS} -c ${LOPTS} -o $(O)/f90sac_csubs.o f90sac/f90sac_csubs.c
-
+# General compilation rules
 $(O)/%.o: %.f90
 	$(FC) ${FCOPTS} ${LOPTS} -c $*.f90 -J$(M) -o $(O)/$*.o
 	$(FC) -I$(M) -o $(L)/lib$*.so.1 -shared $(O)/$*.o
@@ -136,6 +129,13 @@ $(O)/%.o: %.f90
 	$(AR) ${AROPTS} $(L)/lib$*.a $(O)/$*.o
 	$(RANLIB) $(L)/lib$*.a
 
+$(O)/%.o: %.F90
+	$(FC) ${FCOPTS} ${LOPTS} $(DEFINES) -c $*.F90 -J$(M) -o $(O)/$*.o
+	$(FC) -I$(M) -o $(L)/lib$*.so.1 -shared $(O)/$*.o
+	ln -sf $(L)/lib$*.so.1 $(L)/lib$*.so
+	rm -f $(L)/lib$*.a
+	$(AR) ${AROPTS} $(L)/lib$*.a $(O)/$*.o
+	$(RANLIB) $(L)/lib$*.a
 
 .PHONY: progs installprogs
 
