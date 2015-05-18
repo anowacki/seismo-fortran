@@ -22,8 +22,8 @@
 !
 !   Please report bugs/problems to email address above
 !
-!   NOTE: This version of the code assumes IO filestream 99 is available 
-!         for reading and writing. 
+!   NOTE: This version of the code assumes IO filestream 99 is available
+!         for reading and writing.
 !
 !-------------------------------------------------------------------------------
 !
@@ -37,14 +37,14 @@
 !   * Redistribution and use in source and binary forms, with or without
 !     modification, are permitted provided that the following conditions are
 !     met:
-!        
+!
 !   * Redistributions of source code must retain the above copyright notice,
 !     this list of conditions and the following disclaimer.
-!        
+!
 !   * Redistributions in binary form must reproduce the above copyright
 !     notice, this list of conditions and the following disclaimer in the
 !     documentation and/or other materials provided with the distribution.
-!     
+!
 !   * Neither the name of the copyright holder nor the names of its
 !     contributors may be used to endorse or promote products derived from
 !     this software without specific prior written permission.
@@ -80,8 +80,8 @@
 !     2004-07-21  v2.2   * added a subroutine f90sac_rotate2d_rz
 !     2004-09-08  v2.3   * added functions f90sac_resampleup,
 !                                          f90sac_cattraces
-!     2004-10-22  v2.31  * included NR routines in the file for ease 
-!     2004-11-02  v2.32  * included option to suppress warnings 
+!     2004-10-22  v2.31  * included NR routines in the file for ease
+!     2004-11-02  v2.32  * included option to suppress warnings
 !     2005-01-11  v2.4   * included option for setting record length
 !     2005-02-16  v2.5   * added function f90sac_jd2ymd
 !     2005-02-16  v2.6   * change dateseed routine to use date_and_time
@@ -107,23 +107,23 @@
 !     2007-02-21  v3.2   * added function f90sac_compare_origin_time
 !     2007-02-22  v3.3   * changed from GPL to BSD license
 !     2007-03-07  v3.31  * added f90sac_isBigEndian (for checking CPU type)
-!     2007-03-12  v3.4   * changed memory allocation procedure. 
-!     2007-08-02  v3.41  * changed writetrace to destroy pre-existing file 
-!     2007-09-24  v3.42  * minor fixes to byteswapping routines 
-!     2007-10-03  v4.00  * Moved trace reading/writing to C for speed 
+!     2007-03-12  v3.4   * changed memory allocation procedure.
+!     2007-08-02  v3.41  * changed writetrace to destroy pre-existing file
+!     2007-09-24  v3.42  * minor fixes to byteswapping routines
+!     2007-10-03  v4.00  * Moved trace reading/writing to C for speed
 !                          Only f90sac_writeheader remains unchanged
 !     2007-12-05  v4.1   * Changed to a .F90 file to allow pre-processing
 !                          Used this to add ppd to set endian behaviour.
-!                          Also added an init routine, to set up IO. 
-!     2008-02-06  v4.2   * Moved non-C subroutines to preprocessor directives, 
+!                          Also added an init routine, to set up IO.
+!     2008-02-06  v4.2   * Moved non-C subroutines to preprocessor directives,
 !                          added some tagging to allow easy removal of
 !                          non-distribution routines
-!     2008-02-15  v4.21  * Added a C based writeheader, completing the set. 
-!     2008-03-31  v4.22  * Added an optional force parameter to rotation 
-!                          routines 
-!     2008-03-31  v4.3   * Added two routines to generate covariance matrices 
+!     2008-02-15  v4.21  * Added a C based writeheader, completing the set.
+!     2008-03-31  v4.22  * Added an optional force parameter to rotation
+!                          routines
+!     2008-03-31  v4.3   * Added two routines to generate covariance matrices
 !     2008-08-26  v4.4   * Added a routine to suggest filenames for SAC data
-!                          structures, based on header values. Also added a 
+!                          structures, based on header values. Also added a
 !                          parameter to standardise filename lengths.
 !     2008-10-17  v4.41  * Changed to allow variable length strings as filenames
 !                          (with a maximum length, set by f90sac_fnlength)
@@ -148,7 +148,7 @@
       public :: f90sac_clonetrace
       public :: f90sac_copytraceheader
       public :: f90sac_readtrace
-      public :: f90sac_writetrace 
+      public :: f90sac_writetrace
       public :: f90sac_enumhdr
       public :: f90sac_getfhdr
       public :: f90sac_getihdr
@@ -169,7 +169,7 @@
 !  ** Some old 'compatibility' functions are available
 !  ** One might want to consider these if one has access to a fireball F90
 !     compiler which won't link to C. These are considerably slower than
-!     the new C-based routines. 
+!     the new C-based routines.
 !     THESE HAVE BEEN INCLUDED IN A PREPROCESSOR DIRECTIVE - DISABLE_C_ROUTINES
 
 !!!BEG_NONDIST
@@ -179,22 +179,22 @@
 !  ** Similarly, f90sac_resampleup uses NR routines splint and spline.
       public :: f90sac_init_random
       public :: f90sac_addwnoise
-      public :: f90sac_resampleup 
+      public :: f90sac_resampleup
 !!!END_NONDIST
-                
-!  ** define a long (32 bit) integer and 32 bit real      
+
+!  ** define a long (32 bit) integer and 32 bit real
       integer, parameter, private :: int4 = selected_int_kind(9) ;
       integer, parameter, private :: real4 = selected_real_kind(6,37) ;
-      integer, parameter, private :: real8 = selected_real_kind(15,307) ; 
+      integer, parameter, private :: real8 = selected_real_kind(15,307) ;
 
 !  ** define the record length in a sequential access file for a 32 bit number
-!  ** this is compiler dependent: 
-!        IFORT/IFC Version >= 8.0 = 1 (or set flag -assume byterecl) 
+!  ** this is compiler dependent:
+!        IFORT/IFC Version >= 8.0 = 1 (or set flag -assume byterecl)
 !        IFC Version < v8.0 = 4
 !        Solaris F90 = 4
 !        g95/gfortran = 4
       integer, parameter, private :: f90sac_32bit_record_length = 4 ;
-      
+
 !  ** define the unit number to use for reading and writing (opened and closed
 !  ** within each call)
       integer, parameter, private :: f90sac_iounit = 99 ;
@@ -203,24 +203,24 @@
 
 #ifdef FORCE_BIGENDIAN_SACFILES
       character, parameter :: f90sac_endian_mode = 'b'
-#else      
+#else
       character, parameter :: f90sac_endian_mode = 'n'
-#endif      
-      
+#endif
+
       integer :: f90sac_init_flag ; ! This is set to a value of 51423
                                     ! when the initialisation is done
       logical :: f90sac_force_byteswap ; ! This is now set by f90sac_init_io
-      
+
 !  ** noise generator seed value
-      integer, private :: f90sac_random_seed ;      
+      integer, private :: f90sac_random_seed ;
 
 !  ** standard filename length
-      integer, parameter :: f90sac_fnlength = 256 ;      
+      integer, parameter :: f90sac_fnlength = 256 ;
 
 
-!=============================================================================== 
+!===============================================================================
 !  ** Define a specialised data structure for containing SAC files
-!=============================================================================== 
+!===============================================================================
       type SACtrace
 !     ** Header floating point part
          real(real4) :: delta,depmin,depmax,scale,odelta,b,e,o,a,internal0
@@ -243,9 +243,9 @@
          integer(int4) :: iinst,istreg,ievreg,ievtyp
          integer(int4) :: iqual,isynth,imagtyp,imagsrc
          integer(int4) :: unused10,unused11,unused12,unused13,unused14
-         integer(int4) :: unused15,unused16,unused17         
+         integer(int4) :: unused15,unused16,unused17
 !     ** Header logical part (stored as integers)
-         integer(int4) ::  leven,lpspol,lovrok,lcalda,unused18 
+         integer(int4) ::  leven,lpspol,lovrok,lcalda,unused18
 !     ** Header character part
          character (len = 16) :: kevnm
          character (len = 8) :: kstnm,khole,ko,ka
@@ -255,12 +255,12 @@
          character (len = 8) :: kcmpnm,knetwk,kdatrd,kinst
 !     ** the trace
          real(real4), allocatable :: trace(:)
-                  
-      end type SACtrace      
 
-!=============================================================================== 
+      end type SACtrace
+
+!===============================================================================
 !  ** Define a data structure for containing SAC xy files
-!=============================================================================== 
+!===============================================================================
       type SACxy
 !     ** Header floating point part
          real(real4) :: delta,depmin,depmax,scale,odelta,b,e,o,a,internal0
@@ -283,9 +283,9 @@
          integer(int4) :: iinst,istreg,ievreg,ievtyp
          integer(int4) :: iqual,isynth,imagtyp,imagsrc
          integer(int4) :: unused10,unused11,unused12,unused13,unused14
-         integer(int4) :: unused15,unused16,unused17         
+         integer(int4) :: unused15,unused16,unused17
 !     ** Header logical part (stored as integers)
-         integer(int4) ::  leven,lpspol,lovrok,lcalda,unused18 
+         integer(int4) ::  leven,lpspol,lovrok,lcalda,unused18
 !     ** Header character part
          character (len = 16) :: kevnm
          character (len = 8) :: kstnm,khole,ko,ka
@@ -297,20 +297,20 @@
 
          real(real4), allocatable :: x(:)
          real(real4), allocatable :: y(:)
-      end type SACxy      
+      end type SACxy
 
-!  ** tolerance for the comparison of angles      
+!  ** tolerance for the comparison of angles
       real, parameter :: f90sac_angle_tolerance = 0.001
 
-!  ** NULL values set in SAC objects      
+!  ** NULL values set in SAC objects
       real, parameter :: SAC_rnull = -12345.0
       integer, parameter :: SAC_inull = -12345
       integer, parameter :: SAC_lnull = -12345
       character (len = 8) :: SAC_cnull = '-12345'
 
-!  ** OPTIONAL suppression of warnings, set to 1 to supress      
+!  ** OPTIONAL suppression of warnings, set to 1 to supress
       integer,public :: f90sac_suppress_warnings
-      
+
 !===============================================================================
 !
 !  ** MODULE SUBROUTINES
@@ -327,20 +327,20 @@
 !
       implicit none
       if (f90sac_init_flag == 6514236) return ! configuration is already done
-         
-!  ** configure endian behaviour. If forced big-endian, then swapping is 
-!     required on little-endian machines.   
-      if (f90sac_endian_mode == 'b') then   
+
+!  ** configure endian behaviour. If forced big-endian, then swapping is
+!     required on little-endian machines.
+      if (f90sac_endian_mode == 'b') then
          if(f90sac_isBigEndian()) then
             f90sac_force_byteswap = .false.
          else
             f90sac_force_byteswap = .true.
-         endif      
+         endif
       else
             f90sac_force_byteswap = .false.
       endif
       f90sac_init_flag = 6514236 ! need only do this once
-         
+
       return
    end subroutine f90sac_io_init
 !===============================================================================
@@ -350,8 +350,8 @@
    subroutine f90sac_filename(tr,iformat,fn)
 !===============================================================================
 !
-!     Suggest a filename for a SAC file based on specified format of the 
-!     header values. 
+!     Suggest a filename for a SAC file based on specified format of the
+!     header values.
 !
 !     Available formats are:
 !
@@ -359,10 +359,10 @@
 !            =2 : YYYYDDD.STNM.NW.CMP (*reference* time)
 !            =3 : YYYYDDD.HHMMSS.STNM.NW.CMP (*reference* time)
 !
-!     Names (such as station or network name) which are longer than the fields 
+!     Names (such as station or network name) which are longer than the fields
 !     above are truncated. Only the time information is checked.
 !     Note that the date/time used is the reference time which might be the
-!     zero, event or neither, depending on the values of the b and o headers. 
+!     zero, event or neither, depending on the values of the b and o headers.
 !
       implicit none
       type (SACtrace) :: tr
@@ -373,45 +373,45 @@
       character (len=3) :: cmp
       character (len=2) :: nw
       integer :: iformat
-      
+
 !  ** blank out the string
       fn(1:256) = ''
-      
+
 !  ** construct all of the possible string parts first
       stnm(1:4) = tr%kstnm(1:4)
       nw(1:2) = tr%knetwk(1:2)
       cmp(1:3) = tr%kcmpnm(1:3)
-      
+
       if (tr % nzyear == SAC_inull .or. tr % nzjday== SAC_inull) then
          yyyyddd = '_______'
       else
-         write(yyyyddd,'(i4.4,i3.3)') tr % nzyear, tr % nzjday   
-      endif   
+         write(yyyyddd,'(i4.4,i3.3)') tr % nzyear, tr % nzjday
+      endif
 
       if (tr % nzhour == SAC_inull .or. &
-          tr % nzmin == SAC_inull .or. & 
+          tr % nzmin == SAC_inull .or. &
           tr % nzsec == SAC_inull) then
          yyyyddd = '______'
       else
-         write(hhmmss,'(3i2.2)') tr % nzhour, tr % nzmin, tr % nzsec    
-      endif   
+         write(hhmmss,'(3i2.2)') tr % nzhour, tr % nzmin, tr % nzsec
+      endif
 
       if (iformat==0) then
          fn = trim(stnm) // '.' // trim(cmp)
       elseif (iformat==1) then
          fn = trim(stnm) // '.' // trim(nw) // '.' // trim(cmp)
       elseif (iformat==2) then
-         fn = trim(yyyyddd) // '.' 
+         fn = trim(yyyyddd) // '.'
          fn = trim(fn) // trim(stnm) // '.' // trim(nw) // '.' // trim(cmp)
       elseif (iformat==3) then
          fn = trim(yyyyddd) // '.' // trim(hhmmss) // '.'
          fn = trim(fn) // trim(stnm) // '.' // trim(nw) // '.' // trim(cmp)
-      else   
+      else
          write(0,'(a)') &
          'F90SAC_FILENAME: Error: Unsupported format code'
          STOP
-      endif           
-         
+      endif
+
       return
    end subroutine f90sac_filename
 !===============================================================================
@@ -426,7 +426,7 @@
       implicit none
       type (SACtrace) :: t1,t2
       real :: cov(2,2)
-      
+
       integer :: i
 
 !  ** check that traces are the same length
@@ -434,17 +434,17 @@
          write(0,'(a)') &
          'F90SAC_COVAR2: Error: Input traces are different lengths'
          STOP
-      endif  
+      endif
 
 !  ** calculate covariance matrix
       cov(:,:) = 0.0
       do i=1,t1 % npts
          cov(1,1) = cov(1,1) + t1%trace(i)**2.
          cov(2,2) = cov(2,2) + t2%trace(i)**2
-         cov(1,2) = cov(1,2) + t1%trace(i)*t2%trace(i)         
-      enddo   
+         cov(1,2) = cov(1,2) + t1%trace(i)*t2%trace(i)
+      enddo
       cov(2,1) = cov(1,2)
-      
+
       return
    end subroutine f90sac_covar2
 !===============================================================================
@@ -459,33 +459,33 @@
 
       type (SACtrace) :: t1,t2,t3
       real :: cov(3,3)
-      
+
       real, allocatable :: m1(:,:),m2(:,:)
       integer :: i
 
 !  ** check that traces are the same length
       if (t1 % npts /= t2 % npts .or. &
-          t1 % npts /= t3 % npts .or. & 
+          t1 % npts /= t3 % npts .or. &
           t2 % npts /= t3 % npts ) then
          write(0,'(a)') &
          'F90SAC_COVAR2: Error: Input traces are different lengths'
          STOP
-      endif  
+      endif
 
       allocate(m1(t1%npts,3))
       allocate(m2(3,t1%npts))
-      
+
       m1(:,1) = t1%trace(:)
       m1(:,2) = t2%trace(:)
       m1(:,3) = t3%trace(:)
-      
+
       m2 = transpose(m1)
-      
+
       cov = matmul(m2,m1)
-      
+
       deallocate(m1)
       deallocate(m2)
-      
+
       return
    end subroutine f90sac_covar3
 !===============================================================================
@@ -503,10 +503,10 @@
       implicit none
       type (SACtrace) :: t1,t2
       integer :: f90sac_compare_origin_time
-      
+
 !
       f90sac_compare_origin_time = 0
-      
+
       if (t1%nzyear<t2%nzyear) then
          f90sac_compare_origin_time=-1
          return
@@ -551,14 +551,14 @@
                      else
                         f90sac_compare_origin_time=0
                         return
-                     endif         
-                  endif         
-               endif         
-            endif   
-         endif   
+                     endif
+                  endif
+               endif
+            endif
+         endif
       endif
 
-         
+
       return
    end function f90sac_compare_origin_time
 !===============================================================================
@@ -574,32 +574,32 @@
       type (SACtrace) :: t1,t2,tc
       integer :: npts_new
 
-!  ** check delta is the same for both traces. 
-      if (t1 % delta /= t2 % delta) then     
+!  ** check delta is the same for both traces.
+      if (t1 % delta /= t2 % delta) then
          write(0,'(a)') &
          'F90SAC_CATTRACES: Error: Traces have different deltas'
-         STOP     
-      endif      
+         STOP
+      endif
 
       npts_new = t1 % npts + t2 % npts
-      
-!  ** make a new trace      
+
+!  ** make a new trace
       call f90sac_newtrace(npts_new, t1 % delta, tc)
 
-!  ** copy the trace header to the new trace      
+!  ** copy the trace header to the new trace
       call f90sac_copytraceheader(t1,tc)
       tc % npts = npts_new
 
 !  ** set the new end time (if begin time is not null)
-      if (tc%b /= SAC_rnull) then     
+      if (tc%b /= SAC_rnull) then
          tc % e = tc % b + real(tc % npts) * tc % delta
       endif
-      
-!  ** copy the traces      
+
+!  ** copy the traces
       tc % trace(1:t1 % npts) = t1 % trace(1:t1 % npts)
       tc % trace(t1%npts + 1 : t1%npts + t2%npts) = t2%trace(1:t2 % npts)
-      
-         
+
+
       return
    end subroutine f90sac_cattraces
 !===============================================================================
@@ -613,11 +613,11 @@
       implicit none
       type (SACtrace) :: trace
       real :: lat,lon,depth
-      
+
       trace % evla = lat
       trace % evlo = lon
       trace % evdp = depth
-      
+
       return
    end subroutine f90sac_setevent
 !===============================================================================
@@ -631,11 +631,11 @@
       implicit none
       type (SACtrace) :: trace
       real :: lat,lon,elevation
-      
+
       trace % stla = lat
       trace % stlo = lon
       trace % stel = elevation
-      
+
       return
    end subroutine f90sac_setstation
 !===============================================================================
@@ -649,28 +649,28 @@
 !
       implicit none
       type (SACtrace) :: tr_in,tr_out
-      
+
       integer iwbeg,iwend,new_npts,istatus,i
       real t1,t2
       real new_b,new_e
 
-!  ** calculate indices of window      
+!  ** calculate indices of window
       iwbeg = nint((t1-tr_in % b)/tr_in % delta)+1
-      iwend = nint((t2-tr_in % b)/tr_in % delta)+1   
-      
+      iwend = nint((t2-tr_in % b)/tr_in % delta)+1
+
 !  ** Check these values
       if (iwbeg <=0 .or. iwend > tr_in % npts) then
          write(0,'(a)') &
          'F90SAC_WINDOW: Error: Window limits out of range of data.'
-         STOP     
-      endif      
+         STOP
+      endif
 
 !  ** Check these values
       if (iwend <= iwbeg) then
          write(0,'(a)') &
-         'F90SAC_WINDOW: Error: Resulting trace has no data points.'     
+         'F90SAC_WINDOW: Error: Resulting trace has no data points.'
          STOP
-      endif      
+      endif
 
 !  ** calculate new header values
       new_npts = iwend - iwbeg + 1
@@ -680,7 +680,7 @@
 !  ** create a new trace
       call f90sac_clonetrace(tr_in,tr_out)
 
-!  ** deallocate it's trace memory, and reallocate the correct amount           
+!  ** deallocate it's trace memory, and reallocate the correct amount
       deallocate (tr_out % trace, stat = istatus)
       allocate (tr_out % trace(new_npts))
 
@@ -691,7 +691,7 @@
 
 !  ** copy the trace
       do i = 1,new_npts
-         tr_out % trace(i) = tr_in % trace( iwbeg + (i-1) )          
+         tr_out % trace(i) = tr_in % trace( iwbeg + (i-1) )
       enddo
       return
    end subroutine f90sac_window
@@ -705,25 +705,25 @@
 !
       implicit none
       type (SACtrace) :: trace
-      
+
       integer iyr,ijd,ihr,imi,ise,ims
-      
+
       trace % nzyear = iyr
       trace % nzjday = ijd
       trace % nzhour = ihr
       trace % nzmin = imi
       trace % nzsec = ise
       trace % nzmsec = ims
-      
+
       return
    end subroutine f90sac_setdate
 !===============================================================================
-     
+
 !===============================================================================
    subroutine f90sac_orient2d(t1,t2)
 !===============================================================================
 !
-!     take 2 traces in arbitrary (orthogonal) orientation and rotate to a 
+!     take 2 traces in arbitrary (orthogonal) orientation and rotate to a
 !     north-east reference frame
 !
 !     t1 :  (I/O) SAC trace, on output this holds the north component
@@ -731,7 +731,7 @@
 !
       implicit none
       type (SACtrace) :: t1,t2
-      
+
       real theta,cmpazdiff
 
 !   ** check that cmpaz is set
@@ -741,7 +741,7 @@
          STOP
       endif
 
-      
+
 !  ** check for orthogonality
       cmpazdiff = abs(t1 % cmpaz - t2 % cmpaz)
       if ( .not.((abs(cmpazdiff-90.0) <= f90sac_angle_tolerance) &
@@ -749,7 +749,7 @@
          write(0,'(a)') &
          'F90SAC_ORIENT2D: Error: Input components are not orthogonal'
          STOP
-      endif      
+      endif
 
 !  ** first rotate t1 to the north
       call f90sac_rotate2d(t1,t2,-t1 % cmpaz)
@@ -758,15 +758,15 @@
       if ( (abs(t2 % cmpaz-270.0) <= f90sac_angle_tolerance) ) then
          t2 % trace(1:t2 % npts) = -t2 % trace(1:t2 % npts)
       endif
-      
+
 !  ** update component azimuths
       t1 % cmpaz = 0.0   ! north
       t2 % cmpaz = 90.0  ! east
 
 !  ** update component names
-      write(t1 % kcmpnm,'(f5.1)') t1 % cmpaz        
-      write(t2 % kcmpnm,'(f5.1)') t2 % cmpaz        
-      
+      write(t1 % kcmpnm,'(f5.1)') t1 % cmpaz
+      write(t2 % kcmpnm,'(f5.1)') t2 % cmpaz
+
       return
    end subroutine f90sac_orient2d
 !===============================================================================
@@ -781,16 +781,16 @@
       type (SACtrace) :: t1,t2
       integer f90sac_orth2d
       real cmpazdiff
-      
+
 !  ** check for orthogonality
       cmpazdiff = abs(t1 % cmpaz - t2 % cmpaz)
       if ( .not.((abs(cmpazdiff-90.0) <= f90sac_angle_tolerance) &
             .or. (abs(cmpazdiff-270.0) <= f90sac_angle_tolerance))) then
          f90sac_orth2d = 0
-      else      
+      else
          f90sac_orth2d = 1
       endif
-         
+
       return
       end function f90sac_orth2d
 !===============================================================================
@@ -807,7 +807,7 @@
       implicit none
       integer :: isamp
       type (SACtrace) :: t1,t2
-      
+
       real theta, rotmat(2,2), sample(2,1), rsample(2,1),temp1,temp2
       real,parameter :: pi = 3.1415927410125732421875
       real :: cmpazdiff
@@ -819,7 +819,7 @@
             'F90SAC_ROTATE2D_RZ: Warning: CMPINC Header is not set,'
             write(0,'(a)') &
             'F90SAC_ROTATE2D_RZ: Warning: setting CMPINC to 0,90'
-         endif   
+         endif
          t1 % cmpinc = 0.0
          t2 % cmpinc = 90.0
       endif
@@ -832,35 +832,35 @@
             'F90SAC_ROTATE2D_RZ: Error: Input components are not orthogonal'
          STOP
       endif
-            
+
 !  ** check that traces are the same length
       if (t1 % npts /= t2 % npts) then
          write(0,'(a)') &
          'F90SAC_ROTATE2D_RZ: Error: Input components are different lengths'
          STOP
-      endif            
+      endif
 
-!  ** make theta clockwise       
+!  ** make theta clockwise
       theta = theta * (-1.0)
-      
+
 !  ** build rotation matrix
       rotmat(1,1) = cos(theta*pi/180.)
       rotmat(1,2) = sin(theta*pi/180.)
       rotmat(2,1) = -sin(theta*pi/180.)
       rotmat(2,2) = cos(theta*pi/180.)
-      
-!  ** rotate traces      
-      do isamp = 1 , t1 % npts     
-         sample(1,1) = t1 % trace(isamp) ; 
-         sample(2,1) = t2 % trace(isamp) ; 
-         
+
+!  ** rotate traces
+      do isamp = 1 , t1 % npts
+         sample(1,1) = t1 % trace(isamp) ;
+         sample(2,1) = t2 % trace(isamp) ;
+
          rsample = matmul(rotmat,sample) ;
-         
+
          t1 % trace(isamp) = rsample(1,1) ;
-         t2 % trace(isamp) = rsample(2,1) ; 
+         t2 % trace(isamp) = rsample(2,1) ;
       enddo
 
-!  ** update component azimuths      
+!  ** update component azimuths
       t1 % cmpinc = t1 % cmpinc + theta
       t2 % cmpinc = t2 % cmpinc + theta
 
@@ -868,15 +868,15 @@
       do ! forever
          if (t1 % cmpinc >= 0.0 .and. t1 % cmpinc < 360.0) exit
          if (t1 % cmpinc >= 360.0) t1 % cmpinc = t1 % cmpinc - 360.0
-         if (t1 % cmpinc < 0.0) t1 % cmpinc = t1 % cmpinc + 360.0      
-      enddo      
-      
+         if (t1 % cmpinc < 0.0) t1 % cmpinc = t1 % cmpinc + 360.0
+      enddo
+
       do ! forever
          if (t2 % cmpinc >= 0.0 .and. t2 % cmpinc < 360.0) exit
          if (t2 % cmpinc >= 360.0) t2 % cmpinc = t2 % cmpinc - 360.0
-         if (t2 % cmpinc < 0.0) t2 % cmpinc = t2 % cmpinc + 360.0      
+         if (t2 % cmpinc < 0.0) t2 % cmpinc = t2 % cmpinc + 360.0
       enddo
-      
+
       return
    end subroutine f90sac_rotate2d_rz
 !===============================================================================
@@ -889,7 +889,7 @@
 !
 !     t1,t2 :  (I/O) SAC traces
 !     theta : (I) angle to rotate by (clockwise)
-!     iforce : set to 1 to circumvent checking (except trace length) 
+!     iforce : set to 1 to circumvent checking (except trace length)
 !
       implicit none
       integer :: isamp
@@ -897,7 +897,7 @@
       real :: theta
       integer, optional :: iforce
 
-!  ** locals      
+!  ** locals
       integer :: iforceV
       real rotmat(2,2), sample(2,1), rsample(2,1),temp1,temp2
       real,parameter :: pi = 3.1415927410125732421875
@@ -908,9 +908,9 @@
       else
          iforceV = 0
       endif
-      
+
       if (iforceV==0) then
-         
+
 !      ** check that cmpaz is set
          if (t1 % cmpaz == SAC_rnull .or. t2 % cmpaz == SAC_rnull) then
            if (f90sac_suppress_warnings /= 1) then
@@ -920,9 +920,9 @@
                'F90SAC_ROTATE2D: Warning: Setting CMPAZ to 0,90'
             endif
             t1 % cmpaz = 0.
-            t2 % cmpaz = 90.0         
+            t2 % cmpaz = 90.0
          endif
-    
+
 !     ** check for orthogonality
          cmpazdiff = abs(t1 % cmpaz - t2 % cmpaz)
          if ( .not.((abs(cmpazdiff-90.0) <= f90sac_angle_tolerance) &
@@ -931,34 +931,34 @@
             'F90SAC_ROTATE2D: Error: Input components are not orthogonal'
             STOP
          endif
-      
+
       endif
-            
+
 !  ** check that traces are the same length
       if (t1 % npts /= t2 % npts) then
          write(0,'(a)') &
          'F90SAC_ROTATE2D: Error: Input traces are different lengths'
          STOP
-      endif            
-      
+      endif
+
 !  ** build rotation matrix
       rotmat(1,1) = cos(theta*pi/180.)
       rotmat(1,2) = sin(theta*pi/180.)
       rotmat(2,1) = -sin(theta*pi/180.)
       rotmat(2,2) = cos(theta*pi/180.)
-      
-!  ** rotate traces      
-      do isamp = 1 , t1 % npts     
-         sample(1,1) = t1 % trace(isamp) ; 
-         sample(2,1) = t2 % trace(isamp) ; 
-         
+
+!  ** rotate traces
+      do isamp = 1 , t1 % npts
+         sample(1,1) = t1 % trace(isamp) ;
+         sample(2,1) = t2 % trace(isamp) ;
+
          rsample = matmul(rotmat,sample) ;
-         
+
          t1 % trace(isamp) = rsample(1,1) ;
-         t2 % trace(isamp) = rsample(2,1) ; 
+         t2 % trace(isamp) = rsample(2,1) ;
       enddo
 
-!  ** update component azimuths      
+!  ** update component azimuths
       t1 % cmpaz = t1 % cmpaz + theta
       t2 % cmpaz = t2 % cmpaz + theta
 
@@ -966,19 +966,19 @@
       do ! forever
          if (t1 % cmpaz >= 0.0 .and. t1 % cmpaz < 360.0) exit
          if (t1 % cmpaz >= 360.0) t1 % cmpaz = t1 % cmpaz - 360.0
-         if (t1 % cmpaz < 0.0) t1 % cmpaz = t1 % cmpaz + 360.0      
-      enddo      
-      
+         if (t1 % cmpaz < 0.0) t1 % cmpaz = t1 % cmpaz + 360.0
+      enddo
+
       do ! forever
          if (t2 % cmpaz >= 0.0 .and. t2 % cmpaz < 360.0) exit
          if (t2 % cmpaz >= 360.0) t2 % cmpaz = t2 % cmpaz - 360.0
-         if (t2 % cmpaz < 0.0) t2 % cmpaz = t2 % cmpaz + 360.0      
+         if (t2 % cmpaz < 0.0) t2 % cmpaz = t2 % cmpaz + 360.0
       enddo
 
 !  ** update component names
-      write(t1 % kcmpnm,'(f5.1)') t1 % cmpaz        
-      write(t2 % kcmpnm,'(f5.1)') t2 % cmpaz        
-      
+      write(t1 % kcmpnm,'(f5.1)') t1 % cmpaz
+      write(t2 % kcmpnm,'(f5.1)') t2 % cmpaz
+
       return
    end subroutine f90sac_rotate2d
 !===============================================================================
@@ -998,9 +998,9 @@
       do ! forever
          if (angle >= 0.0 .and. angle < 360.0) exit
          if (angle >= 360.0) angle = angle - 360.0
-         if (angle < 0.0) angle = angle + 360.0      
+         if (angle < 0.0) angle = angle + 360.0
       enddo
-      
+
       return
    end subroutine f90sac_unwind
 !===============================================================================
@@ -1019,24 +1019,24 @@
       integer :: isamp,ishift
       real :: dt
       type (SACtrace) :: trace
-      
+
       ishift = nint (dt / (trace % delta) )
-            
-!  ** check for no shift      
+
+!  ** check for no shift
       if (ishift == 0 .and. f90sac_suppress_warnings /= 1) then
          write(0,'(a)') &
             'F90SAC_TSHIFT: Warning: no shift applied, dt too small'
-      endif      
-         
-!  ** shift array      
+      endif
+
+!  ** shift array
       trace % trace = cshift((trace % trace),-ishift)
-      
-!  ** if negative shift, zero last ishift points      
+
+!  ** if negative shift, zero last ishift points
       if (ishift < 0) &
          trace % trace(trace % npts - abs(ishift): trace % npts) = 0.0
-!  ** if positive shift, zero first ishift points      
+!  ** if positive shift, zero first ishift points
       if (ishift > 0) trace % trace(1:abs(ishift)) = 0.0
-      
+
       return
    end subroutine f90sac_tshift
 !===============================================================================
@@ -1046,9 +1046,9 @@
 !===============================================================================
       implicit none
       type (SACtrace) :: out
-      integer :: nsamp ! number of samples for trace 
+      integer :: nsamp ! number of samples for trace
       real :: delta
-      
+
       out%delta     = delta
       out%depmin    = SAC_rnull
       out%depmax    = SAC_rnull
@@ -1184,12 +1184,12 @@
       out%knetwk  = SAC_cnull
       out%kdatrd  = SAC_cnull
       out%kinst   = SAC_cnull
- 
+
 !  ** allocate memory for the trace
       call f90sac_malloc(out%trace,out%npts)
-   
+
       out % trace(1:out % npts) = 0.0
-      
+
 
    end subroutine f90sac_newtrace
 !===============================================================================
@@ -1225,9 +1225,9 @@ tr%t8        = SAC_rnull ; tr%user2     = SAC_rnull ; tr%unused4   = SAC_rnull
 tr%t9        = SAC_rnull ; tr%user3     = SAC_rnull ; tr%unused5   = SAC_rnull
 tr%f         = SAC_rnull ; tr%user4     = SAC_rnull ; tr%unused6   = SAC_rnull
 tr%resp0     = SAC_rnull ; tr%user5     = SAC_rnull ; tr%unused7   = SAC_rnull
-tr%resp1     = SAC_rnull ; tr%user6     = SAC_rnull ; 
-tr%resp2     = SAC_rnull ; tr%user7     = SAC_rnull ; 
-                           
+tr%resp1     = SAC_rnull ; tr%user6     = SAC_rnull ;
+tr%resp2     = SAC_rnull ; tr%user7     = SAC_rnull ;
+
 tr%nzyear    = SAC_inull ; tr%unused8   = SAC_inull ; tr%unused11  = SAC_inull
 tr%nzjday    = SAC_inull ; tr%iftype    = 1         ; tr%unused12  = SAC_inull
 tr%nzhour    = SAC_inull ; tr%idep      = 5         ; tr%unused13  = SAC_inull
@@ -1235,7 +1235,7 @@ tr%nzmin     = SAC_inull ; tr%iztype    = 9         ; tr%unused14  = SAC_inull
 tr%nzsec     = SAC_inull ; tr%unused9   = SAC_inull ; tr%unused15  = SAC_inull
 tr%nzmsec    = SAC_inull ; tr%iinst     = SAC_inull ; tr%unused16  = SAC_inull
 tr%nvhdr     = 6         ; tr%istreg    = SAC_inull ; tr%unused17  = SAC_inull
-tr%norid     = SAC_inull ; tr%ievreg    = SAC_inull ; tr%leven     = 1   
+tr%norid     = SAC_inull ; tr%ievreg    = SAC_inull ; tr%leven     = 1
 tr%nevid     = SAC_inull ; tr%ievtyp    = 5         ; tr%lpspol    = 0
 tr%npts      = 0         ; tr%iqual     = SAC_inull ; tr%lovrok    = 1
 tr%internal3 = SAC_inull ; tr%isynth    = SAC_inull ; tr%lcalda    = 1
@@ -1250,16 +1250,16 @@ tr%ko    = SAC_cnull ; tr%kt6 = SAC_cnull ; tr%kcmpnm  = SAC_cnull
 tr%ka    = SAC_cnull ; tr%kt7 = SAC_cnull ; tr%knetwk  = SAC_cnull
 tr%kt0   = SAC_cnull ; tr%kt8 = SAC_cnull ; tr%kdatrd  = SAC_cnull
 tr%kt1   = SAC_cnull ; tr%kt9 = SAC_cnull ; tr%kinst   = SAC_cnull
-tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ; 
-      
+tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
+
       if (allocated(tr%trace)) then
          deallocate(tr%trace)
-      endif 
-      
+      endif
+
       return
       end subroutine f90sac_deletetrace
 !===============================================================================
-   
+
 !===============================================================================
    subroutine f90sac_malloc(x,n)
 !===============================================================================
@@ -1276,14 +1276,14 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
 !            print*,'reallocating memory'
             deallocate(x)
             allocate(x(n))
-         endif   
+         endif
       else
             allocate(x(n))
-      endif   
-      
+      endif
+
    end subroutine f90sac_malloc
 !===============================================================================
-      
+
 !===============================================================================
    subroutine f90sac_clonetrace(target,clone)
 !===============================================================================
@@ -1296,13 +1296,13 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
       implicit none
       type (SACtrace) :: target,clone
 
-!  ** make a new trace object     
+!  ** make a new trace object
       call f90sac_newtrace(target % npts, target % delta, clone)
 !  ** duplicate target header
-      call f90sac_copytraceheader(target,clone) 
-!  ** copy data   
+      call f90sac_copytraceheader(target,clone)
+!  ** copy data
       clone % trace(1:clone % npts) = target % trace(1:target % npts)
-      
+
    end subroutine f90sac_clonetrace
 !===============================================================================
 
@@ -1318,141 +1318,141 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
       implicit none
       type (SACtrace) :: source,dest
 
-      dest%delta     =  source%delta     
-      dest%depmin    =  source%depmin    
-      dest%depmax    =  source%depmax    
-      dest%scale     =  source%scale     
-      dest%odelta    =  source%odelta    
-      dest%b         =  source%b         
-      dest%e         =  source%e         
-      dest%o         =  source%o         
-      dest%a         =  source%a         
-      dest%internal0 =  source%internal0 
-      dest%t0        =  source%t0        
-      dest%t1        =  source%t1        
-      dest%t2        =  source%t2        
-      dest%t3        =  source%t3        
-      dest%t4        =  source%t4        
-      dest%t5        =  source%t5        
-      dest%t6        =  source%t6        
-      dest%t7        =  source%t7        
-      dest%t8        =  source%t8        
-      dest%t9        =  source%t9        
-      dest%f         =  source%f         
-      dest%resp0     =  source%resp0     
-      dest%resp1     =  source%resp1     
-      dest%resp2     =  source%resp2     
-      dest%resp3     =  source%resp3     
-      dest%resp4     =  source%resp4     
-      dest%resp5     =  source%resp5     
-      dest%resp6     =  source%resp6     
-      dest%resp7     =  source%resp7     
-      dest%resp8     =  source%resp8     
-      dest%resp9     =  source%resp9     
-      dest%stla      =  source%stla      
-      dest%stlo      =  source%stlo      
-      dest%stel      =  source%stel      
-      dest%stdp      =  source%stdp      
-      dest%evla      =  source%evla      
-      dest%evlo      =  source%evlo      
-      dest%evel      =  source%evel      
-      dest%evdp      =  source%evdp      
-      dest%mag       =  source%mag       
-      dest%user0     =  source%user0     
-      dest%user1     =  source%user1     
-      dest%user2     =  source%user2     
-      dest%user3     =  source%user3     
-      dest%user4     =  source%user4     
-      dest%user5     =  source%user5     
-      dest%user6     =  source%user6     
-      dest%user7     =  source%user7     
-      dest%user8     =  source%user8     
-      dest%user9     =  source%user9     
-      dest%dist      =  source%dist      
-      dest%az        =  source%az        
-      dest%baz       =  source%baz       
-      dest%gcarc     =  source%gcarc     
-      dest%internal1 =  source%internal1 
-      dest%internal2 =  source%internal2 
-      dest%depmen    =  source%depmen    
-      dest%cmpaz     =  source%cmpaz     
-      dest%cmpinc    =  source%cmpinc    
-      dest%xminimum  =  source%xminimum  
-      dest%xmaximum  =  source%xmaximum  
-      dest%yminimum  =  source%yminimum  
-      dest%ymaximum  =  source%ymaximum  
-      dest%unused1   =  source%unused1   
-      dest%unused2   =  source%unused2   
-      dest%unused3   =  source%unused3   
-      dest%unused4   =  source%unused4   
-      dest%unused5   =  source%unused5   
-      dest%unused6   =  source%unused6   
-      dest%unused7   =  source%unused7   
+      dest%delta     =  source%delta
+      dest%depmin    =  source%depmin
+      dest%depmax    =  source%depmax
+      dest%scale     =  source%scale
+      dest%odelta    =  source%odelta
+      dest%b         =  source%b
+      dest%e         =  source%e
+      dest%o         =  source%o
+      dest%a         =  source%a
+      dest%internal0 =  source%internal0
+      dest%t0        =  source%t0
+      dest%t1        =  source%t1
+      dest%t2        =  source%t2
+      dest%t3        =  source%t3
+      dest%t4        =  source%t4
+      dest%t5        =  source%t5
+      dest%t6        =  source%t6
+      dest%t7        =  source%t7
+      dest%t8        =  source%t8
+      dest%t9        =  source%t9
+      dest%f         =  source%f
+      dest%resp0     =  source%resp0
+      dest%resp1     =  source%resp1
+      dest%resp2     =  source%resp2
+      dest%resp3     =  source%resp3
+      dest%resp4     =  source%resp4
+      dest%resp5     =  source%resp5
+      dest%resp6     =  source%resp6
+      dest%resp7     =  source%resp7
+      dest%resp8     =  source%resp8
+      dest%resp9     =  source%resp9
+      dest%stla      =  source%stla
+      dest%stlo      =  source%stlo
+      dest%stel      =  source%stel
+      dest%stdp      =  source%stdp
+      dest%evla      =  source%evla
+      dest%evlo      =  source%evlo
+      dest%evel      =  source%evel
+      dest%evdp      =  source%evdp
+      dest%mag       =  source%mag
+      dest%user0     =  source%user0
+      dest%user1     =  source%user1
+      dest%user2     =  source%user2
+      dest%user3     =  source%user3
+      dest%user4     =  source%user4
+      dest%user5     =  source%user5
+      dest%user6     =  source%user6
+      dest%user7     =  source%user7
+      dest%user8     =  source%user8
+      dest%user9     =  source%user9
+      dest%dist      =  source%dist
+      dest%az        =  source%az
+      dest%baz       =  source%baz
+      dest%gcarc     =  source%gcarc
+      dest%internal1 =  source%internal1
+      dest%internal2 =  source%internal2
+      dest%depmen    =  source%depmen
+      dest%cmpaz     =  source%cmpaz
+      dest%cmpinc    =  source%cmpinc
+      dest%xminimum  =  source%xminimum
+      dest%xmaximum  =  source%xmaximum
+      dest%yminimum  =  source%yminimum
+      dest%ymaximum  =  source%ymaximum
+      dest%unused1   =  source%unused1
+      dest%unused2   =  source%unused2
+      dest%unused3   =  source%unused3
+      dest%unused4   =  source%unused4
+      dest%unused5   =  source%unused5
+      dest%unused6   =  source%unused6
+      dest%unused7   =  source%unused7
 
-      dest%nzyear    =  source%nzyear    
-      dest%nzjday    =  source%nzjday    
-      dest%nzhour    =  source%nzhour    
-      dest%nzmin     =  source%nzmin     
-      dest%nzsec     =  source%nzsec     
-      dest%nzmsec    =  source%nzmsec    
-      dest%nvhdr     =  source%nvhdr     
-      dest%norid     =  source%norid     
-      dest%nevid     =  source%nevid     
-      dest%npts      =  source%npts      
-      dest%internal3 =  source%internal3 
-      dest%nwfid     =  source%nwfid     
-      dest%nxsize    =  source%nxsize    
-      dest%nysize    =  source%nysize    
-      dest%unused8   =  source%unused8   
-      dest%iftype    =  source%iftype    
-      dest%idep      =  source%idep      
-      dest%iztype    =  source%iztype    
-      dest%unused9   =  source%unused9   
-      dest%iinst     =  source%iinst     
-      dest%istreg    =  source%istreg    
-      dest%ievreg    =  source%ievreg    
-      dest%ievtyp    =  source%ievtyp    
-      dest%iqual     =  source%iqual     
-      dest%isynth    =  source%isynth    
-      dest%imagtyp   =  source%imagtyp   
-      dest%imagsrc   =  source%imagsrc   
-      dest%unused10  =  source%unused10  
-      dest%unused11  =  source%unused11  
-      dest%unused12  =  source%unused12  
-      dest%unused13  =  source%unused13  
-      dest%unused14  =  source%unused14  
-      dest%unused15  =  source%unused15  
-      dest%unused16  =  source%unused16  
-      dest%unused17  =  source%unused17  
-      dest%leven     =  source%leven     
-      dest%lpspol    =  source%lpspol    
-      dest%lovrok    =  source%lovrok    
-      dest%lcalda    =  source%lcalda    
-      dest%unused18  =  source%unused18  
+      dest%nzyear    =  source%nzyear
+      dest%nzjday    =  source%nzjday
+      dest%nzhour    =  source%nzhour
+      dest%nzmin     =  source%nzmin
+      dest%nzsec     =  source%nzsec
+      dest%nzmsec    =  source%nzmsec
+      dest%nvhdr     =  source%nvhdr
+      dest%norid     =  source%norid
+      dest%nevid     =  source%nevid
+      dest%npts      =  source%npts
+      dest%internal3 =  source%internal3
+      dest%nwfid     =  source%nwfid
+      dest%nxsize    =  source%nxsize
+      dest%nysize    =  source%nysize
+      dest%unused8   =  source%unused8
+      dest%iftype    =  source%iftype
+      dest%idep      =  source%idep
+      dest%iztype    =  source%iztype
+      dest%unused9   =  source%unused9
+      dest%iinst     =  source%iinst
+      dest%istreg    =  source%istreg
+      dest%ievreg    =  source%ievreg
+      dest%ievtyp    =  source%ievtyp
+      dest%iqual     =  source%iqual
+      dest%isynth    =  source%isynth
+      dest%imagtyp   =  source%imagtyp
+      dest%imagsrc   =  source%imagsrc
+      dest%unused10  =  source%unused10
+      dest%unused11  =  source%unused11
+      dest%unused12  =  source%unused12
+      dest%unused13  =  source%unused13
+      dest%unused14  =  source%unused14
+      dest%unused15  =  source%unused15
+      dest%unused16  =  source%unused16
+      dest%unused17  =  source%unused17
+      dest%leven     =  source%leven
+      dest%lpspol    =  source%lpspol
+      dest%lovrok    =  source%lovrok
+      dest%lcalda    =  source%lcalda
+      dest%unused18  =  source%unused18
 
-      dest%kstnm     =  source%kstnm     
-      dest%kevnm     =  source%kevnm     
-      dest%khole     =  source%khole     
-      dest%ko        =  source%ko        
-      dest%ka        =  source%ka        
-      dest%kt0       =  source%kt0       
-      dest%kt1       =  source%kt1       
-      dest%kt2       =  source%kt2       
-      dest%kt3       =  source%kt3       
-      dest%kt4       =  source%kt4       
-      dest%kt5       =  source%kt5       
-      dest%kt6       =  source%kt6       
-      dest%kt7       =  source%kt7       
-      dest%kt8       =  source%kt8       
-      dest%kt9       =  source%kt9       
-      dest%kf        =  source%kf        
-      dest%kuser0    =  source%kuser0    
-      dest%kuser1    =  source%kuser1    
-      dest%kuser2    =  source%kuser2    
-      dest%kcmpnm    =  source%kcmpnm    
-      dest%knetwk    =  source%knetwk    
-      dest%kdatrd    =  source%kdatrd    
-      dest%kinst     =  source%kinst     
+      dest%kstnm     =  source%kstnm
+      dest%kevnm     =  source%kevnm
+      dest%khole     =  source%khole
+      dest%ko        =  source%ko
+      dest%ka        =  source%ka
+      dest%kt0       =  source%kt0
+      dest%kt1       =  source%kt1
+      dest%kt2       =  source%kt2
+      dest%kt3       =  source%kt3
+      dest%kt4       =  source%kt4
+      dest%kt5       =  source%kt5
+      dest%kt6       =  source%kt6
+      dest%kt7       =  source%kt7
+      dest%kt8       =  source%kt8
+      dest%kt9       =  source%kt9
+      dest%kf        =  source%kf
+      dest%kuser0    =  source%kuser0
+      dest%kuser1    =  source%kuser1
+      dest%kuser2    =  source%kuser2
+      dest%kcmpnm    =  source%kcmpnm
+      dest%knetwk    =  source%knetwk
+      dest%kdatrd    =  source%kdatrd
+      dest%kinst     =  source%kinst
 
    end subroutine f90sac_copytraceheader
 !===============================================================================
@@ -1470,9 +1470,9 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
       character(4) ch
       equivalence (int,ch)
       logical f90sac_isBigEndian
-      
+
       int = i0 + i1*256 + i2*(256**2) + i3*(256**3)
-      
+
       if (ch == '0123') then
 !     ** it's little-endian
          f90sac_isBigEndian = .false.
@@ -1484,8 +1484,8 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
          write(0,'(a)') &
             'F90SAC_ISBIGENDIAN: Error: Machine seems to be middle-endian!'
          stop
-      endif 
-      return     
+      endif
+      return
    end function f90sac_isBigEndian
 !===============================================================================
 
@@ -1499,9 +1499,9 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
       integer :: n,i
       real(real4) :: x(n),xx
       integer(int4) :: itmp,itmp2
-      
+
       itmp2=0
-      
+
       do i=1,n
          itmp = transfer(x(i),itmp)
 
@@ -1509,11 +1509,11 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
          call mvbits( itmp, 16, 8, itmp2, 8  )
          call mvbits( itmp,  8, 8, itmp2, 16 )
          call mvbits( itmp,  0, 8, itmp2, 24 )
-         
+
          x(i) = transfer(itmp2,xx)
       enddo
-    
-      return     
+
+      return
    end subroutine f90sac_real32_byteswap
 !===============================================================================
 
@@ -1529,7 +1529,7 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
       integer(int4) :: itmp,itmp2
 
       itmp2=0
-      
+
       do i=1,n
          itmp = nx(i)
 
@@ -1537,11 +1537,11 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
          call mvbits( itmp, 16, 8, itmp2, 8  )
          call mvbits( itmp,  8, 8, itmp2, 16 )
          call mvbits( itmp,  0, 8, itmp2, 24 )
-         
+
          nx(i) = itmp2
       enddo
-    
-      return     
+
+      return
    end subroutine f90sac_int32_byteswap
 !===============================================================================
 
@@ -1553,7 +1553,7 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
 !
 !     Return the value of a floating point header, identified by its ID number
 !     (this can be got using f90sac_enumhdr)
-!     
+!
       implicit none
       type (SACtrace) :: tr
       integer :: id_hdr,ifound
@@ -1563,81 +1563,81 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
       if (id_hdr<1 .or. id_hdr>70) then
          write(0,'(a)') &
          'F90SAC_GETFHDR: Error: Bad FP header ID number (not 1-70)'
-         STOP     
-      endif      
+         STOP
+      endif
 
-      if (id_hdr == 01) val = tr % delta     
-      if (id_hdr == 02) val = tr % depmin    
-      if (id_hdr == 03) val = tr % depmax    
-      if (id_hdr == 04) val = tr % scale     
-      if (id_hdr == 05) val = tr % odelta    
-      if (id_hdr == 06) val = tr % b         
-      if (id_hdr == 07) val = tr % e         
-      if (id_hdr == 08) val = tr % o         
-      if (id_hdr == 09) val = tr % a         
-      if (id_hdr == 10) val = tr % internal0 
-      if (id_hdr == 11) val = tr % t0        
-      if (id_hdr == 12) val = tr % t1        
-      if (id_hdr == 13) val = tr % t2        
-      if (id_hdr == 14) val = tr % t3        
-      if (id_hdr == 15) val = tr % t4        
-      if (id_hdr == 16) val = tr % t5        
-      if (id_hdr == 17) val = tr % t6        
-      if (id_hdr == 18) val = tr % t7        
-      if (id_hdr == 19) val = tr % t8        
-      if (id_hdr == 20) val = tr % t9        
-      if (id_hdr == 21) val = tr % f         
-      if (id_hdr == 22) val = tr % resp0     
-      if (id_hdr == 23) val = tr % resp1     
-      if (id_hdr == 24) val = tr % resp2     
-      if (id_hdr == 25) val = tr % resp3     
-      if (id_hdr == 26) val = tr % resp4     
-      if (id_hdr == 27) val = tr % resp5     
-      if (id_hdr == 28) val = tr % resp6     
-      if (id_hdr == 29) val = tr % resp7     
-      if (id_hdr == 30) val = tr % resp8     
-      if (id_hdr == 31) val = tr % resp9     
-      if (id_hdr == 32) val = tr % stla      
-      if (id_hdr == 33) val = tr % stlo      
-      if (id_hdr == 34) val = tr % stel      
-      if (id_hdr == 35) val = tr % stdp      
-      if (id_hdr == 36) val = tr % evla      
-      if (id_hdr == 37) val = tr % evlo      
-      if (id_hdr == 38) val = tr % evel      
-      if (id_hdr == 39) val = tr % evdp      
-      if (id_hdr == 40) val = tr % mag       
-      if (id_hdr == 41) val = tr % user0     
-      if (id_hdr == 42) val = tr % user1     
-      if (id_hdr == 43) val = tr % user2     
-      if (id_hdr == 44) val = tr % user3     
-      if (id_hdr == 45) val = tr % user4     
-      if (id_hdr == 46) val = tr % user5     
-      if (id_hdr == 47) val = tr % user6     
-      if (id_hdr == 48) val = tr % user7     
-      if (id_hdr == 49) val = tr % user8     
-      if (id_hdr == 50) val = tr % user9     
-      if (id_hdr == 51) val = tr % dist      
-      if (id_hdr == 52) val = tr % az        
-      if (id_hdr == 53) val = tr % baz       
-      if (id_hdr == 54) val = tr % gcarc     
-      if (id_hdr == 55) val = tr % internal1 
-      if (id_hdr == 56) val = tr % internal2 
-      if (id_hdr == 57) val = tr % depmen    
-      if (id_hdr == 58) val = tr % cmpaz     
-      if (id_hdr == 59) val = tr % cmpinc    
-      if (id_hdr == 60) val = tr % xminimum  
-      if (id_hdr == 61) val = tr % xmaximum  
-      if (id_hdr == 62) val = tr % yminimum  
-      if (id_hdr == 63) val = tr % ymaximum  
-      if (id_hdr == 64) val = tr % unused1   
-      if (id_hdr == 65) val = tr % unused2   
-      if (id_hdr == 66) val = tr % unused3   
-      if (id_hdr == 67) val = tr % unused4   
-      if (id_hdr == 68) val = tr % unused5   
-      if (id_hdr == 69) val = tr % unused6   
-      if (id_hdr == 70) val = tr % unused7         
+      if (id_hdr == 01) val = tr % delta
+      if (id_hdr == 02) val = tr % depmin
+      if (id_hdr == 03) val = tr % depmax
+      if (id_hdr == 04) val = tr % scale
+      if (id_hdr == 05) val = tr % odelta
+      if (id_hdr == 06) val = tr % b
+      if (id_hdr == 07) val = tr % e
+      if (id_hdr == 08) val = tr % o
+      if (id_hdr == 09) val = tr % a
+      if (id_hdr == 10) val = tr % internal0
+      if (id_hdr == 11) val = tr % t0
+      if (id_hdr == 12) val = tr % t1
+      if (id_hdr == 13) val = tr % t2
+      if (id_hdr == 14) val = tr % t3
+      if (id_hdr == 15) val = tr % t4
+      if (id_hdr == 16) val = tr % t5
+      if (id_hdr == 17) val = tr % t6
+      if (id_hdr == 18) val = tr % t7
+      if (id_hdr == 19) val = tr % t8
+      if (id_hdr == 20) val = tr % t9
+      if (id_hdr == 21) val = tr % f
+      if (id_hdr == 22) val = tr % resp0
+      if (id_hdr == 23) val = tr % resp1
+      if (id_hdr == 24) val = tr % resp2
+      if (id_hdr == 25) val = tr % resp3
+      if (id_hdr == 26) val = tr % resp4
+      if (id_hdr == 27) val = tr % resp5
+      if (id_hdr == 28) val = tr % resp6
+      if (id_hdr == 29) val = tr % resp7
+      if (id_hdr == 30) val = tr % resp8
+      if (id_hdr == 31) val = tr % resp9
+      if (id_hdr == 32) val = tr % stla
+      if (id_hdr == 33) val = tr % stlo
+      if (id_hdr == 34) val = tr % stel
+      if (id_hdr == 35) val = tr % stdp
+      if (id_hdr == 36) val = tr % evla
+      if (id_hdr == 37) val = tr % evlo
+      if (id_hdr == 38) val = tr % evel
+      if (id_hdr == 39) val = tr % evdp
+      if (id_hdr == 40) val = tr % mag
+      if (id_hdr == 41) val = tr % user0
+      if (id_hdr == 42) val = tr % user1
+      if (id_hdr == 43) val = tr % user2
+      if (id_hdr == 44) val = tr % user3
+      if (id_hdr == 45) val = tr % user4
+      if (id_hdr == 46) val = tr % user5
+      if (id_hdr == 47) val = tr % user6
+      if (id_hdr == 48) val = tr % user7
+      if (id_hdr == 49) val = tr % user8
+      if (id_hdr == 50) val = tr % user9
+      if (id_hdr == 51) val = tr % dist
+      if (id_hdr == 52) val = tr % az
+      if (id_hdr == 53) val = tr % baz
+      if (id_hdr == 54) val = tr % gcarc
+      if (id_hdr == 55) val = tr % internal1
+      if (id_hdr == 56) val = tr % internal2
+      if (id_hdr == 57) val = tr % depmen
+      if (id_hdr == 58) val = tr % cmpaz
+      if (id_hdr == 59) val = tr % cmpinc
+      if (id_hdr == 60) val = tr % xminimum
+      if (id_hdr == 61) val = tr % xmaximum
+      if (id_hdr == 62) val = tr % yminimum
+      if (id_hdr == 63) val = tr % ymaximum
+      if (id_hdr == 64) val = tr % unused1
+      if (id_hdr == 65) val = tr % unused2
+      if (id_hdr == 66) val = tr % unused3
+      if (id_hdr == 67) val = tr % unused4
+      if (id_hdr == 68) val = tr % unused5
+      if (id_hdr == 69) val = tr % unused6
+      if (id_hdr == 70) val = tr % unused7
 
-          
+
       return
    end subroutine f90sac_getfhdr
 !===============================================================================
@@ -1648,7 +1648,7 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
 !
 !     Return the value of an integer header, identified by its ID number
 !     (this can be got using f90sac_enumhdr)
-!     
+!
       implicit none
       type (SACtrace) :: tr
       integer :: id_hdr,ifound
@@ -1658,8 +1658,8 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
       if (id_hdr<71 .or. id_hdr>105) then
          write(0,'(a)') &
          'F90SAC_GETIHDR: Error: Bad Int header ID number (not 71-105)'
-         STOP     
-      endif      
+         STOP
+      endif
 
       if (id_hdr == 071) val = tr % nzyear
       if (id_hdr == 072) val = tr % nzjday
@@ -1696,7 +1696,7 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
       if (id_hdr == 103) val = tr % unused15
       if (id_hdr == 104) val = tr % unused16
       if (id_hdr == 105) val = tr % unused17
-          
+
       return
    end subroutine f90sac_getihdr
 !===============================================================================
@@ -1709,8 +1709,8 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
 !     (this can be got using f90sac_enumhdr)
 !
 !     Note that logicals in SAC are integers with the value 0 or 1, not
-!     fortran logicals.      
-!     
+!     fortran logicals.
+!
       implicit none
       type (SACtrace) :: tr
       integer :: id_hdr,ifound
@@ -1720,15 +1720,15 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
       if (id_hdr<106 .or. id_hdr>110) then
          write(0,'(a)') &
          'F90SAC_GETLHDR: Error: Bad Logical header ID number (not 106-110)'
-         STOP     
-      endif      
+         STOP
+      endif
 
       if (id_hdr == 106) val = tr % leven
       if (id_hdr == 107) val = tr % lpspol
       if (id_hdr == 108) val = tr % lovrok
       if (id_hdr == 109) val = tr % lcalda
       if (id_hdr == 110) val = tr % unused18
-          
+
       return
    end subroutine f90sac_getlhdr
 !===============================================================================
@@ -1739,7 +1739,7 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
 !
 !     Return the value of a character header, identified by its ID number
 !     (this can be got using f90sac_enumhdr)
-!     
+!
       implicit none
       type (SACtrace) :: tr
       integer :: id_hdr,ifound
@@ -1749,33 +1749,33 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
       if (id_hdr<111 .or. id_hdr>133) then
          write(0,'(a)') &
          'F90SAC_GETKHDR: Error: Bad Character header ID number (not 111-133)'
-         STOP     
-      endif      
+         STOP
+      endif
 
-      if (id_hdr == 111) val = tr % kstnm     
-      if (id_hdr == 112) val = tr % kevnm     
-      if (id_hdr == 113) val = tr % khole     
-      if (id_hdr == 114) val = tr % ko        
-      if (id_hdr == 115) val = tr % ka        
-      if (id_hdr == 116) val = tr % kt0       
-      if (id_hdr == 117) val = tr % kt1       
-      if (id_hdr == 118) val = tr % kt2       
-      if (id_hdr == 119) val = tr % kt3       
-      if (id_hdr == 120) val = tr % kt4       
-      if (id_hdr == 121) val = tr % kt5       
-      if (id_hdr == 122) val = tr % kt6       
-      if (id_hdr == 123) val = tr % kt7       
-      if (id_hdr == 124) val = tr % kt8       
-      if (id_hdr == 125) val = tr % kt9       
-      if (id_hdr == 126) val = tr % kf        
-      if (id_hdr == 127) val = tr % kuser0    
-      if (id_hdr == 128) val = tr % kuser1    
-      if (id_hdr == 129) val = tr % kuser2    
-      if (id_hdr == 130) val = tr % kcmpnm    
-      if (id_hdr == 131) val = tr % knetwk    
-      if (id_hdr == 132) val = tr % kdatrd    
-      if (id_hdr == 133) val = tr % kinst     
-          
+      if (id_hdr == 111) val = tr % kstnm
+      if (id_hdr == 112) val = tr % kevnm
+      if (id_hdr == 113) val = tr % khole
+      if (id_hdr == 114) val = tr % ko
+      if (id_hdr == 115) val = tr % ka
+      if (id_hdr == 116) val = tr % kt0
+      if (id_hdr == 117) val = tr % kt1
+      if (id_hdr == 118) val = tr % kt2
+      if (id_hdr == 119) val = tr % kt3
+      if (id_hdr == 120) val = tr % kt4
+      if (id_hdr == 121) val = tr % kt5
+      if (id_hdr == 122) val = tr % kt6
+      if (id_hdr == 123) val = tr % kt7
+      if (id_hdr == 124) val = tr % kt8
+      if (id_hdr == 125) val = tr % kt9
+      if (id_hdr == 126) val = tr % kf
+      if (id_hdr == 127) val = tr % kuser0
+      if (id_hdr == 128) val = tr % kuser1
+      if (id_hdr == 129) val = tr % kuser2
+      if (id_hdr == 130) val = tr % kcmpnm
+      if (id_hdr == 131) val = tr % knetwk
+      if (id_hdr == 132) val = tr % kdatrd
+      if (id_hdr == 133) val = tr % kinst
+
       return
    end subroutine f90sac_getkhdr
 !===============================================================================
@@ -1786,7 +1786,7 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
 !
 !     Set the value of a floating point header, identified by its ID number
 !     (this can be got using f90sac_enumhdr)
-!     
+!
       implicit none
       type (SACtrace) :: tr
       integer :: id_hdr,ifound
@@ -1796,81 +1796,81 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
       if (id_hdr<1 .or. id_hdr>70) then
          write(0,'(a)') &
          'F90SAC_SETFHDR: Error: Bad FP header ID number (not 1-70)'
-         STOP     
-      endif      
+         STOP
+      endif
 
-      if (id_hdr == 01) tr % delta     = val 
-      if (id_hdr == 02) tr % depmin    = val 
-      if (id_hdr == 03) tr % depmax    = val 
-      if (id_hdr == 04) tr % scale     = val 
-      if (id_hdr == 05) tr % odelta    = val 
-      if (id_hdr == 06) tr % b         = val 
-      if (id_hdr == 07) tr % e         = val 
-      if (id_hdr == 08) tr % o         = val 
-      if (id_hdr == 09) tr % a         = val 
-      if (id_hdr == 10) tr % internal0 = val 
-      if (id_hdr == 11) tr % t0        = val 
-      if (id_hdr == 12) tr % t1        = val 
-      if (id_hdr == 13) tr % t2        = val 
-      if (id_hdr == 14) tr % t3        = val 
-      if (id_hdr == 15) tr % t4        = val 
-      if (id_hdr == 16) tr % t5        = val 
-      if (id_hdr == 17) tr % t6        = val 
-      if (id_hdr == 18) tr % t7        = val 
-      if (id_hdr == 19) tr % t8        = val 
-      if (id_hdr == 20) tr % t9        = val 
-      if (id_hdr == 21) tr % f         = val 
-      if (id_hdr == 22) tr % resp0     = val 
-      if (id_hdr == 23) tr % resp1     = val 
-      if (id_hdr == 24) tr % resp2     = val 
-      if (id_hdr == 25) tr % resp3     = val 
-      if (id_hdr == 26) tr % resp4     = val 
-      if (id_hdr == 27) tr % resp5     = val 
-      if (id_hdr == 28) tr % resp6     = val 
-      if (id_hdr == 29) tr % resp7     = val 
-      if (id_hdr == 30) tr % resp8     = val 
-      if (id_hdr == 31) tr % resp9     = val 
-      if (id_hdr == 32) tr % stla      = val 
-      if (id_hdr == 33) tr % stlo      = val 
-      if (id_hdr == 34) tr % stel      = val 
-      if (id_hdr == 35) tr % stdp      = val 
-      if (id_hdr == 36) tr % evla      = val 
-      if (id_hdr == 37) tr % evlo      = val 
-      if (id_hdr == 38) tr % evel      = val 
-      if (id_hdr == 39) tr % evdp      = val 
-      if (id_hdr == 40) tr % mag       = val 
-      if (id_hdr == 41) tr % user0     = val 
-      if (id_hdr == 42) tr % user1     = val 
-      if (id_hdr == 43) tr % user2     = val 
-      if (id_hdr == 44) tr % user3     = val 
-      if (id_hdr == 45) tr % user4     = val 
-      if (id_hdr == 46) tr % user5     = val 
-      if (id_hdr == 47) tr % user6     = val 
-      if (id_hdr == 48) tr % user7     = val 
-      if (id_hdr == 49) tr % user8     = val 
-      if (id_hdr == 50) tr % user9     = val 
-      if (id_hdr == 51) tr % dist      = val 
-      if (id_hdr == 52) tr % az        = val 
-      if (id_hdr == 53) tr % baz       = val 
-      if (id_hdr == 54) tr % gcarc     = val 
-      if (id_hdr == 55) tr % internal1 = val 
-      if (id_hdr == 56) tr % internal2 = val 
-      if (id_hdr == 57) tr % depmen    = val 
-      if (id_hdr == 58) tr % cmpaz     = val 
-      if (id_hdr == 59) tr % cmpinc    = val 
-      if (id_hdr == 60) tr % xminimum  = val 
-      if (id_hdr == 61) tr % xmaximum  = val 
-      if (id_hdr == 62) tr % yminimum  = val 
-      if (id_hdr == 63) tr % ymaximum  = val 
-      if (id_hdr == 64) tr % unused1   = val 
-      if (id_hdr == 65) tr % unused2   = val 
-      if (id_hdr == 66) tr % unused3   = val 
-      if (id_hdr == 67) tr % unused4   = val 
-      if (id_hdr == 68) tr % unused5   = val 
-      if (id_hdr == 69) tr % unused6   = val 
-      if (id_hdr == 70) tr % unused7   = val       
+      if (id_hdr == 01) tr % delta     = val
+      if (id_hdr == 02) tr % depmin    = val
+      if (id_hdr == 03) tr % depmax    = val
+      if (id_hdr == 04) tr % scale     = val
+      if (id_hdr == 05) tr % odelta    = val
+      if (id_hdr == 06) tr % b         = val
+      if (id_hdr == 07) tr % e         = val
+      if (id_hdr == 08) tr % o         = val
+      if (id_hdr == 09) tr % a         = val
+      if (id_hdr == 10) tr % internal0 = val
+      if (id_hdr == 11) tr % t0        = val
+      if (id_hdr == 12) tr % t1        = val
+      if (id_hdr == 13) tr % t2        = val
+      if (id_hdr == 14) tr % t3        = val
+      if (id_hdr == 15) tr % t4        = val
+      if (id_hdr == 16) tr % t5        = val
+      if (id_hdr == 17) tr % t6        = val
+      if (id_hdr == 18) tr % t7        = val
+      if (id_hdr == 19) tr % t8        = val
+      if (id_hdr == 20) tr % t9        = val
+      if (id_hdr == 21) tr % f         = val
+      if (id_hdr == 22) tr % resp0     = val
+      if (id_hdr == 23) tr % resp1     = val
+      if (id_hdr == 24) tr % resp2     = val
+      if (id_hdr == 25) tr % resp3     = val
+      if (id_hdr == 26) tr % resp4     = val
+      if (id_hdr == 27) tr % resp5     = val
+      if (id_hdr == 28) tr % resp6     = val
+      if (id_hdr == 29) tr % resp7     = val
+      if (id_hdr == 30) tr % resp8     = val
+      if (id_hdr == 31) tr % resp9     = val
+      if (id_hdr == 32) tr % stla      = val
+      if (id_hdr == 33) tr % stlo      = val
+      if (id_hdr == 34) tr % stel      = val
+      if (id_hdr == 35) tr % stdp      = val
+      if (id_hdr == 36) tr % evla      = val
+      if (id_hdr == 37) tr % evlo      = val
+      if (id_hdr == 38) tr % evel      = val
+      if (id_hdr == 39) tr % evdp      = val
+      if (id_hdr == 40) tr % mag       = val
+      if (id_hdr == 41) tr % user0     = val
+      if (id_hdr == 42) tr % user1     = val
+      if (id_hdr == 43) tr % user2     = val
+      if (id_hdr == 44) tr % user3     = val
+      if (id_hdr == 45) tr % user4     = val
+      if (id_hdr == 46) tr % user5     = val
+      if (id_hdr == 47) tr % user6     = val
+      if (id_hdr == 48) tr % user7     = val
+      if (id_hdr == 49) tr % user8     = val
+      if (id_hdr == 50) tr % user9     = val
+      if (id_hdr == 51) tr % dist      = val
+      if (id_hdr == 52) tr % az        = val
+      if (id_hdr == 53) tr % baz       = val
+      if (id_hdr == 54) tr % gcarc     = val
+      if (id_hdr == 55) tr % internal1 = val
+      if (id_hdr == 56) tr % internal2 = val
+      if (id_hdr == 57) tr % depmen    = val
+      if (id_hdr == 58) tr % cmpaz     = val
+      if (id_hdr == 59) tr % cmpinc    = val
+      if (id_hdr == 60) tr % xminimum  = val
+      if (id_hdr == 61) tr % xmaximum  = val
+      if (id_hdr == 62) tr % yminimum  = val
+      if (id_hdr == 63) tr % ymaximum  = val
+      if (id_hdr == 64) tr % unused1   = val
+      if (id_hdr == 65) tr % unused2   = val
+      if (id_hdr == 66) tr % unused3   = val
+      if (id_hdr == 67) tr % unused4   = val
+      if (id_hdr == 68) tr % unused5   = val
+      if (id_hdr == 69) tr % unused6   = val
+      if (id_hdr == 70) tr % unused7   = val
 
-          
+
       return
    end subroutine f90sac_setfhdr
 !===============================================================================
@@ -1881,7 +1881,7 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
 !
 !     Set the value of an integer header, identified by its ID number
 !     (this can be got using f90sac_enumhdr)
-!     
+!
       implicit none
       type (SACtrace) :: tr
       integer :: id_hdr,ifound
@@ -1891,8 +1891,8 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
       if (id_hdr<71 .or. id_hdr>105) then
          write(0,'(a)') &
          'F90SAC_SETIHDR: Error: Bad Int header ID number (not 71-105)'
-         STOP     
-      endif      
+         STOP
+      endif
 
       if (id_hdr == 071)  tr % nzyear    = val
       if (id_hdr == 072)  tr % nzjday    = val
@@ -1929,7 +1929,7 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
       if (id_hdr == 103)  tr % unused15  = val
       if (id_hdr == 104)  tr % unused16  = val
       if (id_hdr == 105)  tr % unused17  = val
-          
+
       return
    end subroutine f90sac_setihdr
 !===============================================================================
@@ -1942,8 +1942,8 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
 !     (this can be got using f90sac_enumhdr)
 !
 !     Note that logicals in SAC are integers with the value 0 or 1, not
-!     fortran logicals.      
-!     
+!     fortran logicals.
+!
       implicit none
       type (SACtrace) :: tr
       integer :: id_hdr,ifound
@@ -1953,15 +1953,15 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
       if (id_hdr<106 .or. id_hdr>110) then
          write(0,'(a)') &
          'F90SAC_SETLHDR: Error: Bad Logical header ID number (not 106-110)'
-         STOP     
-      endif      
+         STOP
+      endif
 
       if (id_hdr == 106)  tr % leven    = val
       if (id_hdr == 107)  tr % lpspol   = val
       if (id_hdr == 108)  tr % lovrok   = val
       if (id_hdr == 109)  tr % lcalda   = val
       if (id_hdr == 110)  tr % unused18 = val
-          
+
       return
    end subroutine f90sac_setlhdr
 !===============================================================================
@@ -1972,7 +1972,7 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
 !
 !     Set the value of a character header, identified by its ID number
 !     (this can be got using f90sac_enumhdr)
-!     
+!
       implicit none
       type (SACtrace) :: tr
       integer :: id_hdr,ifound
@@ -1982,33 +1982,33 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
       if (id_hdr<111 .or. id_hdr>133) then
          write(0,'(a)') &
          'F90SAC_SETKHDR: Error: Bad Character header ID number (not 111-133)'
-         STOP     
-      endif      
+         STOP
+      endif
 
-      if (id_hdr == 111)  tr % kstnm  = val   
-      if (id_hdr == 112)  tr % kevnm  = val   
-      if (id_hdr == 113)  tr % khole  = val   
-      if (id_hdr == 114)  tr % ko     = val   
-      if (id_hdr == 115)  tr % ka     = val   
-      if (id_hdr == 116)  tr % kt0    = val   
-      if (id_hdr == 117)  tr % kt1    = val   
-      if (id_hdr == 118)  tr % kt2    = val   
-      if (id_hdr == 119)  tr % kt3    = val   
-      if (id_hdr == 120)  tr % kt4    = val   
-      if (id_hdr == 121)  tr % kt5    = val   
-      if (id_hdr == 122)  tr % kt6    = val   
-      if (id_hdr == 123)  tr % kt7    = val   
-      if (id_hdr == 124)  tr % kt8    = val   
-      if (id_hdr == 125)  tr % kt9    = val   
-      if (id_hdr == 126)  tr % kf     = val   
-      if (id_hdr == 127)  tr % kuser0 = val   
-      if (id_hdr == 128)  tr % kuser1 = val   
-      if (id_hdr == 129)  tr % kuser2 = val   
-      if (id_hdr == 130)  tr % kcmpnm = val   
-      if (id_hdr == 131)  tr % knetwk = val   
-      if (id_hdr == 132)  tr % kdatrd = val   
-      if (id_hdr == 133)  tr % kinst  = val   
-          
+      if (id_hdr == 111)  tr % kstnm  = val
+      if (id_hdr == 112)  tr % kevnm  = val
+      if (id_hdr == 113)  tr % khole  = val
+      if (id_hdr == 114)  tr % ko     = val
+      if (id_hdr == 115)  tr % ka     = val
+      if (id_hdr == 116)  tr % kt0    = val
+      if (id_hdr == 117)  tr % kt1    = val
+      if (id_hdr == 118)  tr % kt2    = val
+      if (id_hdr == 119)  tr % kt3    = val
+      if (id_hdr == 120)  tr % kt4    = val
+      if (id_hdr == 121)  tr % kt5    = val
+      if (id_hdr == 122)  tr % kt6    = val
+      if (id_hdr == 123)  tr % kt7    = val
+      if (id_hdr == 124)  tr % kt8    = val
+      if (id_hdr == 125)  tr % kt9    = val
+      if (id_hdr == 126)  tr % kf     = val
+      if (id_hdr == 127)  tr % kuser0 = val
+      if (id_hdr == 128)  tr % kuser1 = val
+      if (id_hdr == 129)  tr % kuser2 = val
+      if (id_hdr == 130)  tr % kcmpnm = val
+      if (id_hdr == 131)  tr % knetwk = val
+      if (id_hdr == 132)  tr % kdatrd = val
+      if (id_hdr == 133)  tr % kinst  = val
+
       return
    end subroutine f90sac_setkhdr
 !===============================================================================
@@ -2019,7 +2019,7 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
 !
 !     Return the header ID number (just the header's place in the SACfile list)
 !     If the header can't be found, -1 is returned
-!     
+!
       implicit none
 !      type (SACtrace) :: tr
       integer :: id_hdr
@@ -2119,10 +2119,10 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
          if (trim(hdrstr) == trim(headers(id_hdr))) then
             return ! the do loop
          endif
-      enddo   
-      
+      enddo
+
       id_hdr = -1 ! not found condition
-          
+
       return
    end subroutine f90sac_enumhdr
 !===============================================================================
@@ -2137,22 +2137,22 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
       implicit none
       integer :: dd,mm,yy ! dd,mm,yy
       integer :: dayno,nsec
-      integer :: hh,mi,se,ms      
+      integer :: hh,mi,se,ms
 
-      integer :: f90sac_dateseed ! random number seed 
+      integer :: f90sac_dateseed ! random number seed
       character :: dtsdstr*8
       character :: datestr*8,timestr*10
 
-!  ** get the time and date      
+!  ** get the time and date
       call date_and_time(datestr,timestr)
       read(datestr,'(i4.4,i2.2,i2.2)') yy,mm,dd
       read(timestr,'(i2.2,i2.2,i2.2,1x,i3.3)') hh,mi,se,ms
 
 !  ** get a day (in year) number
-!      call f90sac_ymd2jd(yy,mm,dd,dayno)   
-      
+!      call f90sac_ymd2jd(yy,mm,dd,dayno)
+
       f90sac_dateseed = (hh*3600 +mi*60 +se) * 1000 + ms
-      
+
       return
    end function f90sac_dateseed
 !===============================================================================
@@ -2160,7 +2160,7 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
 !===============================================================================
    subroutine f90sac_ymd2jd(iyear,imonth,iday,ijd)
 !===============================================================================
-!     
+!
 !  Convert YYYY/MM/DD to DAY number in year
 !
       implicit none
@@ -2169,7 +2169,7 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
       character (len=35) :: dstr = '31,28,31,30,31,30,31,31,30,31,30,31'
       logical isleap
 
-!  ** do an internal read to get days-in-month into array      
+!  ** do an internal read to get days-in-month into array
       read(dstr,*) (ndaysin(i),i=1,12)
 
 !  ** See if it is a leap year
@@ -2178,21 +2178,21 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
       if (modulo(iyear,100) == 0) isleap = .false.
       if (modulo(iyear,400) == 0) isleap = .true.
       if (isleap) ndaysin(2) = ndaysin(2) + 1
-      
+
 !   ** check the date makes sense
       if (imonth > 12 .or. imonth < 1) then
          write(0,'(a)') 'F90SAC_YMD2JD: Error: Bad date'
          stop
-      endif  
- 
+      endif
+
       if (iday < 0 .or. iday > ndaysin(imonth)) then
          write(0,'(a)') 'F90SAC_YMD2JD: Error: Bad date'
          stop
-      endif      
- 
-      ijd = sum(ndaysin(1:imonth-1)) + iday      
-      
-      
+      endif
+
+      ijd = sum(ndaysin(1:imonth-1)) + iday
+
+
       return
    end subroutine f90sac_ymd2jd
 !===============================================================================
@@ -2200,7 +2200,7 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
 !===============================================================================
    subroutine f90sac_jd2ymd(iyear,ijd,imonth,iday)
 !===============================================================================
-!     
+!
 !  Convert YYYY/MM/DD to DAY number in year
 !
       implicit none
@@ -2209,7 +2209,7 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
       character (len=35) :: dstr = '31,28,31,30,31,30,31,31,30,31,30,31'
       logical isleap
 
-!  ** do an internal read to get days-in-month into array      
+!  ** do an internal read to get days-in-month into array
       read(dstr,*) (ndaysin(i),i=1,12)
 
 !  ** See if it is a leap year
@@ -2220,22 +2220,22 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
       if (isleap) ndaysin(2) = ndaysin(2) + 1
 
       ndaysinyear = 365 ; if (isleap) ndaysinyear = 366
-      
+
 !  ** check the day number makes sense
       if (ijd > ndaysinyear .or. ijd < 1) then
          write(0,'(a)') 'F90SAC_JD2YMD: Error: Bad date'
          stop
-      endif  
- 
+      endif
+
 !  ** convert to month/day numbder
       ijd_temp = ijd
       do i=1,12
          if (ijd_temp-ndaysin(i) <= 0) exit
          ijd_temp = ijd_temp - ndaysin(i)
-      enddo 
-      imonth = i ; iday = ijd_temp      
-      
-      
+      enddo
+      imonth = i ; iday = ijd_temp
+
+
       return
    end subroutine f90sac_jd2ymd
 !===============================================================================
@@ -2246,9 +2246,9 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
 !===============================================================================
 !
 !  Initiate random number generator
-!  
+!
 !  NOTE: Requires Numerical Recipes function ran1, or appropriate
-!  substitute. Numerical Recipes functions are NOT freeware and 
+!  substitute. Numerical Recipes functions are NOT freeware and
 !  are therefore NOT distributed with this code. If no appropriate
 !  substitute is available, this subroutine can be commented out.
 !
@@ -2256,17 +2256,17 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
       integer i
       real dum
 
-!  ** Numerical Recipes random number generator      
+!  ** Numerical Recipes random number generator
       real NR_ran1
 
 !  ** seed and burn in the random number generator
       f90sac_random_seed = f90sac_dateseed()
-      
+
       dum = NR_ran1(-f90sac_random_seed) ! initialise ran1
       do i=1,10
           dum = NR_ran1(f90sac_random_seed)
-      enddo      
-               
+      enddo
+
       return
    end subroutine f90sac_init_random
 !===============================================================================
@@ -2277,10 +2277,10 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
 !
 !  Add white noise to sac trace t1, with a maximum amplitude:
 !  +/-scale*max_ampl_in_trace *or* if scale is -ve then use it
-!  as the absolute maximum amplitude 
-!  
+!  as the absolute maximum amplitude
+!
 !  NOTE: Requires Numerical Recipes function ran1, or appropriate
-!  substitute. Numerical Recipes functions are NOT freeware and 
+!  substitute. Numerical Recipes functions are NOT freeware and
 !  are therefore NOT distributed with this code. If no appropriate
 !  substitute is available, this subroutine can be commented out.
 !
@@ -2290,7 +2290,7 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
       integer seed,i
       real dum, ampmax
 
-!  ** Numerical Recipes random number generator      
+!  ** Numerical Recipes random number generator
       real NR_ran1
 
 !  ** check that the random number generator has been initialised
@@ -2309,19 +2309,19 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
                         ampmax = abs(t1 % trace(i))
          enddo
 
-!        * add random fluctuations to trace      
+!        * add random fluctuations to trace
          do i=1,t1 % npts
             t1 % trace(i) = t1 % trace(i) + &
                (NR_ran1(f90sac_random_seed)*2.0-1.0)*scale*ampmax
          enddo
       else
-!        * add random fluctuations to trace      
+!        * add random fluctuations to trace
          do i=1,t1 % npts
             t1 % trace(i) = t1 % trace(i) + &
                (NR_ran1(f90sac_random_seed)*2.0-1.0)*abs(scale)
-         enddo         
+         enddo
       endif
-               
+
       return
    end subroutine f90sac_addwnoise
 !===============================================================================
@@ -2345,38 +2345,38 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
 
       real :: x(nmax),y(nmax) ! time-series
       real :: y2a(nmax) ! derivatives
-      real,allocatable :: xi(:),yi(:) ! new traces   
-      real :: delta_rs                                 
-      
+      real,allocatable :: xi(:),yi(:) ! new traces
+      real :: delta_rs
+
       npts = tr % npts
       npts_rs = (npts-1)*factor+1
-      
+
 !  ** check trace length
-      if (npts > nmax) then     
+      if (npts > nmax) then
          write(0,'(a)') &
          'F90SAC_RESAMPLEUP: Error: Trace too long for resample.'
-         STOP     
-      endif      
+         STOP
+      endif
 
-!  ** allocate memory for the resampled arrays      
+!  ** allocate memory for the resampled arrays
       allocate(xi(npts_rs))
       allocate(yi(npts_rs))
-      
+
 
 !  ** fill x and y arrays. Just use real(1..npts) for x
       do i = 1 , npts
          x(i) = real(i)
          y(i) = tr % trace(i)
-      enddo 
-      
+      enddo
+
 !  ** fill xi array
       do i = 1 , npts_rs
          xi(i) = real(i-1) * 1./real(factor)
       enddo
-      
+
 !  ** initialise splines (use a natural spline y"(1)=y"(n)=0
       call NR_spline(x,y,npts,0.0,0.0,y2a)
-      
+
 !  ** generate the interpolated trace
       do i = 1 , npts_rs
          call NR_splint(x,y,y2a,npts,xi(i),yi(i))
@@ -2391,11 +2391,11 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
       tr_resamp % delta = delta_rs ; tr_resamp % npts = npts_rs
 
 !  ** upload the interpolated data to the trace
-      tr_resamp % trace(1:npts_rs) = yi( 1:npts_rs)       
+      tr_resamp % trace(1:npts_rs) = yi( 1:npts_rs)
 
 !  ** destroy the allocated arrays
-      deallocate(xi, stat=istat) ;  deallocate(yi, stat=istat)               
-      
+      deallocate(xi, stat=istat) ;  deallocate(yi, stat=istat)
+
       return
    end subroutine f90sac_resampleup
 !===============================================================================
@@ -2405,7 +2405,7 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
 !===============================================================================
 !  IO Routines below here. There are two versions, accessed using pre-processor
 !  directives. The default are wrappers for the C-routines in f90sac_csubs.c -
-!  these are much faster. However, if -DDISABLE_C_IO is invoked, these are 
+!  these are much faster. However, if -DDISABLE_C_IO is invoked, these are
 !  avoided and the older, slower, pure Fortran routines are compiled instead.
 !===============================================================================
 !===============================================================================
@@ -2419,7 +2419,7 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
    subroutine f90sac_writeheader(fname,out)
 !===============================================================================
 !
-!  write a SAC time-series object to a file (header only)  
+!  write a SAC time-series object to a file (header only)
 !
       implicit none
       integer :: lu
@@ -2431,7 +2431,7 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
       real(real4) :: sacrh(70) ! SAC floating point header
       integer(int4) :: sacih(40) ! SAC floating point header
 
-      call f90sac_io_init() 
+      call f90sac_io_init()
 
 !  ** Open the file for writing
       open (unit=f90sac_iounit, file=trim(fname),form='unformatted', &
@@ -2443,76 +2443,76 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
 !
 !  ** WRITE OUT THE SAC HEADER
 !
-      sacrh(001)  = out%delta             
-      sacrh(002)  = out%depmin   
-      sacrh(003)  = out%depmax   
-      sacrh(004)  = out%scale    
-      sacrh(005)  = out%odelta   
-      sacrh(006)  = out%b        
-      sacrh(007)  = out%e        
-      sacrh(008)  = out%o        
-      sacrh(009)  = out%a        
+      sacrh(001)  = out%delta
+      sacrh(002)  = out%depmin
+      sacrh(003)  = out%depmax
+      sacrh(004)  = out%scale
+      sacrh(005)  = out%odelta
+      sacrh(006)  = out%b
+      sacrh(007)  = out%e
+      sacrh(008)  = out%o
+      sacrh(009)  = out%a
       sacrh(010)  = out%internal0
-      sacrh(011)  = out%t0       
-      sacrh(012)  = out%t1       
-      sacrh(013)  = out%t2       
-      sacrh(014)  = out%t3       
-      sacrh(015)  = out%t4       
-      sacrh(016)  = out%t5       
-      sacrh(017)  = out%t6       
-      sacrh(018)  = out%t7       
-      sacrh(019)  = out%t8       
-      sacrh(020)  = out%t9       
-      sacrh(021)  = out%f        
-      sacrh(022)  = out%resp0    
-      sacrh(023)  = out%resp1    
-      sacrh(024)  = out%resp2    
-      sacrh(025)  = out%resp3    
-      sacrh(026)  = out%resp4    
-      sacrh(027)  = out%resp5    
-      sacrh(028)  = out%resp6    
-      sacrh(029)  = out%resp7    
-      sacrh(030)  = out%resp8    
-      sacrh(031)  = out%resp9    
-      sacrh(032)  = out%stla     
-      sacrh(033)  = out%stlo     
-      sacrh(034)  = out%stel     
-      sacrh(035)  = out%stdp     
-      sacrh(036)  = out%evla     
-      sacrh(037)  = out%evlo     
-      sacrh(038)  = out%evel     
-      sacrh(039)  = out%evdp     
-      sacrh(040)  = out%mag      
-      sacrh(041)  = out%user0    
-      sacrh(042)  = out%user1    
-      sacrh(043)  = out%user2    
-      sacrh(044)  = out%user3    
-      sacrh(045)  = out%user4    
-      sacrh(046)  = out%user5    
-      sacrh(047)  = out%user6    
-      sacrh(048)  = out%user7    
-      sacrh(049)  = out%user8    
-      sacrh(050)  = out%user9    
-      sacrh(051)  = out%dist     
-      sacrh(052)  = out%az       
-      sacrh(053)  = out%baz      
-      sacrh(054)  = out%gcarc    
+      sacrh(011)  = out%t0
+      sacrh(012)  = out%t1
+      sacrh(013)  = out%t2
+      sacrh(014)  = out%t3
+      sacrh(015)  = out%t4
+      sacrh(016)  = out%t5
+      sacrh(017)  = out%t6
+      sacrh(018)  = out%t7
+      sacrh(019)  = out%t8
+      sacrh(020)  = out%t9
+      sacrh(021)  = out%f
+      sacrh(022)  = out%resp0
+      sacrh(023)  = out%resp1
+      sacrh(024)  = out%resp2
+      sacrh(025)  = out%resp3
+      sacrh(026)  = out%resp4
+      sacrh(027)  = out%resp5
+      sacrh(028)  = out%resp6
+      sacrh(029)  = out%resp7
+      sacrh(030)  = out%resp8
+      sacrh(031)  = out%resp9
+      sacrh(032)  = out%stla
+      sacrh(033)  = out%stlo
+      sacrh(034)  = out%stel
+      sacrh(035)  = out%stdp
+      sacrh(036)  = out%evla
+      sacrh(037)  = out%evlo
+      sacrh(038)  = out%evel
+      sacrh(039)  = out%evdp
+      sacrh(040)  = out%mag
+      sacrh(041)  = out%user0
+      sacrh(042)  = out%user1
+      sacrh(043)  = out%user2
+      sacrh(044)  = out%user3
+      sacrh(045)  = out%user4
+      sacrh(046)  = out%user5
+      sacrh(047)  = out%user6
+      sacrh(048)  = out%user7
+      sacrh(049)  = out%user8
+      sacrh(050)  = out%user9
+      sacrh(051)  = out%dist
+      sacrh(052)  = out%az
+      sacrh(053)  = out%baz
+      sacrh(054)  = out%gcarc
       sacrh(055)  = out%internal1
       sacrh(056)  = out%internal2
-      sacrh(057)  = out%depmen   
-      sacrh(058)  = out%cmpaz    
-      sacrh(059)  = out%cmpinc   
-      sacrh(060)  = out%xminimum 
-      sacrh(061)  = out%xmaximum 
-      sacrh(062)  = out%yminimum 
-      sacrh(063)  = out%ymaximum 
-      sacrh(064)  = out%unused1  
-      sacrh(065)  = out%unused2  
-      sacrh(066)  = out%unused3  
-      sacrh(067)  = out%unused4  
-      sacrh(068)  = out%unused5  
-      sacrh(069)  = out%unused6  
-      sacrh(070)  = out%unused7  
+      sacrh(057)  = out%depmen
+      sacrh(058)  = out%cmpaz
+      sacrh(059)  = out%cmpinc
+      sacrh(060)  = out%xminimum
+      sacrh(061)  = out%xmaximum
+      sacrh(062)  = out%yminimum
+      sacrh(063)  = out%ymaximum
+      sacrh(064)  = out%unused1
+      sacrh(065)  = out%unused2
+      sacrh(066)  = out%unused3
+      sacrh(067)  = out%unused4
+      sacrh(068)  = out%unused5
+      sacrh(069)  = out%unused6
+      sacrh(070)  = out%unused7
 
       if (f90sac_force_byteswap) then
          call f90sac_real32_byteswap(sacrh,70)
@@ -2522,46 +2522,46 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
          write(lu,rec=i) sacrh(i)
       enddo
 
-      sacih(001) = out%nzyear   
-      sacih(002) = out%nzjday   
-      sacih(003) = out%nzhour   
-      sacih(004) = out%nzmin    
-      sacih(005) = out%nzsec    
-      sacih(006) = out%nzmsec   
-      sacih(007) = out%nvhdr    
-      sacih(008) = out%norid    
-      sacih(009) = out%nevid    
-      sacih(010) = out%npts     
+      sacih(001) = out%nzyear
+      sacih(002) = out%nzjday
+      sacih(003) = out%nzhour
+      sacih(004) = out%nzmin
+      sacih(005) = out%nzsec
+      sacih(006) = out%nzmsec
+      sacih(007) = out%nvhdr
+      sacih(008) = out%norid
+      sacih(009) = out%nevid
+      sacih(010) = out%npts
       sacih(011) = out%internal3
-      sacih(012) = out%nwfid    
-      sacih(013) = out%nxsize   
-      sacih(014) = out%nysize   
-      sacih(015) = out%unused8  
-      sacih(016) = out%iftype   
-      sacih(017) = out%idep     
-      sacih(018) = out%iztype   
-      sacih(019) = out%unused9  
-      sacih(020) = out%iinst    
-      sacih(021) = out%istreg   
-      sacih(022) = out%ievreg   
-      sacih(023) = out%ievtyp   
-      sacih(024) = out%iqual    
-      sacih(025) = out%isynth   
-      sacih(026) = out%imagtyp  
-      sacih(027) = out%imagsrc  
-      sacih(028) = out%unused10 
-      sacih(029) = out%unused11 
-      sacih(030) = out%unused12 
-      sacih(031) = out%unused13 
-      sacih(032) = out%unused14 
-      sacih(033) = out%unused15 
-      sacih(034) = out%unused16 
-      sacih(035) = out%unused17 
-      sacih(036) = out%leven    
-      sacih(037) = out%lpspol   
-      sacih(038) = out%lovrok   
-      sacih(039) = out%lcalda   
-      sacih(040) = out%unused18 
+      sacih(012) = out%nwfid
+      sacih(013) = out%nxsize
+      sacih(014) = out%nysize
+      sacih(015) = out%unused8
+      sacih(016) = out%iftype
+      sacih(017) = out%idep
+      sacih(018) = out%iztype
+      sacih(019) = out%unused9
+      sacih(020) = out%iinst
+      sacih(021) = out%istreg
+      sacih(022) = out%ievreg
+      sacih(023) = out%ievtyp
+      sacih(024) = out%iqual
+      sacih(025) = out%isynth
+      sacih(026) = out%imagtyp
+      sacih(027) = out%imagsrc
+      sacih(028) = out%unused10
+      sacih(029) = out%unused11
+      sacih(030) = out%unused12
+      sacih(031) = out%unused13
+      sacih(032) = out%unused14
+      sacih(033) = out%unused15
+      sacih(034) = out%unused16
+      sacih(035) = out%unused17
+      sacih(036) = out%leven
+      sacih(037) = out%lpspol
+      sacih(038) = out%lovrok
+      sacih(039) = out%lcalda
+      sacih(040) = out%unused18
 
       if (f90sac_force_byteswap) then
          call f90sac_int32_byteswap(sacih,40)
@@ -2570,7 +2570,7 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
       do i=1,40
          write(lu,rec=i+70) sacih(i)
       enddo
-      
+
       write(lu,rec=111) out%kstnm(1:4)
       write(lu,rec=112) out%kstnm(5:8)
       write(lu,rec=113) out%kevnm(1:4)
@@ -2629,7 +2629,7 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
    subroutine f90sac_writetrace(fname,out)
 !===============================================================================
 !
-!  write a SAC time-series object to a file   
+!  write a SAC time-series object to a file
 !
       implicit none
       integer :: lu
@@ -2641,8 +2641,8 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
 
       real(real4) :: sacrh(70) ! SAC floating point header
       integer(int4) :: sacih(40) ! SAC floating point header
-      
-      call f90sac_io_init() 
+
+      call f90sac_io_init()
 
 
 !  ** Open the file for writing
@@ -2656,76 +2656,76 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
 !  ** WRITE OUT THE SAC HEADER
 !
 !  ** populate the structure
-      sacrh(001)  = out%delta             
-      sacrh(002)  = out%depmin   
-      sacrh(003)  = out%depmax   
-      sacrh(004)  = out%scale    
-      sacrh(005)  = out%odelta   
-      sacrh(006)  = out%b        
-      sacrh(007)  = out%e        
-      sacrh(008)  = out%o        
-      sacrh(009)  = out%a        
+      sacrh(001)  = out%delta
+      sacrh(002)  = out%depmin
+      sacrh(003)  = out%depmax
+      sacrh(004)  = out%scale
+      sacrh(005)  = out%odelta
+      sacrh(006)  = out%b
+      sacrh(007)  = out%e
+      sacrh(008)  = out%o
+      sacrh(009)  = out%a
       sacrh(010)  = out%internal0
-      sacrh(011)  = out%t0       
-      sacrh(012)  = out%t1       
-      sacrh(013)  = out%t2       
-      sacrh(014)  = out%t3       
-      sacrh(015)  = out%t4       
-      sacrh(016)  = out%t5       
-      sacrh(017)  = out%t6       
-      sacrh(018)  = out%t7       
-      sacrh(019)  = out%t8       
-      sacrh(020)  = out%t9       
-      sacrh(021)  = out%f        
-      sacrh(022)  = out%resp0    
-      sacrh(023)  = out%resp1    
-      sacrh(024)  = out%resp2    
-      sacrh(025)  = out%resp3    
-      sacrh(026)  = out%resp4    
-      sacrh(027)  = out%resp5    
-      sacrh(028)  = out%resp6    
-      sacrh(029)  = out%resp7    
-      sacrh(030)  = out%resp8    
-      sacrh(031)  = out%resp9    
-      sacrh(032)  = out%stla     
-      sacrh(033)  = out%stlo     
-      sacrh(034)  = out%stel     
-      sacrh(035)  = out%stdp     
-      sacrh(036)  = out%evla     
-      sacrh(037)  = out%evlo     
-      sacrh(038)  = out%evel     
-      sacrh(039)  = out%evdp     
-      sacrh(040)  = out%mag      
-      sacrh(041)  = out%user0    
-      sacrh(042)  = out%user1    
-      sacrh(043)  = out%user2    
-      sacrh(044)  = out%user3    
-      sacrh(045)  = out%user4    
-      sacrh(046)  = out%user5    
-      sacrh(047)  = out%user6    
-      sacrh(048)  = out%user7    
-      sacrh(049)  = out%user8    
-      sacrh(050)  = out%user9    
-      sacrh(051)  = out%dist     
-      sacrh(052)  = out%az       
-      sacrh(053)  = out%baz      
-      sacrh(054)  = out%gcarc    
+      sacrh(011)  = out%t0
+      sacrh(012)  = out%t1
+      sacrh(013)  = out%t2
+      sacrh(014)  = out%t3
+      sacrh(015)  = out%t4
+      sacrh(016)  = out%t5
+      sacrh(017)  = out%t6
+      sacrh(018)  = out%t7
+      sacrh(019)  = out%t8
+      sacrh(020)  = out%t9
+      sacrh(021)  = out%f
+      sacrh(022)  = out%resp0
+      sacrh(023)  = out%resp1
+      sacrh(024)  = out%resp2
+      sacrh(025)  = out%resp3
+      sacrh(026)  = out%resp4
+      sacrh(027)  = out%resp5
+      sacrh(028)  = out%resp6
+      sacrh(029)  = out%resp7
+      sacrh(030)  = out%resp8
+      sacrh(031)  = out%resp9
+      sacrh(032)  = out%stla
+      sacrh(033)  = out%stlo
+      sacrh(034)  = out%stel
+      sacrh(035)  = out%stdp
+      sacrh(036)  = out%evla
+      sacrh(037)  = out%evlo
+      sacrh(038)  = out%evel
+      sacrh(039)  = out%evdp
+      sacrh(040)  = out%mag
+      sacrh(041)  = out%user0
+      sacrh(042)  = out%user1
+      sacrh(043)  = out%user2
+      sacrh(044)  = out%user3
+      sacrh(045)  = out%user4
+      sacrh(046)  = out%user5
+      sacrh(047)  = out%user6
+      sacrh(048)  = out%user7
+      sacrh(049)  = out%user8
+      sacrh(050)  = out%user9
+      sacrh(051)  = out%dist
+      sacrh(052)  = out%az
+      sacrh(053)  = out%baz
+      sacrh(054)  = out%gcarc
       sacrh(055)  = out%internal1
       sacrh(056)  = out%internal2
-      sacrh(057)  = out%depmen   
-      sacrh(058)  = out%cmpaz    
-      sacrh(059)  = out%cmpinc   
-      sacrh(060)  = out%xminimum 
-      sacrh(061)  = out%xmaximum 
-      sacrh(062)  = out%yminimum 
-      sacrh(063)  = out%ymaximum 
-      sacrh(064)  = out%unused1  
-      sacrh(065)  = out%unused2  
-      sacrh(066)  = out%unused3  
-      sacrh(067)  = out%unused4  
-      sacrh(068)  = out%unused5  
-      sacrh(069)  = out%unused6  
-      sacrh(070)  = out%unused7  
+      sacrh(057)  = out%depmen
+      sacrh(058)  = out%cmpaz
+      sacrh(059)  = out%cmpinc
+      sacrh(060)  = out%xminimum
+      sacrh(061)  = out%xmaximum
+      sacrh(062)  = out%yminimum
+      sacrh(063)  = out%ymaximum
+      sacrh(064)  = out%unused1
+      sacrh(065)  = out%unused2
+      sacrh(066)  = out%unused3
+      sacrh(067)  = out%unused4
+      sacrh(068)  = out%unused5
+      sacrh(069)  = out%unused6
+      sacrh(070)  = out%unused7
 
       if (f90sac_force_byteswap) then
          call f90sac_real32_byteswap(sacrh,70)
@@ -2735,46 +2735,46 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
          write(lu,rec=i) sacrh(i)
       enddo
 
-      sacih(001) = out%nzyear   
-      sacih(002) = out%nzjday   
-      sacih(003) = out%nzhour   
-      sacih(004) = out%nzmin    
-      sacih(005) = out%nzsec    
-      sacih(006) = out%nzmsec   
-      sacih(007) = out%nvhdr    
-      sacih(008) = out%norid    
-      sacih(009) = out%nevid    
-      sacih(010) = out%npts     
+      sacih(001) = out%nzyear
+      sacih(002) = out%nzjday
+      sacih(003) = out%nzhour
+      sacih(004) = out%nzmin
+      sacih(005) = out%nzsec
+      sacih(006) = out%nzmsec
+      sacih(007) = out%nvhdr
+      sacih(008) = out%norid
+      sacih(009) = out%nevid
+      sacih(010) = out%npts
       sacih(011) = out%internal3
-      sacih(012) = out%nwfid    
-      sacih(013) = out%nxsize   
-      sacih(014) = out%nysize   
-      sacih(015) = out%unused8  
-      sacih(016) = out%iftype   
-      sacih(017) = out%idep     
-      sacih(018) = out%iztype   
-      sacih(019) = out%unused9  
-      sacih(020) = out%iinst    
-      sacih(021) = out%istreg   
-      sacih(022) = out%ievreg   
-      sacih(023) = out%ievtyp   
-      sacih(024) = out%iqual    
-      sacih(025) = out%isynth   
-      sacih(026) = out%imagtyp  
-      sacih(027) = out%imagsrc  
-      sacih(028) = out%unused10 
-      sacih(029) = out%unused11 
-      sacih(030) = out%unused12 
-      sacih(031) = out%unused13 
-      sacih(032) = out%unused14 
-      sacih(033) = out%unused15 
-      sacih(034) = out%unused16 
-      sacih(035) = out%unused17 
-      sacih(036) = out%leven    
-      sacih(037) = out%lpspol   
-      sacih(038) = out%lovrok   
-      sacih(039) = out%lcalda   
-      sacih(040) = out%unused18 
+      sacih(012) = out%nwfid
+      sacih(013) = out%nxsize
+      sacih(014) = out%nysize
+      sacih(015) = out%unused8
+      sacih(016) = out%iftype
+      sacih(017) = out%idep
+      sacih(018) = out%iztype
+      sacih(019) = out%unused9
+      sacih(020) = out%iinst
+      sacih(021) = out%istreg
+      sacih(022) = out%ievreg
+      sacih(023) = out%ievtyp
+      sacih(024) = out%iqual
+      sacih(025) = out%isynth
+      sacih(026) = out%imagtyp
+      sacih(027) = out%imagsrc
+      sacih(028) = out%unused10
+      sacih(029) = out%unused11
+      sacih(030) = out%unused12
+      sacih(031) = out%unused13
+      sacih(032) = out%unused14
+      sacih(033) = out%unused15
+      sacih(034) = out%unused16
+      sacih(035) = out%unused17
+      sacih(036) = out%leven
+      sacih(037) = out%lpspol
+      sacih(038) = out%lovrok
+      sacih(039) = out%lcalda
+      sacih(040) = out%unused18
 
       if (f90sac_force_byteswap) then
          call f90sac_int32_byteswap(sacih,40)
@@ -2783,7 +2783,7 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
       do i=1,40
          write(lu,rec=i+70) sacih(i)
       enddo
-      
+
       write(lu,rec=111) out%kstnm(1:4)
       write(lu,rec=112) out%kstnm(5:8)
       write(lu,rec=113) out%kevnm(1:4)
@@ -2838,12 +2838,12 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
          call f90sac_real32_byteswap(out%trace,out%npts)
       endif
 
-!  ** Output the trace   
+!  ** Output the trace
        do i=1,out % npts
             write(lu,rec=158+i) out%trace(i)
       enddo
 
- 
+
       close(lu)
    end subroutine f90sac_writetrace
 !===============================================================================
@@ -2852,8 +2852,8 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
    subroutine f90sac_readheader(fname,out)
 !===============================================================================
 !
-!  read a SAC header from a file. This is a trace object but with a single null    
-!  value as the trace. 
+!  read a SAC header from a file. This is a trace object but with a single null
+!  value as the trace.
 !
       implicit none
       integer :: lu
@@ -2862,19 +2862,19 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
       integer :: i, istatus
       type (SACtrace) :: out
       logical UNITOK, UNITOP
-            
+
       real(real4) :: sacrh(70) ! SAC floating point header
       integer(int4) :: sacih(40) ! SAC floating point header
 
-      call f90sac_io_init() 
-                        
+      call f90sac_io_init()
+
 !  ** Open the file for reading
       open (unit=f90sac_iounit, file=trim(fname),form='unformatted', &
             access='direct',recl=f90sac_32bit_record_length, &
             status='old',err=900)
-      
+
       lu = f90sac_iounit
-      
+
 !
 !  ** READ IN THE SAC HEADER
 !
@@ -2887,77 +2887,77 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
       endif
 
 !  ** populate the structure
-      out%delta     = sacrh(001)          
-      out%depmin    = sacrh(002) 
-      out%depmax    = sacrh(003) 
-      out%scale     = sacrh(004) 
-      out%odelta    = sacrh(005) 
-      out%b         = sacrh(006) 
-      out%e         = sacrh(007) 
-      out%o         = sacrh(008) 
-      out%a         = sacrh(009) 
-      out%internal0 = sacrh(010) 
-      out%t0        = sacrh(011) 
-      out%t1        = sacrh(012) 
-      out%t2        = sacrh(013) 
-      out%t3        = sacrh(014) 
-      out%t4        = sacrh(015) 
-      out%t5        = sacrh(016) 
-      out%t6        = sacrh(017) 
-      out%t7        = sacrh(018) 
-      out%t8        = sacrh(019) 
-      out%t9        = sacrh(020) 
-      out%f         = sacrh(021) 
-      out%resp0     = sacrh(022) 
-      out%resp1     = sacrh(023) 
-      out%resp2     = sacrh(024) 
-      out%resp3     = sacrh(025) 
-      out%resp4     = sacrh(026) 
-      out%resp5     = sacrh(027) 
-      out%resp6     = sacrh(028) 
-      out%resp7     = sacrh(029) 
-      out%resp8     = sacrh(030) 
-      out%resp9     = sacrh(031) 
-      out%stla      = sacrh(032) 
-      out%stlo      = sacrh(033) 
-      out%stel      = sacrh(034) 
-      out%stdp      = sacrh(035) 
-      out%evla      = sacrh(036) 
-      out%evlo      = sacrh(037) 
-      out%evel      = sacrh(038) 
-      out%evdp      = sacrh(039) 
-      out%mag       = sacrh(040) 
-      out%user0     = sacrh(041) 
-      out%user1     = sacrh(042) 
-      out%user2     = sacrh(043) 
-      out%user3     = sacrh(044) 
-      out%user4     = sacrh(045) 
-      out%user5     = sacrh(046) 
-      out%user6     = sacrh(047) 
-      out%user7     = sacrh(048) 
-      out%user8     = sacrh(049) 
-      out%user9     = sacrh(050) 
-      out%dist      = sacrh(051) 
-      out%az        = sacrh(052) 
-      out%baz       = sacrh(053) 
-      out%gcarc     = sacrh(054) 
-      out%internal1 = sacrh(055) 
-      out%internal2 = sacrh(056) 
-      out%depmen    = sacrh(057) 
-      out%cmpaz     = sacrh(058) 
-      out%cmpinc    = sacrh(059) 
-      out%xminimum  = sacrh(060) 
-      out%xmaximum  = sacrh(061) 
-      out%yminimum  = sacrh(062) 
-      out%ymaximum  = sacrh(063) 
-      out%unused1   = sacrh(064) 
-      out%unused2   = sacrh(065) 
-      out%unused3   = sacrh(066) 
-      out%unused4   = sacrh(067) 
-      out%unused5   = sacrh(068) 
-      out%unused6   = sacrh(069) 
-      out%unused7   = sacrh(070) 
-      
+      out%delta     = sacrh(001)
+      out%depmin    = sacrh(002)
+      out%depmax    = sacrh(003)
+      out%scale     = sacrh(004)
+      out%odelta    = sacrh(005)
+      out%b         = sacrh(006)
+      out%e         = sacrh(007)
+      out%o         = sacrh(008)
+      out%a         = sacrh(009)
+      out%internal0 = sacrh(010)
+      out%t0        = sacrh(011)
+      out%t1        = sacrh(012)
+      out%t2        = sacrh(013)
+      out%t3        = sacrh(014)
+      out%t4        = sacrh(015)
+      out%t5        = sacrh(016)
+      out%t6        = sacrh(017)
+      out%t7        = sacrh(018)
+      out%t8        = sacrh(019)
+      out%t9        = sacrh(020)
+      out%f         = sacrh(021)
+      out%resp0     = sacrh(022)
+      out%resp1     = sacrh(023)
+      out%resp2     = sacrh(024)
+      out%resp3     = sacrh(025)
+      out%resp4     = sacrh(026)
+      out%resp5     = sacrh(027)
+      out%resp6     = sacrh(028)
+      out%resp7     = sacrh(029)
+      out%resp8     = sacrh(030)
+      out%resp9     = sacrh(031)
+      out%stla      = sacrh(032)
+      out%stlo      = sacrh(033)
+      out%stel      = sacrh(034)
+      out%stdp      = sacrh(035)
+      out%evla      = sacrh(036)
+      out%evlo      = sacrh(037)
+      out%evel      = sacrh(038)
+      out%evdp      = sacrh(039)
+      out%mag       = sacrh(040)
+      out%user0     = sacrh(041)
+      out%user1     = sacrh(042)
+      out%user2     = sacrh(043)
+      out%user3     = sacrh(044)
+      out%user4     = sacrh(045)
+      out%user5     = sacrh(046)
+      out%user6     = sacrh(047)
+      out%user7     = sacrh(048)
+      out%user8     = sacrh(049)
+      out%user9     = sacrh(050)
+      out%dist      = sacrh(051)
+      out%az        = sacrh(052)
+      out%baz       = sacrh(053)
+      out%gcarc     = sacrh(054)
+      out%internal1 = sacrh(055)
+      out%internal2 = sacrh(056)
+      out%depmen    = sacrh(057)
+      out%cmpaz     = sacrh(058)
+      out%cmpinc    = sacrh(059)
+      out%xminimum  = sacrh(060)
+      out%xmaximum  = sacrh(061)
+      out%yminimum  = sacrh(062)
+      out%ymaximum  = sacrh(063)
+      out%unused1   = sacrh(064)
+      out%unused2   = sacrh(065)
+      out%unused3   = sacrh(066)
+      out%unused4   = sacrh(067)
+      out%unused5   = sacrh(068)
+      out%unused6   = sacrh(069)
+      out%unused7   = sacrh(070)
+
       do i=1,40
          read(lu,rec=i+70,err=901) sacih(i)
       enddo
@@ -3006,97 +3006,97 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
       out%lovrok    = sacih(038)
       out%lcalda    = sacih(039)
       out%unused18  = sacih(040)
-      
+
       read(lu,rec=111,err=901)tmp_char1
       read(lu,rec=112,err=901)tmp_char2
       out%kstnm = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=113,err=901)tmp_char1
       read(lu,rec=114,err=901)tmp_char2
       read(lu,rec=115,err=901)tmp_char3
       read(lu,rec=116,err=901)tmp_char4
       out%kevnm = tmp_char1//tmp_char2//tmp_char3//tmp_char4
-      
+
       read(lu,rec=117,err=901)tmp_char1
       read(lu,rec=118,err=901)tmp_char2
       out%khole = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=119,err=901)tmp_char1
       read(lu,rec=120,err=901)tmp_char2
       out %ko = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=121,err=901)tmp_char1
       read(lu,rec=122,err=901)tmp_char2
       out %ka = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=123,err=901)tmp_char1
       read(lu,rec=124,err=901)tmp_char2
       out %kt0 = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=125,err=901)tmp_char1
       read(lu,rec=126,err=901)tmp_char2
       out %kt1 = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=127,err=901)tmp_char1
       read(lu,rec=128,err=901)tmp_char2
       out %kt2 = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=129,err=901)tmp_char1
       read(lu,rec=130,err=901)tmp_char2
       out %kt3 = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=131,err=901)tmp_char1
       read(lu,rec=132,err=901)tmp_char2
       out %kt4 = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=133,err=901)tmp_char1
       read(lu,rec=134,err=901)tmp_char2
       out %kt5 = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=135,err=901)tmp_char1
       read(lu,rec=136,err=901)tmp_char2
       out %kt6 = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=137,err=901)tmp_char1
       read(lu,rec=138,err=901)tmp_char2
       out %kt7 = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=139,err=901)tmp_char1
       read(lu,rec=140,err=901)tmp_char2
       out %kt8 = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=141,err=901)tmp_char1
       read(lu,rec=142,err=901)tmp_char2
       out %kt9 = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=143,err=901)tmp_char1
       read(lu,rec=144,err=901)tmp_char2
       out %kf = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=145,err=901)tmp_char1
       read(lu,rec=146,err=901)tmp_char2
       out %kuser0 = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=147,err=901)tmp_char1
       read(lu,rec=148,err=901)tmp_char2
       out %kuser1 = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=149,err=901)tmp_char1
       read(lu,rec=150,err=901)tmp_char2
       out %kuser2 = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=151,err=901)tmp_char1
       read(lu,rec=152,err=901)tmp_char2
       out %kcmpnm = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=153,err=901)tmp_char1
       read(lu,rec=154,err=901)tmp_char2
       out %knetwk = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=155,err=901)tmp_char1
       read(lu,rec=156,err=901)tmp_char2
       out %kdatrd = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=157,err=901)tmp_char1
       read(lu,rec=158,err=901)tmp_char2
       out %kinst = tmp_char1 // tmp_char2
@@ -3104,27 +3104,27 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
 !  ** DONE WITH THE HEADER, READ THE TRACE ITSELF
 !
 
-!  ** check that the nvhdr header is sensible 
+!  ** check that the nvhdr header is sensible
       if (out % nvhdr < 0 .or. out % nvhdr > 10 ) then
          write(0,'(a)') &
           'F90SAC_READTRACE: Error: NVHDR is not sensible, byteswap required?'
          stop
-      endif 
+      endif
 
 !  ** allocate memory for the trace
       call f90sac_malloc(out%trace,1)
-   
+
       out%trace(1) = SAC_rnull ;
 
       close(lu)
-      
+
       return
 900   write(0,'(a,a)') 'F90SAC_READTRACE: Error: File does not exist: ', &
          trim(fname)
       stop
 901   write(0,'(a,a)') 'F90SAC_READTRACE: Error: Bad read in file: ', &
          trim(fname)
-      stop     
+      stop
    end subroutine f90sac_readheader
 !===============================================================================
 
@@ -3132,29 +3132,29 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
    subroutine f90sac_readtrace(fname,out)
 !===============================================================================
 !
-!  read a SAC time-series object from a file   
+!  read a SAC time-series object from a file
 !
       implicit none
       integer :: lu
       character (len=4) :: tmp_char1,tmp_char2,tmp_char3,tmp_char4
       character (len=*) :: fname
       integer :: i, istatus
-      
+
       real(real4) :: sacrh(70) ! SAC floating point header
       integer(int4) :: sacih(40) ! SAC floating point header
 
       type (SACtrace) :: out
       logical UNITOK, UNITOP
 
-      call f90sac_io_init() 
-                        
+      call f90sac_io_init()
+
 !  ** Open the file for reading
       open (unit=f90sac_iounit, file=trim(fname),form='unformatted', &
             access='direct',recl=f90sac_32bit_record_length, &
             status='old',err=900)
-      
+
       lu = f90sac_iounit
-      
+
 !
 !  ** READ IN THE SAC HEADER
 !
@@ -3167,77 +3167,77 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
       endif
 
 !  ** populate the structure
-      out%delta     = sacrh(001)          
-      out%depmin    = sacrh(002) 
-      out%depmax    = sacrh(003) 
-      out%scale     = sacrh(004) 
-      out%odelta    = sacrh(005) 
-      out%b         = sacrh(006) 
-      out%e         = sacrh(007) 
-      out%o         = sacrh(008) 
-      out%a         = sacrh(009) 
-      out%internal0 = sacrh(010) 
-      out%t0        = sacrh(011) 
-      out%t1        = sacrh(012) 
-      out%t2        = sacrh(013) 
-      out%t3        = sacrh(014) 
-      out%t4        = sacrh(015) 
-      out%t5        = sacrh(016) 
-      out%t6        = sacrh(017) 
-      out%t7        = sacrh(018) 
-      out%t8        = sacrh(019) 
-      out%t9        = sacrh(020) 
-      out%f         = sacrh(021) 
-      out%resp0     = sacrh(022) 
-      out%resp1     = sacrh(023) 
-      out%resp2     = sacrh(024) 
-      out%resp3     = sacrh(025) 
-      out%resp4     = sacrh(026) 
-      out%resp5     = sacrh(027) 
-      out%resp6     = sacrh(028) 
-      out%resp7     = sacrh(029) 
-      out%resp8     = sacrh(030) 
-      out%resp9     = sacrh(031) 
-      out%stla      = sacrh(032) 
-      out%stlo      = sacrh(033) 
-      out%stel      = sacrh(034) 
-      out%stdp      = sacrh(035) 
-      out%evla      = sacrh(036) 
-      out%evlo      = sacrh(037) 
-      out%evel      = sacrh(038) 
-      out%evdp      = sacrh(039) 
-      out%mag       = sacrh(040) 
-      out%user0     = sacrh(041) 
-      out%user1     = sacrh(042) 
-      out%user2     = sacrh(043) 
-      out%user3     = sacrh(044) 
-      out%user4     = sacrh(045) 
-      out%user5     = sacrh(046) 
-      out%user6     = sacrh(047) 
-      out%user7     = sacrh(048) 
-      out%user8     = sacrh(049) 
-      out%user9     = sacrh(050) 
-      out%dist      = sacrh(051) 
-      out%az        = sacrh(052) 
-      out%baz       = sacrh(053) 
-      out%gcarc     = sacrh(054) 
-      out%internal1 = sacrh(055) 
-      out%internal2 = sacrh(056) 
-      out%depmen    = sacrh(057) 
-      out%cmpaz     = sacrh(058) 
-      out%cmpinc    = sacrh(059) 
-      out%xminimum  = sacrh(060) 
-      out%xmaximum  = sacrh(061) 
-      out%yminimum  = sacrh(062) 
-      out%ymaximum  = sacrh(063) 
-      out%unused1   = sacrh(064) 
-      out%unused2   = sacrh(065) 
-      out%unused3   = sacrh(066) 
-      out%unused4   = sacrh(067) 
-      out%unused5   = sacrh(068) 
-      out%unused6   = sacrh(069) 
-      out%unused7   = sacrh(070) 
-      
+      out%delta     = sacrh(001)
+      out%depmin    = sacrh(002)
+      out%depmax    = sacrh(003)
+      out%scale     = sacrh(004)
+      out%odelta    = sacrh(005)
+      out%b         = sacrh(006)
+      out%e         = sacrh(007)
+      out%o         = sacrh(008)
+      out%a         = sacrh(009)
+      out%internal0 = sacrh(010)
+      out%t0        = sacrh(011)
+      out%t1        = sacrh(012)
+      out%t2        = sacrh(013)
+      out%t3        = sacrh(014)
+      out%t4        = sacrh(015)
+      out%t5        = sacrh(016)
+      out%t6        = sacrh(017)
+      out%t7        = sacrh(018)
+      out%t8        = sacrh(019)
+      out%t9        = sacrh(020)
+      out%f         = sacrh(021)
+      out%resp0     = sacrh(022)
+      out%resp1     = sacrh(023)
+      out%resp2     = sacrh(024)
+      out%resp3     = sacrh(025)
+      out%resp4     = sacrh(026)
+      out%resp5     = sacrh(027)
+      out%resp6     = sacrh(028)
+      out%resp7     = sacrh(029)
+      out%resp8     = sacrh(030)
+      out%resp9     = sacrh(031)
+      out%stla      = sacrh(032)
+      out%stlo      = sacrh(033)
+      out%stel      = sacrh(034)
+      out%stdp      = sacrh(035)
+      out%evla      = sacrh(036)
+      out%evlo      = sacrh(037)
+      out%evel      = sacrh(038)
+      out%evdp      = sacrh(039)
+      out%mag       = sacrh(040)
+      out%user0     = sacrh(041)
+      out%user1     = sacrh(042)
+      out%user2     = sacrh(043)
+      out%user3     = sacrh(044)
+      out%user4     = sacrh(045)
+      out%user5     = sacrh(046)
+      out%user6     = sacrh(047)
+      out%user7     = sacrh(048)
+      out%user8     = sacrh(049)
+      out%user9     = sacrh(050)
+      out%dist      = sacrh(051)
+      out%az        = sacrh(052)
+      out%baz       = sacrh(053)
+      out%gcarc     = sacrh(054)
+      out%internal1 = sacrh(055)
+      out%internal2 = sacrh(056)
+      out%depmen    = sacrh(057)
+      out%cmpaz     = sacrh(058)
+      out%cmpinc    = sacrh(059)
+      out%xminimum  = sacrh(060)
+      out%xmaximum  = sacrh(061)
+      out%yminimum  = sacrh(062)
+      out%ymaximum  = sacrh(063)
+      out%unused1   = sacrh(064)
+      out%unused2   = sacrh(065)
+      out%unused3   = sacrh(066)
+      out%unused4   = sacrh(067)
+      out%unused5   = sacrh(068)
+      out%unused6   = sacrh(069)
+      out%unused7   = sacrh(070)
+
       do i=1,40
          read(lu,rec=i+70,err=901) sacih(i)
       enddo
@@ -3286,97 +3286,97 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
       out%lovrok    = sacih(038)
       out%lcalda    = sacih(039)
       out%unused18  = sacih(040)
-      
+
       read(lu,rec=111,err=901)tmp_char1
       read(lu,rec=112,err=901)tmp_char2
       out%kstnm = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=113,err=901)tmp_char1
       read(lu,rec=114,err=901)tmp_char2
       read(lu,rec=115,err=901)tmp_char3
       read(lu,rec=116,err=901)tmp_char4
       out%kevnm = tmp_char1//tmp_char2//tmp_char3//tmp_char4
-      
+
       read(lu,rec=117,err=901)tmp_char1
       read(lu,rec=118,err=901)tmp_char2
       out%khole = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=119,err=901)tmp_char1
       read(lu,rec=120,err=901)tmp_char2
       out %ko = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=121,err=901)tmp_char1
       read(lu,rec=122,err=901)tmp_char2
       out %ka = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=123,err=901)tmp_char1
       read(lu,rec=124,err=901)tmp_char2
       out %kt0 = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=125,err=901)tmp_char1
       read(lu,rec=126,err=901)tmp_char2
       out %kt1 = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=127,err=901)tmp_char1
       read(lu,rec=128,err=901)tmp_char2
       out %kt2 = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=129,err=901)tmp_char1
       read(lu,rec=130,err=901)tmp_char2
       out %kt3 = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=131,err=901)tmp_char1
       read(lu,rec=132,err=901)tmp_char2
       out %kt4 = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=133,err=901)tmp_char1
       read(lu,rec=134,err=901)tmp_char2
       out %kt5 = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=135,err=901)tmp_char1
       read(lu,rec=136,err=901)tmp_char2
       out %kt6 = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=137,err=901)tmp_char1
       read(lu,rec=138,err=901)tmp_char2
       out %kt7 = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=139,err=901)tmp_char1
       read(lu,rec=140,err=901)tmp_char2
       out %kt8 = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=141,err=901)tmp_char1
       read(lu,rec=142,err=901)tmp_char2
       out %kt9 = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=143,err=901)tmp_char1
       read(lu,rec=144,err=901)tmp_char2
       out %kf = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=145,err=901)tmp_char1
       read(lu,rec=146,err=901)tmp_char2
       out %kuser0 = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=147,err=901)tmp_char1
       read(lu,rec=148,err=901)tmp_char2
       out %kuser1 = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=149,err=901)tmp_char1
       read(lu,rec=150,err=901)tmp_char2
       out %kuser2 = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=151,err=901)tmp_char1
       read(lu,rec=152,err=901)tmp_char2
       out %kcmpnm = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=153,err=901)tmp_char1
       read(lu,rec=154,err=901)tmp_char2
       out %knetwk = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=155,err=901)tmp_char1
       read(lu,rec=156,err=901)tmp_char2
       out %kdatrd = tmp_char1 // tmp_char2
-      
+
       read(lu,rec=157,err=901)tmp_char1
       read(lu,rec=158,err=901)tmp_char2
       out %kinst = tmp_char1 // tmp_char2
@@ -3384,12 +3384,12 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
 !  ** DONE WITH THE HEADER, READ THE TRACE ITSELF
 !
 
-!  ** check that the nvhdr header is sensible 
+!  ** check that the nvhdr header is sensible
       if (out % nvhdr < 0 .or. out % nvhdr > 10 ) then
          write(0,'(a)') &
           'F90SAC_READTRACE: Error: NVHDR is not sensible, check f90sac_force_byteswap?'
          stop
-      endif 
+      endif
 
 !  ** allocate memory for the trace
       call f90sac_malloc(out%trace,out%npts)
@@ -3403,18 +3403,18 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
       if (f90sac_force_byteswap) then
          call f90sac_real32_byteswap(out%trace,out%npts)
       endif
-      
+
       return
 900   write(0,'(a,a)') 'F90SAC_READTRACE: Error: File does not exist: ', &
          trim(fname)
       stop
 901   write(0,'(a,a)') 'F90SAC_READTRACE: Error: Bad read in file: ', &
          trim(fname)
-      stop     
+      stop
    end subroutine f90sac_readtrace
 !===============================================================================
 
-#else      
+#else
 
 !===============================================================================
    subroutine f90sac_writeheader(fname,out)
@@ -3430,17 +3430,17 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
       real(real4) :: sacrh(70) ! SAC floating point header
       integer(int4) :: sacih(40) ! SAC floating point header
       character :: sacch*192     ! SAC character header
-                        
-      real(real4),allocatable :: trace(:) ! temporary storage                  
+
+      real(real4),allocatable :: trace(:) ! temporary storage
 !  ** filename handling (C-compatibility)
-      character (len=*) :: fname 
+      character (len=*) :: fname
       character (len=f90sac_fnlength) :: fn ! internal name
       call f90sac_fnfix(fname,fn)
-                        
-      call f90sac_io_init() 
+
+      call f90sac_io_init()
 
 !  ** populate the arrays (enter ugly block mode)
-sacrh(001) = out%delta     ; sacrh(026) = out%resp4 ; sacrh(051)  = out%dist      ;       
+sacrh(001) = out%delta     ; sacrh(026) = out%resp4 ; sacrh(051)  = out%dist      ;
 sacrh(002) = out%depmin    ; sacrh(027) = out%resp5 ; sacrh(052)  = out%az        ;
 sacrh(003) = out%depmax    ; sacrh(028) = out%resp6 ; sacrh(053)  = out%baz       ;
 sacrh(004) = out%scale     ; sacrh(029) = out%resp7 ; sacrh(054)  = out%gcarc     ;
@@ -3460,11 +3460,11 @@ sacrh(017) = out%t6        ; sacrh(042) = out%user1 ; sacrh(067)  = out%unused4 
 sacrh(018) = out%t7        ; sacrh(043) = out%user2 ; sacrh(068)  = out%unused5   ;
 sacrh(019) = out%t8        ; sacrh(044) = out%user3 ; sacrh(069)  = out%unused6   ;
 sacrh(020) = out%t9        ; sacrh(045) = out%user4 ; sacrh(070)  = out%unused7   ;
-sacrh(021) = out%f         ; sacrh(046) = out%user5 ; 
-sacrh(022) = out%resp0     ; sacrh(047) = out%user6 ; 
-sacrh(023) = out%resp1     ; sacrh(048) = out%user7 ; 
-sacrh(024) = out%resp2     ; sacrh(049) = out%user8 ; 
-sacrh(025) = out%resp3     ; sacrh(050) = out%user9 ; 
+sacrh(021) = out%f         ; sacrh(046) = out%user5 ;
+sacrh(022) = out%resp0     ; sacrh(047) = out%user6 ;
+sacrh(023) = out%resp1     ; sacrh(048) = out%user7 ;
+sacrh(024) = out%resp2     ; sacrh(049) = out%user8 ;
+sacrh(025) = out%resp3     ; sacrh(050) = out%user9 ;
 
 !  ** INTEGER PART
 sacih(001) = out%nzyear    ; sacih(016) = out%iftype   ; sacih(031) = out%unused13 ;
@@ -3477,25 +3477,25 @@ sacih(007) = out%nvhdr     ; sacih(022) = out%ievreg   ; sacih(037) = out%lpspol
 sacih(008) = out%norid     ; sacih(023) = out%ievtyp   ; sacih(038) = out%lovrok   ;
 sacih(009) = out%nevid     ; sacih(024) = out%iqual    ; sacih(039) = out%lcalda   ;
 sacih(010) = out%npts      ; sacih(025) = out%isynth   ; sacih(040) = out%unused18 ;
-sacih(011) = out%internal3 ; sacih(026) = out%imagtyp  ; 
-sacih(012) = out%nwfid     ; sacih(027) = out%imagsrc  ; 
-sacih(013) = out%nxsize    ; sacih(028) = out%unused10 ; 
-sacih(014) = out%nysize    ; sacih(029) = out%unused11 ; 
-sacih(015) = out%unused8   ; sacih(030) = out%unused12 ; 
+sacih(011) = out%internal3 ; sacih(026) = out%imagtyp  ;
+sacih(012) = out%nwfid     ; sacih(027) = out%imagsrc  ;
+sacih(013) = out%nxsize    ; sacih(028) = out%unused10 ;
+sacih(014) = out%nysize    ; sacih(029) = out%unused11 ;
+sacih(015) = out%unused8   ; sacih(030) = out%unused12 ;
 
 !  ** Character part
-sacch(001:008) = out%kstnm(1:8)  ; sacch(105:112) = out%kt7(1:8)    ;   
+sacch(001:008) = out%kstnm(1:8)  ; sacch(105:112) = out%kt7(1:8)    ;
 sacch(009:024) = out%kevnm(1:16) ; sacch(113:120) = out%kt8(1:8)    ;
-sacch(025:032) = out%khole(1:8)  ; sacch(121:128) = out%kt9(1:8)    ;   
-sacch(033:040) = out%ko(1:8)     ; sacch(129:136) = out%kf(1:8)     ;      
-sacch(041:048) = out%ka(1:8)     ; sacch(137:144) = out%kuser0(1:8) ;      
-sacch(049:056) = out%kt0(1:8)    ; sacch(145:152) = out%kuser1(1:8) ;     
-sacch(057:064) = out%kt1(1:8)    ; sacch(153:160) = out%kuser2(1:8) ;     
-sacch(065:072) = out%kt2(1:8)    ; sacch(161:168) = out%kcmpnm(1:8) ;     
-sacch(073:080) = out%kt3(1:8)    ; sacch(169:176) = out%knetwk(1:8) ;     
-sacch(081:088) = out%kt4(1:8)    ; sacch(177:184) = out%kdatrd(1:8) ;     
-sacch(089:096) = out%kt5(1:8)    ; sacch(185:192) = out%kinst(1:8)  ;     
-sacch(097:104) = out%kt6(1:8)    ;     
+sacch(025:032) = out%khole(1:8)  ; sacch(121:128) = out%kt9(1:8)    ;
+sacch(033:040) = out%ko(1:8)     ; sacch(129:136) = out%kf(1:8)     ;
+sacch(041:048) = out%ka(1:8)     ; sacch(137:144) = out%kuser0(1:8) ;
+sacch(049:056) = out%kt0(1:8)    ; sacch(145:152) = out%kuser1(1:8) ;
+sacch(057:064) = out%kt1(1:8)    ; sacch(153:160) = out%kuser2(1:8) ;
+sacch(065:072) = out%kt2(1:8)    ; sacch(161:168) = out%kcmpnm(1:8) ;
+sacch(073:080) = out%kt3(1:8)    ; sacch(169:176) = out%knetwk(1:8) ;
+sacch(081:088) = out%kt4(1:8)    ; sacch(177:184) = out%kdatrd(1:8) ;
+sacch(089:096) = out%kt5(1:8)    ; sacch(185:192) = out%kinst(1:8)  ;
+sacch(097:104) = out%kt6(1:8)    ;
 
 !  ** byteswap if required
       if (f90sac_force_byteswap) then
@@ -3507,11 +3507,11 @@ sacch(097:104) = out%kt6(1:8)    ;
       call f90sac_c_openrw(fn)
 
 !  ** write the header
-      call f90sac_c_whd(sacrh,sacih,sacch) 
+      call f90sac_c_whd(sacrh,sacih,sacch)
 
 !  ** close the file
       call f90sac_c_close() ;
-      
+
       return
    end subroutine f90sac_writeheader
 !===============================================================================
@@ -3521,7 +3521,7 @@ sacch(097:104) = out%kt6(1:8)    ;
    subroutine f90sac_readheader(fname,out)
 !===============================================================================
 !
-!  read a SAC header from a file. This is a trace object but with a single null    
+!  read a SAC header from a file. This is a trace object but with a single null
 !  value as the trace. This version uses the C-routines for extra speed.
 !
       implicit none
@@ -3534,19 +3534,19 @@ sacch(097:104) = out%kt6(1:8)    ;
       character :: sacch*192     ! SAC character header
 
 !  ** filename handling (C-compatibility)
-      character (len=*) :: fname 
+      character (len=*) :: fname
       character (len=f90sac_fnlength) :: fn ! internal name
       call f90sac_fnfix(fname,fn)
- 
-      call f90sac_io_init() 
-      
+
+      call f90sac_io_init()
+
 !  ** open the file
       call f90sac_c_openr(fn)
-                        
+
       sacch = ' '
-            
+
 !  ** read the header
-      call f90sac_c_rhd(sacrh,sacih,sacch) 
+      call f90sac_c_rhd(sacrh,sacih,sacch)
 
       if (f90sac_force_byteswap) then
          call f90sac_real32_byteswap(sacrh,70)
@@ -3554,7 +3554,7 @@ sacch(097:104) = out%kt6(1:8)    ;
       endif
 
 !  ** populate the structure
-out%delta     = sacrh(001) ; out%resp4 = sacrh(026) ; out%dist      = sacrh(051) ;       
+out%delta     = sacrh(001) ; out%resp4 = sacrh(026) ; out%dist      = sacrh(051) ;
 out%depmin    = sacrh(002) ; out%resp5 = sacrh(027) ; out%az        = sacrh(052) ;
 out%depmax    = sacrh(003) ; out%resp6 = sacrh(028) ; out%baz       = sacrh(053) ;
 out%scale     = sacrh(004) ; out%resp7 = sacrh(029) ; out%gcarc     = sacrh(054) ;
@@ -3574,11 +3574,11 @@ out%t6        = sacrh(017) ; out%user1 = sacrh(042) ; out%unused4   = sacrh(067)
 out%t7        = sacrh(018) ; out%user2 = sacrh(043) ; out%unused5   = sacrh(068) ;
 out%t8        = sacrh(019) ; out%user3 = sacrh(044) ; out%unused6   = sacrh(069) ;
 out%t9        = sacrh(020) ; out%user4 = sacrh(045) ; out%unused7   = sacrh(070) ;
-out%f         = sacrh(021) ; out%user5 = sacrh(046) ; 
-out%resp0     = sacrh(022) ; out%user6 = sacrh(047) ; 
-out%resp1     = sacrh(023) ; out%user7 = sacrh(048) ; 
-out%resp2     = sacrh(024) ; out%user8 = sacrh(049) ; 
-out%resp3     = sacrh(025) ; out%user9 = sacrh(050) ; 
+out%f         = sacrh(021) ; out%user5 = sacrh(046) ;
+out%resp0     = sacrh(022) ; out%user6 = sacrh(047) ;
+out%resp1     = sacrh(023) ; out%user7 = sacrh(048) ;
+out%resp2     = sacrh(024) ; out%user8 = sacrh(049) ;
+out%resp3     = sacrh(025) ; out%user9 = sacrh(050) ;
 
 !  ** INTEGER PART
 out%nzyear    = sacih(001) ; out%iftype   = sacih(016) ; out%unused13 = sacih(031) ;
@@ -3591,11 +3591,11 @@ out%nvhdr     = sacih(007) ; out%ievreg   = sacih(022) ; out%lpspol   = sacih(03
 out%norid     = sacih(008) ; out%ievtyp   = sacih(023) ; out%lovrok   = sacih(038) ;
 out%nevid     = sacih(009) ; out%iqual    = sacih(024) ; out%lcalda   = sacih(039) ;
 out%npts      = sacih(010) ; out%isynth   = sacih(025) ; out%unused18 = sacih(040) ;
-out%internal3 = sacih(011) ; out%imagtyp  = sacih(026) ; 
-out%nwfid     = sacih(012) ; out%imagsrc  = sacih(027) ; 
-out%nxsize    = sacih(013) ; out%unused10 = sacih(028) ; 
-out%nysize    = sacih(014) ; out%unused11 = sacih(029) ; 
-out%unused8   = sacih(015) ; out%unused12 = sacih(030) ; 
+out%internal3 = sacih(011) ; out%imagtyp  = sacih(026) ;
+out%nwfid     = sacih(012) ; out%imagsrc  = sacih(027) ;
+out%nxsize    = sacih(013) ; out%unused10 = sacih(028) ;
+out%nysize    = sacih(014) ; out%unused11 = sacih(029) ;
+out%unused8   = sacih(015) ; out%unused12 = sacih(030) ;
 
 !  ** Character part
 out%kstnm  = sacch(001:008) ; out%kt7    = sacch(105:112) ;
@@ -3609,22 +3609,22 @@ out%kt2    = sacch(065:072) ; out%kcmpnm = sacch(161:168) ;
 out%kt3    = sacch(073:080) ; out%knetwk = sacch(169:176) ;
 out%kt4    = sacch(081:088) ; out%kdatrd = sacch(177:184) ;
 out%kt5    = sacch(089:096) ; out%kinst  = sacch(185:192) ;
-out%kt6    = sacch(097:104) ; 
+out%kt6    = sacch(097:104) ;
 
-!  ** check that the nvhdr header is sensible 
+!  ** check that the nvhdr header is sensible
 !      if (out % nvhdr < 0 .or. out % nvhdr > 10 ) then
 !         write(0,'(a)') &
 !          'F90SAC_READTRACE: Error: NVHDR is not sensible, byteswap required?'
 !         stop
-!      endif 
+!      endif
 
 !  ** allocate memory for the null trace
       call f90sac_malloc(out%trace,1)
-      out%trace(1) = SAC_rnull 
+      out%trace(1) = SAC_rnull
 
 !  ** close the file
       call f90sac_c_close() ;
-      
+
       return
    end subroutine f90sac_readheader
 !===============================================================================
@@ -3644,19 +3644,19 @@ out%kt6    = sacch(097:104) ;
       integer(int4) :: sacih(40) ! SAC floating point header
       character :: sacch*192     ! SAC character header
 !  ** filename handling (C-compatibility)
-      character (len=*) :: fname 
+      character (len=*) :: fname
       character (len=f90sac_fnlength) :: fn ! internal name
       call f90sac_fnfix(fname,fn)
 
-      call f90sac_io_init() 
-                        
+      call f90sac_io_init()
+
 !  ** open the file
       call f90sac_c_openr(fn)
-                        
+
       sacch = ' '
-            
+
 !  ** read the header
-      call f90sac_c_rhd(sacrh,sacih,sacch) 
+      call f90sac_c_rhd(sacrh,sacih,sacch)
 
 !  ** byteswap if required
       if (f90sac_force_byteswap) then
@@ -3665,7 +3665,7 @@ out%kt6    = sacch(097:104) ;
       endif
 
 !  ** populate the structure (enter ugly block mode)
-out%delta     = sacrh(001) ; out%resp4 = sacrh(026) ; out%dist      = sacrh(051) ;       
+out%delta     = sacrh(001) ; out%resp4 = sacrh(026) ; out%dist      = sacrh(051) ;
 out%depmin    = sacrh(002) ; out%resp5 = sacrh(027) ; out%az        = sacrh(052) ;
 out%depmax    = sacrh(003) ; out%resp6 = sacrh(028) ; out%baz       = sacrh(053) ;
 out%scale     = sacrh(004) ; out%resp7 = sacrh(029) ; out%gcarc     = sacrh(054) ;
@@ -3685,11 +3685,11 @@ out%t6        = sacrh(017) ; out%user1 = sacrh(042) ; out%unused4   = sacrh(067)
 out%t7        = sacrh(018) ; out%user2 = sacrh(043) ; out%unused5   = sacrh(068) ;
 out%t8        = sacrh(019) ; out%user3 = sacrh(044) ; out%unused6   = sacrh(069) ;
 out%t9        = sacrh(020) ; out%user4 = sacrh(045) ; out%unused7   = sacrh(070) ;
-out%f         = sacrh(021) ; out%user5 = sacrh(046) ; 
-out%resp0     = sacrh(022) ; out%user6 = sacrh(047) ; 
-out%resp1     = sacrh(023) ; out%user7 = sacrh(048) ; 
-out%resp2     = sacrh(024) ; out%user8 = sacrh(049) ; 
-out%resp3     = sacrh(025) ; out%user9 = sacrh(050) ; 
+out%f         = sacrh(021) ; out%user5 = sacrh(046) ;
+out%resp0     = sacrh(022) ; out%user6 = sacrh(047) ;
+out%resp1     = sacrh(023) ; out%user7 = sacrh(048) ;
+out%resp2     = sacrh(024) ; out%user8 = sacrh(049) ;
+out%resp3     = sacrh(025) ; out%user9 = sacrh(050) ;
 
 !  ** INTEGER PART
 out%nzyear    = sacih(001) ; out%iftype   = sacih(016) ; out%unused13 = sacih(031) ;
@@ -3702,11 +3702,11 @@ out%nvhdr     = sacih(007) ; out%ievreg   = sacih(022) ; out%lpspol   = sacih(03
 out%norid     = sacih(008) ; out%ievtyp   = sacih(023) ; out%lovrok   = sacih(038) ;
 out%nevid     = sacih(009) ; out%iqual    = sacih(024) ; out%lcalda   = sacih(039) ;
 out%npts      = sacih(010) ; out%isynth   = sacih(025) ; out%unused18 = sacih(040) ;
-out%internal3 = sacih(011) ; out%imagtyp  = sacih(026) ; 
-out%nwfid     = sacih(012) ; out%imagsrc  = sacih(027) ; 
-out%nxsize    = sacih(013) ; out%unused10 = sacih(028) ; 
-out%nysize    = sacih(014) ; out%unused11 = sacih(029) ; 
-out%unused8   = sacih(015) ; out%unused12 = sacih(030) ; 
+out%internal3 = sacih(011) ; out%imagtyp  = sacih(026) ;
+out%nwfid     = sacih(012) ; out%imagsrc  = sacih(027) ;
+out%nxsize    = sacih(013) ; out%unused10 = sacih(028) ;
+out%nysize    = sacih(014) ; out%unused11 = sacih(029) ;
+out%unused8   = sacih(015) ; out%unused12 = sacih(030) ;
 
 !  ** Character part
 out%kstnm  = sacch(001:008) ; out%kt7    = sacch(105:112) ;
@@ -3720,14 +3720,14 @@ out%kt2    = sacch(065:072) ; out%kcmpnm = sacch(161:168) ;
 out%kt3    = sacch(073:080) ; out%knetwk = sacch(169:176) ;
 out%kt4    = sacch(081:088) ; out%kdatrd = sacch(177:184) ;
 out%kt5    = sacch(089:096) ; out%kinst  = sacch(185:192) ;
-out%kt6    = sacch(097:104) ; 
+out%kt6    = sacch(097:104) ;
 
-!  ** check that the nvhdr header is sensible 
+!  ** check that the nvhdr header is sensible
       if (out % nvhdr < 0 .or. out % nvhdr > 10 ) then
          write(0,'(a)') &
           'F90SAC_READTRACE: Error: NVHDR is not sensible, byteswap required?'
          stop
-      endif 
+      endif
 
 !  ** allocate memory for the trace
       call f90sac_malloc(out%trace,out%npts)
@@ -3742,7 +3742,7 @@ out%kt6    = sacch(097:104) ;
 
 !  ** close the file
       call f90sac_c_close() ;
-      
+
       return
    end subroutine f90sac_readtrace
 !===============================================================================
@@ -3761,18 +3761,18 @@ out%kt6    = sacch(097:104) ;
       real(real4) :: sacrh(70) ! SAC floating point header
       integer(int4) :: sacih(40) ! SAC floating point header
       character :: sacch*192     ! SAC character header
-                        
-      real(real4),allocatable :: trace(:) ! temporary storage                  
+
+      real(real4),allocatable :: trace(:) ! temporary storage
 
 !  ** filename handling (C-compatibility)
-      character (len=*) :: fname 
+      character (len=*) :: fname
       character (len=f90sac_fnlength) :: fn ! internal name
       call f90sac_fnfix(fname,fn)
-                        
-      call f90sac_io_init() 
+
+      call f90sac_io_init()
 
 !  ** populate the arrays (enter ugly block mode)
-sacrh(001) = out%delta     ; sacrh(026) = out%resp4 ; sacrh(051)  = out%dist      ;       
+sacrh(001) = out%delta     ; sacrh(026) = out%resp4 ; sacrh(051)  = out%dist      ;
 sacrh(002) = out%depmin    ; sacrh(027) = out%resp5 ; sacrh(052)  = out%az        ;
 sacrh(003) = out%depmax    ; sacrh(028) = out%resp6 ; sacrh(053)  = out%baz       ;
 sacrh(004) = out%scale     ; sacrh(029) = out%resp7 ; sacrh(054)  = out%gcarc     ;
@@ -3792,11 +3792,11 @@ sacrh(017) = out%t6        ; sacrh(042) = out%user1 ; sacrh(067)  = out%unused4 
 sacrh(018) = out%t7        ; sacrh(043) = out%user2 ; sacrh(068)  = out%unused5   ;
 sacrh(019) = out%t8        ; sacrh(044) = out%user3 ; sacrh(069)  = out%unused6   ;
 sacrh(020) = out%t9        ; sacrh(045) = out%user4 ; sacrh(070)  = out%unused7   ;
-sacrh(021) = out%f         ; sacrh(046) = out%user5 ; 
-sacrh(022) = out%resp0     ; sacrh(047) = out%user6 ; 
-sacrh(023) = out%resp1     ; sacrh(048) = out%user7 ; 
-sacrh(024) = out%resp2     ; sacrh(049) = out%user8 ; 
-sacrh(025) = out%resp3     ; sacrh(050) = out%user9 ; 
+sacrh(021) = out%f         ; sacrh(046) = out%user5 ;
+sacrh(022) = out%resp0     ; sacrh(047) = out%user6 ;
+sacrh(023) = out%resp1     ; sacrh(048) = out%user7 ;
+sacrh(024) = out%resp2     ; sacrh(049) = out%user8 ;
+sacrh(025) = out%resp3     ; sacrh(050) = out%user9 ;
 
 !  ** INTEGER PART
 sacih(001) = out%nzyear    ; sacih(016) = out%iftype   ; sacih(031) = out%unused13 ;
@@ -3809,25 +3809,25 @@ sacih(007) = out%nvhdr     ; sacih(022) = out%ievreg   ; sacih(037) = out%lpspol
 sacih(008) = out%norid     ; sacih(023) = out%ievtyp   ; sacih(038) = out%lovrok   ;
 sacih(009) = out%nevid     ; sacih(024) = out%iqual    ; sacih(039) = out%lcalda   ;
 sacih(010) = out%npts      ; sacih(025) = out%isynth   ; sacih(040) = out%unused18 ;
-sacih(011) = out%internal3 ; sacih(026) = out%imagtyp  ; 
-sacih(012) = out%nwfid     ; sacih(027) = out%imagsrc  ; 
-sacih(013) = out%nxsize    ; sacih(028) = out%unused10 ; 
-sacih(014) = out%nysize    ; sacih(029) = out%unused11 ; 
-sacih(015) = out%unused8   ; sacih(030) = out%unused12 ; 
+sacih(011) = out%internal3 ; sacih(026) = out%imagtyp  ;
+sacih(012) = out%nwfid     ; sacih(027) = out%imagsrc  ;
+sacih(013) = out%nxsize    ; sacih(028) = out%unused10 ;
+sacih(014) = out%nysize    ; sacih(029) = out%unused11 ;
+sacih(015) = out%unused8   ; sacih(030) = out%unused12 ;
 
 !  ** Character part
-sacch(001:008) = out%kstnm(1:8)  ; sacch(105:112) = out%kt7(1:8)    ;   
+sacch(001:008) = out%kstnm(1:8)  ; sacch(105:112) = out%kt7(1:8)    ;
 sacch(009:024) = out%kevnm(1:16) ; sacch(113:120) = out%kt8(1:8)    ;
-sacch(025:032) = out%khole(1:8)  ; sacch(121:128) = out%kt9(1:8)    ;   
-sacch(033:040) = out%ko(1:8)     ; sacch(129:136) = out%kf(1:8)     ;      
-sacch(041:048) = out%ka(1:8)     ; sacch(137:144) = out%kuser0(1:8) ;      
-sacch(049:056) = out%kt0(1:8)    ; sacch(145:152) = out%kuser1(1:8) ;     
-sacch(057:064) = out%kt1(1:8)    ; sacch(153:160) = out%kuser2(1:8) ;     
-sacch(065:072) = out%kt2(1:8)    ; sacch(161:168) = out%kcmpnm(1:8) ;     
-sacch(073:080) = out%kt3(1:8)    ; sacch(169:176) = out%knetwk(1:8) ;     
-sacch(081:088) = out%kt4(1:8)    ; sacch(177:184) = out%kdatrd(1:8) ;     
-sacch(089:096) = out%kt5(1:8)    ; sacch(185:192) = out%kinst(1:8)  ;     
-sacch(097:104) = out%kt6(1:8)    ;     
+sacch(025:032) = out%khole(1:8)  ; sacch(121:128) = out%kt9(1:8)    ;
+sacch(033:040) = out%ko(1:8)     ; sacch(129:136) = out%kf(1:8)     ;
+sacch(041:048) = out%ka(1:8)     ; sacch(137:144) = out%kuser0(1:8) ;
+sacch(049:056) = out%kt0(1:8)    ; sacch(145:152) = out%kuser1(1:8) ;
+sacch(057:064) = out%kt1(1:8)    ; sacch(153:160) = out%kuser2(1:8) ;
+sacch(065:072) = out%kt2(1:8)    ; sacch(161:168) = out%kcmpnm(1:8) ;
+sacch(073:080) = out%kt3(1:8)    ; sacch(169:176) = out%knetwk(1:8) ;
+sacch(081:088) = out%kt4(1:8)    ; sacch(177:184) = out%kdatrd(1:8) ;
+sacch(089:096) = out%kt5(1:8)    ; sacch(185:192) = out%kinst(1:8)  ;
+sacch(097:104) = out%kt6(1:8)    ;
 
 !  ** byteswap if required
       if (f90sac_force_byteswap) then
@@ -3839,10 +3839,10 @@ sacch(097:104) = out%kt6(1:8)    ;
       call f90sac_c_openw(fn)
 
 !  ** write the header
-      call f90sac_c_whd(sacrh,sacih,sacch) 
+      call f90sac_c_whd(sacrh,sacih,sacch)
 
 !  ** allocate a temporary array to store the trace
-      
+
       allocate(trace(out%npts)) ;
       trace(1:out%npts) = out%trace(1:out%npts)
 
@@ -3850,14 +3850,14 @@ sacch(097:104) = out%kt6(1:8)    ;
       if (f90sac_force_byteswap) then
          call f90sac_real32_byteswap(trace,out%npts)
       endif
- 
+
 !  ** call C code to write trace
       call f90sac_c_wtr(out%npts,trace)
       deallocate(trace)
 
 !  ** close the file
       call f90sac_c_close() ;
-      
+
       return
    end subroutine f90sac_writetrace
 !===============================================================================
@@ -3873,26 +3873,26 @@ sacch(097:104) = out%kt6(1:8)    ;
 !  ** filename handling (C-compatibility)
       character (len=*) :: fn
       character (len=f90sac_fnlength) :: fnfixed ! internal name
-      
+
 !  ** check the string
       if (len(fn)>f90sac_fnlength) then
          write(0,'(a,i5,a)') &
           'F90SAC_FNFIX: Error: Filename string is too long (>',&
             f90sac_fnlength,') chars.'
          stop
-      endif 
+      endif
 
 !  ** transfer
       fnfixed(1:f90sac_fnlength) = ''
-      fnfixed(1:len(fn)) = fn(1:len(fn)) 
+      fnfixed(1:len(fn)) = fn(1:len(fn))
       fnfixed = trim(fnfixed)
-      
+
       return
    end subroutine f90sac_fnfix
 !===============================================================================
 
 
-#endif      
+#endif
 ! of DISABLE_C_IO
 
 
@@ -3971,7 +3971,7 @@ sacch(097:104) = out%kt6(1:8)    ;
       h=xa(khi)-xa(klo)
       if (h.eq.0.) then
          write(0,*) 'bad xa input in NR_splint'
-      endif   
+      endif
       a=(xa(khi)-x)/h
       b=(x-xa(klo))/h
       y=a*ya(klo)+b*ya(khi)+((a**3-a)*y2a(klo)+(b**3-b)*y2a(khi))*(h** &
