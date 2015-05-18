@@ -15,6 +15,10 @@
 !  Wills Memorial Building, Queen's Road, Bristol, BR8 1RJ, UK
 !  j.wookey@bristol.ac.uk
 !
+!  (C) Andy Noawcki
+!  School of Earth and Environment, University of Leeds, Leeds, LS2 9JT, UK
+!  a.nowacki@leeds.ac.uk
+!
 !-------------------------------------------------------------------------------
 !
 !   The module provides data structures and functions for reading,
@@ -31,6 +35,7 @@
 !
 !  Copyright:
 !     (c) 2003-2008, James Wookey
+!     (c) 2015-, Andy Nowacki
 !
 !  All rights reserved.
 !
@@ -129,6 +134,9 @@
 !                          (with a maximum length, set by f90sac_fnlength)
 ! AJN:2011-03-09         * Cross-introduced f90sac_deletetrace from v4.43 of the
 !                          f90sac_distrib.F90 version.
+! AJN:2011-03-09         * Future changes in the source will be found in the git
+!                          history in this repo.  No new updates to this list
+!                          will be made.
 !===============================================================================
 
    module f90sac ! Utility module for F90/95 for SAC files
@@ -136,41 +144,42 @@
 !===============================================================================
    implicit none
 
+      private
+
 !  ** DECLARE CONTAINED FUNCTIONS
-      public :: f90sac_filename
-      public :: f90sac_compare_origin_time
-      public :: f90sac_orient2d
-      public :: f90sac_rotate2d
-      public :: f90sac_rotate2d_rz
-      public :: f90sac_unwind
-      public :: f90sac_tshift
-      public :: f90sac_newtrace
+      public :: f90sac_cattraces
       public :: f90sac_clonetrace
+      public :: f90sac_compare_origin_time
       public :: f90sac_copytraceheader
-      public :: f90sac_readtrace
-      public :: f90sac_writetrace
+      public :: f90sac_covar2
+      public :: f90sac_covar3
+      public :: f90sac_dateseed
       public :: f90sac_enumhdr
+      public :: f90sac_filename
+      public :: f90sac_get_file_endianness
       public :: f90sac_getfhdr
       public :: f90sac_getihdr
-      public :: f90sac_getlhdr
       public :: f90sac_getkhdr
+      public :: f90sac_getlhdr
+      public :: f90sac_newtrace
+      public :: f90sac_orient2d
+      public :: f90sac_readheader
+      public :: f90sac_readtrace
+      public :: f90sac_rotate2d
+      public :: f90sac_rotate2d_rz
+      public :: f90sac_setdate
+      public :: f90sac_setevent
       public :: f90sac_setfhdr
       public :: f90sac_setihdr
-      public :: f90sac_setlhdr
       public :: f90sac_setkhdr
-      public :: f90sac_setdate
-      public :: f90sac_ymd2jd
-      public :: f90sac_window
+      public :: f90sac_setlhdr
       public :: f90sac_setstation
-      public :: f90sac_setevent
-      public :: f90sac_cattraces
-      public :: f90sac_dateseed
-
-!  ** Some old 'compatibility' functions are available
-!  ** One might want to consider these if one has access to a fireball F90
-!     compiler which won't link to C. These are considerably slower than
-!     the new C-based routines.
-!     THESE HAVE BEEN INCLUDED IN A PREPROCESSOR DIRECTIVE - DISABLE_C_ROUTINES
+      public :: f90sac_tshift
+      public :: f90sac_unwind
+      public :: f90sac_window
+      public :: f90sac_writeheader
+      public :: f90sac_writetrace
+      public :: f90sac_ymd2jd
 
 !!!BEG_NONDIST
 !  ** The f90sac_addwnoise subroutine requires the Numerical Recipes function
@@ -206,7 +215,9 @@
 #else
       character, parameter :: f90sac_endian_mode = 'n'
 #endif
-
+!  ** Define the current SAC file structure version.  This is used to determine
+!     endianness of files.
+      integer, parameter, private :: f90sac_current_nvhdr = 6
       integer :: f90sac_init_flag ; ! This is set to a value of 51423
                                     ! when the initialisation is done
       logical :: f90sac_force_byteswap ; ! This is now set by f90sac_init_io
@@ -221,7 +232,7 @@
 !===============================================================================
 !  ** Define a specialised data structure for containing SAC files
 !===============================================================================
-      type SACtrace
+      type, public :: SACtrace
 !     ** Header floating point part
          real(real4) :: delta,depmin,depmax,scale,odelta,b,e,o,a,internal0
          real(real4) :: t0,t1,t2,t3,t4,t5,t6,t7,t8,t9,f
@@ -261,7 +272,7 @@
 !===============================================================================
 !  ** Define a data structure for containing SAC xy files
 !===============================================================================
-      type SACxy
+      type, public :: SACxy
 !     ** Header floating point part
          real(real4) :: delta,depmin,depmax,scale,odelta,b,e,o,a,internal0
          real(real4) :: t0,t1,t2,t3,t4,t5,t6,t7,t8,t9,f
@@ -303,13 +314,13 @@
       real, parameter :: f90sac_angle_tolerance = 0.001
 
 !  ** NULL values set in SAC objects
-      real, parameter :: SAC_rnull = -12345.0
-      integer, parameter :: SAC_inull = -12345
-      integer, parameter :: SAC_lnull = -12345
-      character (len = 8) :: SAC_cnull = '-12345'
+      real, parameter, public :: SAC_rnull = -12345.0
+      integer, parameter, public :: SAC_inull = -12345
+      integer, parameter, public :: SAC_lnull = -12345
+      character (len = 8), public :: SAC_cnull = '-12345'
 
 !  ** OPTIONAL suppression of warnings, set to 1 to supress
-      integer,public :: f90sac_suppress_warnings
+      integer, public :: f90sac_suppress_warnings
 
 !===============================================================================
 !
@@ -459,9 +470,7 @@
 
       type (SACtrace) :: t1,t2,t3
       real :: cov(3,3)
-
       real, allocatable :: m1(:,:),m2(:,:)
-      integer :: i
 
 !  ** check that traces are the same length
       if (t1 % npts /= t2 % npts .or. &
@@ -731,8 +740,7 @@
 !
       implicit none
       type (SACtrace) :: t1,t2
-
-      real theta,cmpazdiff
+      real cmpazdiff
 
 !   ** check that cmpaz is set
       if (t1 % cmpaz == SAC_rnull .or. t2 % cmpaz == SAC_rnull) then
@@ -808,7 +816,7 @@
       integer :: isamp
       type (SACtrace) :: t1,t2
 
-      real theta, rotmat(2,2), sample(2,1), rsample(2,1),temp1,temp2
+      real theta, rotmat(2,2), sample(2,1), rsample(2,1)
       real,parameter :: pi = 3.1415927410125732421875
       real :: cmpazdiff
 
@@ -899,7 +907,7 @@
 
 !  ** locals
       integer :: iforceV
-      real rotmat(2,2), sample(2,1), rsample(2,1),temp1,temp2
+      real rotmat(2,2), sample(2,1), rsample(2,1)
       real,parameter :: pi = 3.1415927410125732421875
       real :: cmpazdiff
 
@@ -993,7 +1001,6 @@
 !
       implicit none
       real :: angle
-      real :: dt
 
       do ! forever
          if (angle >= 0.0 .and. angle < 360.0) exit
@@ -1016,7 +1023,7 @@
 !     dt : (I) time to shift by
 !
       implicit none
-      integer :: isamp,ishift
+      integer :: ishift
       real :: dt
       type (SACtrace) :: trace
 
@@ -1556,7 +1563,7 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
 !
       implicit none
       type (SACtrace) :: tr
-      integer :: id_hdr,ifound
+      integer :: id_hdr
       real :: val
 
 !  ** check the ID
@@ -1651,7 +1658,7 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
 !
       implicit none
       type (SACtrace) :: tr
-      integer :: id_hdr,ifound
+      integer :: id_hdr
       integer :: val
 
 !  ** check the ID
@@ -1713,7 +1720,7 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
 !
       implicit none
       type (SACtrace) :: tr
-      integer :: id_hdr,ifound
+      integer :: id_hdr
       integer :: val
 
 !  ** check the ID
@@ -1742,7 +1749,7 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
 !
       implicit none
       type (SACtrace) :: tr
-      integer :: id_hdr,ifound
+      integer :: id_hdr
       character (len=*) :: val
 
 !  ** check the ID
@@ -1789,7 +1796,7 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
 !
       implicit none
       type (SACtrace) :: tr
-      integer :: id_hdr,ifound
+      integer :: id_hdr
       real :: val
 
 !  ** check the ID
@@ -1884,7 +1891,7 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
 !
       implicit none
       type (SACtrace) :: tr
-      integer :: id_hdr,ifound
+      integer :: id_hdr
       integer :: val
 
 !  ** check the ID
@@ -1946,7 +1953,7 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
 !
       implicit none
       type (SACtrace) :: tr
-      integer :: id_hdr,ifound
+      integer :: id_hdr
       integer :: val
 
 !  ** check the ID
@@ -1975,7 +1982,7 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
 !
       implicit none
       type (SACtrace) :: tr
-      integer :: id_hdr,ifound
+      integer :: id_hdr
       character (len=*) :: val
 
 !  ** check the ID
@@ -2136,11 +2143,9 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
 !
       implicit none
       integer :: dd,mm,yy ! dd,mm,yy
-      integer :: dayno,nsec
       integer :: hh,mi,se,ms
 
       integer :: f90sac_dateseed ! random number seed
-      character :: dtsdstr*8
       character :: datestr*8,timestr*10
 
 !  ** get the time and date
@@ -2287,8 +2292,8 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
       implicit none
       type (SACtrace) :: t1
       real scale
-      integer seed,i
-      real dum, ampmax
+      integer i
+      real ampmax
 
 !  ** Numerical Recipes random number generator
       real NR_ran1
@@ -2402,228 +2407,21 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
 !!!END_NONDIST
 
 !===============================================================================
-!===============================================================================
-!  IO Routines below here. There are two versions, accessed using pre-processor
-!  directives. The default are wrappers for the C-routines in f90sac_csubs.c -
-!  these are much faster. However, if -DDISABLE_C_IO is invoked, these are
-!  avoided and the older, slower, pure Fortran routines are compiled instead.
-!===============================================================================
-!===============================================================================
-
-!===============================================================================
-#ifdef DISABLE_C_IO
-!===============================================================================
-
-
-!===============================================================================
    subroutine f90sac_writeheader(fname,out)
 !===============================================================================
 !
 !  write a SAC time-series object to a file (header only)
 !
       implicit none
-      integer :: lu
-      character (len=4) :: tmp_char1,tmp_char2,tmp_char3,tmp_char4
-      character (len=*):: fname
-      integer :: i, istatus
-      type (SACtrace) :: out
-      logical UNITOK, UNITOP
-      real(real4) :: sacrh(70) ! SAC floating point header
-      integer(int4) :: sacih(40) ! SAC floating point header
+      character(len=*), intent(in) :: fname
+      type(SACtrace), intent(in) :: out
 
-      call f90sac_io_init()
+!  ** Open lu and write the header
+      call f90sac_open_writeheader(fname, f90sac_iounit, out)
 
-!  ** Open the file for writing
-      open (unit=f90sac_iounit, file=trim(fname),form='unformatted', &
-            access='direct',recl=f90sac_32bit_record_length, &
-            status='unknown')
-
-      lu = f90sac_iounit
-
-!
-!  ** WRITE OUT THE SAC HEADER
-!
-      sacrh(001)  = out%delta
-      sacrh(002)  = out%depmin
-      sacrh(003)  = out%depmax
-      sacrh(004)  = out%scale
-      sacrh(005)  = out%odelta
-      sacrh(006)  = out%b
-      sacrh(007)  = out%e
-      sacrh(008)  = out%o
-      sacrh(009)  = out%a
-      sacrh(010)  = out%internal0
-      sacrh(011)  = out%t0
-      sacrh(012)  = out%t1
-      sacrh(013)  = out%t2
-      sacrh(014)  = out%t3
-      sacrh(015)  = out%t4
-      sacrh(016)  = out%t5
-      sacrh(017)  = out%t6
-      sacrh(018)  = out%t7
-      sacrh(019)  = out%t8
-      sacrh(020)  = out%t9
-      sacrh(021)  = out%f
-      sacrh(022)  = out%resp0
-      sacrh(023)  = out%resp1
-      sacrh(024)  = out%resp2
-      sacrh(025)  = out%resp3
-      sacrh(026)  = out%resp4
-      sacrh(027)  = out%resp5
-      sacrh(028)  = out%resp6
-      sacrh(029)  = out%resp7
-      sacrh(030)  = out%resp8
-      sacrh(031)  = out%resp9
-      sacrh(032)  = out%stla
-      sacrh(033)  = out%stlo
-      sacrh(034)  = out%stel
-      sacrh(035)  = out%stdp
-      sacrh(036)  = out%evla
-      sacrh(037)  = out%evlo
-      sacrh(038)  = out%evel
-      sacrh(039)  = out%evdp
-      sacrh(040)  = out%mag
-      sacrh(041)  = out%user0
-      sacrh(042)  = out%user1
-      sacrh(043)  = out%user2
-      sacrh(044)  = out%user3
-      sacrh(045)  = out%user4
-      sacrh(046)  = out%user5
-      sacrh(047)  = out%user6
-      sacrh(048)  = out%user7
-      sacrh(049)  = out%user8
-      sacrh(050)  = out%user9
-      sacrh(051)  = out%dist
-      sacrh(052)  = out%az
-      sacrh(053)  = out%baz
-      sacrh(054)  = out%gcarc
-      sacrh(055)  = out%internal1
-      sacrh(056)  = out%internal2
-      sacrh(057)  = out%depmen
-      sacrh(058)  = out%cmpaz
-      sacrh(059)  = out%cmpinc
-      sacrh(060)  = out%xminimum
-      sacrh(061)  = out%xmaximum
-      sacrh(062)  = out%yminimum
-      sacrh(063)  = out%ymaximum
-      sacrh(064)  = out%unused1
-      sacrh(065)  = out%unused2
-      sacrh(066)  = out%unused3
-      sacrh(067)  = out%unused4
-      sacrh(068)  = out%unused5
-      sacrh(069)  = out%unused6
-      sacrh(070)  = out%unused7
-
-      if (f90sac_force_byteswap) then
-         call f90sac_real32_byteswap(sacrh,70)
-      endif
-
-      do i=1,70
-         write(lu,rec=i) sacrh(i)
-      enddo
-
-      sacih(001) = out%nzyear
-      sacih(002) = out%nzjday
-      sacih(003) = out%nzhour
-      sacih(004) = out%nzmin
-      sacih(005) = out%nzsec
-      sacih(006) = out%nzmsec
-      sacih(007) = out%nvhdr
-      sacih(008) = out%norid
-      sacih(009) = out%nevid
-      sacih(010) = out%npts
-      sacih(011) = out%internal3
-      sacih(012) = out%nwfid
-      sacih(013) = out%nxsize
-      sacih(014) = out%nysize
-      sacih(015) = out%unused8
-      sacih(016) = out%iftype
-      sacih(017) = out%idep
-      sacih(018) = out%iztype
-      sacih(019) = out%unused9
-      sacih(020) = out%iinst
-      sacih(021) = out%istreg
-      sacih(022) = out%ievreg
-      sacih(023) = out%ievtyp
-      sacih(024) = out%iqual
-      sacih(025) = out%isynth
-      sacih(026) = out%imagtyp
-      sacih(027) = out%imagsrc
-      sacih(028) = out%unused10
-      sacih(029) = out%unused11
-      sacih(030) = out%unused12
-      sacih(031) = out%unused13
-      sacih(032) = out%unused14
-      sacih(033) = out%unused15
-      sacih(034) = out%unused16
-      sacih(035) = out%unused17
-      sacih(036) = out%leven
-      sacih(037) = out%lpspol
-      sacih(038) = out%lovrok
-      sacih(039) = out%lcalda
-      sacih(040) = out%unused18
-
-      if (f90sac_force_byteswap) then
-         call f90sac_int32_byteswap(sacih,40)
-      endif
-
-      do i=1,40
-         write(lu,rec=i+70) sacih(i)
-      enddo
-
-      write(lu,rec=111) out%kstnm(1:4)
-      write(lu,rec=112) out%kstnm(5:8)
-      write(lu,rec=113) out%kevnm(1:4)
-      write(lu,rec=114) out%kevnm(5:8)
-      write(lu,rec=115) out%kevnm(9:12)
-      write(lu,rec=116) out%kevnm(13:16)
-      write(lu,rec=117) out%khole(1:4)
-      write(lu,rec=118) out%khole(5:8)
-      write(lu,rec=119) out%ko(1:4)
-      write(lu,rec=120) out%ko(5:8)
-      write(lu,rec=121) out%ka(1:4)
-      write(lu,rec=122) out%ka(5:8)
-      write(lu,rec=123) out%kt0(1:4)
-      write(lu,rec=124) out%kt0(5:8)
-      write(lu,rec=125) out%kt1(1:4)
-      write(lu,rec=126) out%kt1(5:8)
-      write(lu,rec=127) out%kt2(1:4)
-      write(lu,rec=128) out%kt2(5:8)
-      write(lu,rec=129) out%kt3(1:4)
-      write(lu,rec=130) out%kt3(5:8)
-      write(lu,rec=131) out%kt4(1:4)
-      write(lu,rec=132) out%kt4(5:8)
-      write(lu,rec=133) out%kt5(1:4)
-      write(lu,rec=134) out%kt5(5:8)
-      write(lu,rec=135) out%kt6(1:4)
-      write(lu,rec=136) out%kt6(5:8)
-      write(lu,rec=137) out%kt7(1:4)
-      write(lu,rec=138) out%kt7(5:8)
-      write(lu,rec=139) out%kt8(1:4)
-      write(lu,rec=140) out%kt8(5:8)
-      write(lu,rec=141) out%kt9(1:4)
-      write(lu,rec=142) out%kt9(5:8)
-      write(lu,rec=143) out%kf(1:4)
-      write(lu,rec=144) out%kf(5:8)
-      write(lu,rec=145) out%kuser0(1:4)
-      write(lu,rec=146) out%kuser0(5:8)
-      write(lu,rec=147) out%kuser1(1:4)
-      write(lu,rec=148) out%kuser1(5:8)
-      write(lu,rec=149) out%kuser2(1:4)
-      write(lu,rec=150) out%kuser2(5:8)
-      write(lu,rec=151) out%kcmpnm(1:4)
-      write(lu,rec=152) out%kcmpnm(5:8)
-      write(lu,rec=153) out%knetwk(1:4)
-      write(lu,rec=154) out%knetwk(5:8)
-      write(lu,rec=155) out%kdatrd(1:4)
-      write(lu,rec=156) out%kdatrd(5:8)
-      write(lu,rec=157) out%kinst(1:4)
-      write(lu,rec=158) out%kinst(5:8)
-
-      close(lu)
+      close(f90sac_iounit)
    end subroutine f90sac_writeheader
 !===============================================================================
-
 
 !===============================================================================
    subroutine f90sac_writetrace(fname,out)
@@ -2632,219 +2430,22 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
 !  write a SAC time-series object to a file
 !
       implicit none
-      integer :: lu
-      character (len=4) :: tmp_char1,tmp_char2,tmp_char3,tmp_char4
-      character (len=*):: fname
-      integer :: i, istatus
-      type (SACtrace) :: out
-      logical UNITOK, UNITOP
+      character(len=*), intent(in) :: fname
+      type(SACtrace), intent(in) :: out
+      integer :: iostat
 
-      real(real4) :: sacrh(70) ! SAC floating point header
-      integer(int4) :: sacih(40) ! SAC floating point header
+!  ** Open lu and write the header
+      call f90sac_open_writeheader(fname, f90sac_iounit, out)
 
-      call f90sac_io_init()
-
-
-!  ** Open the file for writing
-      open (unit=f90sac_iounit, file=trim(fname),form='unformatted', &
-            access='direct',recl=f90sac_32bit_record_length, &
-            status='replace')
-
-      lu = f90sac_iounit
-
-!
-!  ** WRITE OUT THE SAC HEADER
-!
-!  ** populate the structure
-      sacrh(001)  = out%delta
-      sacrh(002)  = out%depmin
-      sacrh(003)  = out%depmax
-      sacrh(004)  = out%scale
-      sacrh(005)  = out%odelta
-      sacrh(006)  = out%b
-      sacrh(007)  = out%e
-      sacrh(008)  = out%o
-      sacrh(009)  = out%a
-      sacrh(010)  = out%internal0
-      sacrh(011)  = out%t0
-      sacrh(012)  = out%t1
-      sacrh(013)  = out%t2
-      sacrh(014)  = out%t3
-      sacrh(015)  = out%t4
-      sacrh(016)  = out%t5
-      sacrh(017)  = out%t6
-      sacrh(018)  = out%t7
-      sacrh(019)  = out%t8
-      sacrh(020)  = out%t9
-      sacrh(021)  = out%f
-      sacrh(022)  = out%resp0
-      sacrh(023)  = out%resp1
-      sacrh(024)  = out%resp2
-      sacrh(025)  = out%resp3
-      sacrh(026)  = out%resp4
-      sacrh(027)  = out%resp5
-      sacrh(028)  = out%resp6
-      sacrh(029)  = out%resp7
-      sacrh(030)  = out%resp8
-      sacrh(031)  = out%resp9
-      sacrh(032)  = out%stla
-      sacrh(033)  = out%stlo
-      sacrh(034)  = out%stel
-      sacrh(035)  = out%stdp
-      sacrh(036)  = out%evla
-      sacrh(037)  = out%evlo
-      sacrh(038)  = out%evel
-      sacrh(039)  = out%evdp
-      sacrh(040)  = out%mag
-      sacrh(041)  = out%user0
-      sacrh(042)  = out%user1
-      sacrh(043)  = out%user2
-      sacrh(044)  = out%user3
-      sacrh(045)  = out%user4
-      sacrh(046)  = out%user5
-      sacrh(047)  = out%user6
-      sacrh(048)  = out%user7
-      sacrh(049)  = out%user8
-      sacrh(050)  = out%user9
-      sacrh(051)  = out%dist
-      sacrh(052)  = out%az
-      sacrh(053)  = out%baz
-      sacrh(054)  = out%gcarc
-      sacrh(055)  = out%internal1
-      sacrh(056)  = out%internal2
-      sacrh(057)  = out%depmen
-      sacrh(058)  = out%cmpaz
-      sacrh(059)  = out%cmpinc
-      sacrh(060)  = out%xminimum
-      sacrh(061)  = out%xmaximum
-      sacrh(062)  = out%yminimum
-      sacrh(063)  = out%ymaximum
-      sacrh(064)  = out%unused1
-      sacrh(065)  = out%unused2
-      sacrh(066)  = out%unused3
-      sacrh(067)  = out%unused4
-      sacrh(068)  = out%unused5
-      sacrh(069)  = out%unused6
-      sacrh(070)  = out%unused7
-
-      if (f90sac_force_byteswap) then
-         call f90sac_real32_byteswap(sacrh,70)
+!  ** Write the trace
+      write(f90sac_iounit, iostat=iostat) out%trace
+      if (iostat /= 0) then
+         write(0,'(a)') 'F90SAC_WRITETRACE: Error: Problem writing trace to' &
+            // ' file "' // trim(fname) // '"'
+         stop
       endif
 
-      do i=1,70
-         write(lu,rec=i) sacrh(i)
-      enddo
-
-      sacih(001) = out%nzyear
-      sacih(002) = out%nzjday
-      sacih(003) = out%nzhour
-      sacih(004) = out%nzmin
-      sacih(005) = out%nzsec
-      sacih(006) = out%nzmsec
-      sacih(007) = out%nvhdr
-      sacih(008) = out%norid
-      sacih(009) = out%nevid
-      sacih(010) = out%npts
-      sacih(011) = out%internal3
-      sacih(012) = out%nwfid
-      sacih(013) = out%nxsize
-      sacih(014) = out%nysize
-      sacih(015) = out%unused8
-      sacih(016) = out%iftype
-      sacih(017) = out%idep
-      sacih(018) = out%iztype
-      sacih(019) = out%unused9
-      sacih(020) = out%iinst
-      sacih(021) = out%istreg
-      sacih(022) = out%ievreg
-      sacih(023) = out%ievtyp
-      sacih(024) = out%iqual
-      sacih(025) = out%isynth
-      sacih(026) = out%imagtyp
-      sacih(027) = out%imagsrc
-      sacih(028) = out%unused10
-      sacih(029) = out%unused11
-      sacih(030) = out%unused12
-      sacih(031) = out%unused13
-      sacih(032) = out%unused14
-      sacih(033) = out%unused15
-      sacih(034) = out%unused16
-      sacih(035) = out%unused17
-      sacih(036) = out%leven
-      sacih(037) = out%lpspol
-      sacih(038) = out%lovrok
-      sacih(039) = out%lcalda
-      sacih(040) = out%unused18
-
-      if (f90sac_force_byteswap) then
-         call f90sac_int32_byteswap(sacih,40)
-      endif
-
-      do i=1,40
-         write(lu,rec=i+70) sacih(i)
-      enddo
-
-      write(lu,rec=111) out%kstnm(1:4)
-      write(lu,rec=112) out%kstnm(5:8)
-      write(lu,rec=113) out%kevnm(1:4)
-      write(lu,rec=114) out%kevnm(5:8)
-      write(lu,rec=115) out%kevnm(9:12)
-      write(lu,rec=116) out%kevnm(13:16)
-      write(lu,rec=117) out%khole(1:4)
-      write(lu,rec=118) out%khole(5:8)
-      write(lu,rec=119) out%ko(1:4)
-      write(lu,rec=120) out%ko(5:8)
-      write(lu,rec=121) out%ka(1:4)
-      write(lu,rec=122) out%ka(5:8)
-      write(lu,rec=123) out%kt0(1:4)
-      write(lu,rec=124) out%kt0(5:8)
-      write(lu,rec=125) out%kt1(1:4)
-      write(lu,rec=126) out%kt1(5:8)
-      write(lu,rec=127) out%kt2(1:4)
-      write(lu,rec=128) out%kt2(5:8)
-      write(lu,rec=129) out%kt3(1:4)
-      write(lu,rec=130) out%kt3(5:8)
-      write(lu,rec=131) out%kt4(1:4)
-      write(lu,rec=132) out%kt4(5:8)
-      write(lu,rec=133) out%kt5(1:4)
-      write(lu,rec=134) out%kt5(5:8)
-      write(lu,rec=135) out%kt6(1:4)
-      write(lu,rec=136) out%kt6(5:8)
-      write(lu,rec=137) out%kt7(1:4)
-      write(lu,rec=138) out%kt7(5:8)
-      write(lu,rec=139) out%kt8(1:4)
-      write(lu,rec=140) out%kt8(5:8)
-      write(lu,rec=141) out%kt9(1:4)
-      write(lu,rec=142) out%kt9(5:8)
-      write(lu,rec=143) out%kf(1:4)
-      write(lu,rec=144) out%kf(5:8)
-      write(lu,rec=145) out%kuser0(1:4)
-      write(lu,rec=146) out%kuser0(5:8)
-      write(lu,rec=147) out%kuser1(1:4)
-      write(lu,rec=148) out%kuser1(5:8)
-      write(lu,rec=149) out%kuser2(1:4)
-      write(lu,rec=150) out%kuser2(5:8)
-      write(lu,rec=151) out%kcmpnm(1:4)
-      write(lu,rec=152) out%kcmpnm(5:8)
-      write(lu,rec=153) out%knetwk(1:4)
-      write(lu,rec=154) out%knetwk(5:8)
-      write(lu,rec=155) out%kdatrd(1:4)
-      write(lu,rec=156) out%kdatrd(5:8)
-      write(lu,rec=157) out%kinst(1:4)
-      write(lu,rec=158) out%kinst(5:8)
-
-!  ** if required, byteswap the trace
-      if (f90sac_force_byteswap) then
-         call f90sac_real32_byteswap(out%trace,out%npts)
-      endif
-
-!  ** Output the trace
-       do i=1,out % npts
-            write(lu,rec=158+i) out%trace(i)
-      enddo
-
-
-      close(lu)
+      close(f90sac_iounit)
    end subroutine f90sac_writetrace
 !===============================================================================
 
@@ -2855,276 +2456,25 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
 !  read a SAC header from a file. This is a trace object but with a single null
 !  value as the trace.
 !
+!  If we can read the file in a different endianness to that expected, we do,
+!  but warn the user on stdout.  The only way to silence this is by byteswapping
+!  the file (which is intentional).
+
       implicit none
-      integer :: lu
-      character (len=4) :: tmp_char1,tmp_char2,tmp_char3,tmp_char4
-      character (len=*) :: fname
-      integer :: i, istatus
-      type (SACtrace) :: out
-      logical UNITOK, UNITOP
+      character(len=*), intent(in) :: fname
+      type(SACtrace), intent(inout) :: out
+      integer, parameter :: lu = f90sac_iounit
 
-      real(real4) :: sacrh(70) ! SAC floating point header
-      integer(int4) :: sacih(40) ! SAC floating point header
-
-      call f90sac_io_init()
-
-!  ** Open the file for reading
-      open (unit=f90sac_iounit, file=trim(fname),form='unformatted', &
-            access='direct',recl=f90sac_32bit_record_length, &
-            status='old',err=900)
-
-      lu = f90sac_iounit
-
-!
-!  ** READ IN THE SAC HEADER
-!
-      do i=1,70
-         read(lu,rec=i,err=901) sacrh(i)
-      enddo
-
-      if (f90sac_force_byteswap) then
-         call f90sac_real32_byteswap(sacrh,70)
-      endif
-
-!  ** populate the structure
-      out%delta     = sacrh(001)
-      out%depmin    = sacrh(002)
-      out%depmax    = sacrh(003)
-      out%scale     = sacrh(004)
-      out%odelta    = sacrh(005)
-      out%b         = sacrh(006)
-      out%e         = sacrh(007)
-      out%o         = sacrh(008)
-      out%a         = sacrh(009)
-      out%internal0 = sacrh(010)
-      out%t0        = sacrh(011)
-      out%t1        = sacrh(012)
-      out%t2        = sacrh(013)
-      out%t3        = sacrh(014)
-      out%t4        = sacrh(015)
-      out%t5        = sacrh(016)
-      out%t6        = sacrh(017)
-      out%t7        = sacrh(018)
-      out%t8        = sacrh(019)
-      out%t9        = sacrh(020)
-      out%f         = sacrh(021)
-      out%resp0     = sacrh(022)
-      out%resp1     = sacrh(023)
-      out%resp2     = sacrh(024)
-      out%resp3     = sacrh(025)
-      out%resp4     = sacrh(026)
-      out%resp5     = sacrh(027)
-      out%resp6     = sacrh(028)
-      out%resp7     = sacrh(029)
-      out%resp8     = sacrh(030)
-      out%resp9     = sacrh(031)
-      out%stla      = sacrh(032)
-      out%stlo      = sacrh(033)
-      out%stel      = sacrh(034)
-      out%stdp      = sacrh(035)
-      out%evla      = sacrh(036)
-      out%evlo      = sacrh(037)
-      out%evel      = sacrh(038)
-      out%evdp      = sacrh(039)
-      out%mag       = sacrh(040)
-      out%user0     = sacrh(041)
-      out%user1     = sacrh(042)
-      out%user2     = sacrh(043)
-      out%user3     = sacrh(044)
-      out%user4     = sacrh(045)
-      out%user5     = sacrh(046)
-      out%user6     = sacrh(047)
-      out%user7     = sacrh(048)
-      out%user8     = sacrh(049)
-      out%user9     = sacrh(050)
-      out%dist      = sacrh(051)
-      out%az        = sacrh(052)
-      out%baz       = sacrh(053)
-      out%gcarc     = sacrh(054)
-      out%internal1 = sacrh(055)
-      out%internal2 = sacrh(056)
-      out%depmen    = sacrh(057)
-      out%cmpaz     = sacrh(058)
-      out%cmpinc    = sacrh(059)
-      out%xminimum  = sacrh(060)
-      out%xmaximum  = sacrh(061)
-      out%yminimum  = sacrh(062)
-      out%ymaximum  = sacrh(063)
-      out%unused1   = sacrh(064)
-      out%unused2   = sacrh(065)
-      out%unused3   = sacrh(066)
-      out%unused4   = sacrh(067)
-      out%unused5   = sacrh(068)
-      out%unused6   = sacrh(069)
-      out%unused7   = sacrh(070)
-
-      do i=1,40
-         read(lu,rec=i+70,err=901) sacih(i)
-      enddo
-      print*,sacih(10)
-      if (f90sac_force_byteswap) then
-         call f90sac_int32_byteswap(sacih,40)
-      endif
-
-      out%nzyear    = sacih(001)
-      out%nzjday    = sacih(002)
-      out%nzhour    = sacih(003)
-      out%nzmin     = sacih(004)
-      out%nzsec     = sacih(005)
-      out%nzmsec    = sacih(006)
-      out%nvhdr     = sacih(007)
-      out%norid     = sacih(008)
-      out%nevid     = sacih(009)
-      out%npts      = sacih(010)
-      out%internal3 = sacih(011)
-      out%nwfid     = sacih(012)
-      out%nxsize    = sacih(013)
-      out%nysize    = sacih(014)
-      out%unused8   = sacih(015)
-      out%iftype    = sacih(016)
-      out%idep      = sacih(017)
-      out%iztype    = sacih(018)
-      out%unused9   = sacih(019)
-      out%iinst     = sacih(020)
-      out%istreg    = sacih(021)
-      out%ievreg    = sacih(022)
-      out%ievtyp    = sacih(023)
-      out%iqual     = sacih(024)
-      out%isynth    = sacih(025)
-      out%imagtyp   = sacih(026)
-      out%imagsrc   = sacih(027)
-      out%unused10  = sacih(028)
-      out%unused11  = sacih(029)
-      out%unused12  = sacih(030)
-      out%unused13  = sacih(031)
-      out%unused14  = sacih(032)
-      out%unused15  = sacih(033)
-      out%unused16  = sacih(034)
-      out%unused17  = sacih(035)
-      out%leven     = sacih(036)
-      out%lpspol    = sacih(037)
-      out%lovrok    = sacih(038)
-      out%lcalda    = sacih(039)
-      out%unused18  = sacih(040)
-
-      read(lu,rec=111,err=901)tmp_char1
-      read(lu,rec=112,err=901)tmp_char2
-      out%kstnm = tmp_char1 // tmp_char2
-
-      read(lu,rec=113,err=901)tmp_char1
-      read(lu,rec=114,err=901)tmp_char2
-      read(lu,rec=115,err=901)tmp_char3
-      read(lu,rec=116,err=901)tmp_char4
-      out%kevnm = tmp_char1//tmp_char2//tmp_char3//tmp_char4
-
-      read(lu,rec=117,err=901)tmp_char1
-      read(lu,rec=118,err=901)tmp_char2
-      out%khole = tmp_char1 // tmp_char2
-
-      read(lu,rec=119,err=901)tmp_char1
-      read(lu,rec=120,err=901)tmp_char2
-      out %ko = tmp_char1 // tmp_char2
-
-      read(lu,rec=121,err=901)tmp_char1
-      read(lu,rec=122,err=901)tmp_char2
-      out %ka = tmp_char1 // tmp_char2
-
-      read(lu,rec=123,err=901)tmp_char1
-      read(lu,rec=124,err=901)tmp_char2
-      out %kt0 = tmp_char1 // tmp_char2
-
-      read(lu,rec=125,err=901)tmp_char1
-      read(lu,rec=126,err=901)tmp_char2
-      out %kt1 = tmp_char1 // tmp_char2
-
-      read(lu,rec=127,err=901)tmp_char1
-      read(lu,rec=128,err=901)tmp_char2
-      out %kt2 = tmp_char1 // tmp_char2
-
-      read(lu,rec=129,err=901)tmp_char1
-      read(lu,rec=130,err=901)tmp_char2
-      out %kt3 = tmp_char1 // tmp_char2
-
-      read(lu,rec=131,err=901)tmp_char1
-      read(lu,rec=132,err=901)tmp_char2
-      out %kt4 = tmp_char1 // tmp_char2
-
-      read(lu,rec=133,err=901)tmp_char1
-      read(lu,rec=134,err=901)tmp_char2
-      out %kt5 = tmp_char1 // tmp_char2
-
-      read(lu,rec=135,err=901)tmp_char1
-      read(lu,rec=136,err=901)tmp_char2
-      out %kt6 = tmp_char1 // tmp_char2
-
-      read(lu,rec=137,err=901)tmp_char1
-      read(lu,rec=138,err=901)tmp_char2
-      out %kt7 = tmp_char1 // tmp_char2
-
-      read(lu,rec=139,err=901)tmp_char1
-      read(lu,rec=140,err=901)tmp_char2
-      out %kt8 = tmp_char1 // tmp_char2
-
-      read(lu,rec=141,err=901)tmp_char1
-      read(lu,rec=142,err=901)tmp_char2
-      out %kt9 = tmp_char1 // tmp_char2
-
-      read(lu,rec=143,err=901)tmp_char1
-      read(lu,rec=144,err=901)tmp_char2
-      out %kf = tmp_char1 // tmp_char2
-
-      read(lu,rec=145,err=901)tmp_char1
-      read(lu,rec=146,err=901)tmp_char2
-      out %kuser0 = tmp_char1 // tmp_char2
-
-      read(lu,rec=147,err=901)tmp_char1
-      read(lu,rec=148,err=901)tmp_char2
-      out %kuser1 = tmp_char1 // tmp_char2
-
-      read(lu,rec=149,err=901)tmp_char1
-      read(lu,rec=150,err=901)tmp_char2
-      out %kuser2 = tmp_char1 // tmp_char2
-
-      read(lu,rec=151,err=901)tmp_char1
-      read(lu,rec=152,err=901)tmp_char2
-      out %kcmpnm = tmp_char1 // tmp_char2
-
-      read(lu,rec=153,err=901)tmp_char1
-      read(lu,rec=154,err=901)tmp_char2
-      out %knetwk = tmp_char1 // tmp_char2
-
-      read(lu,rec=155,err=901)tmp_char1
-      read(lu,rec=156,err=901)tmp_char2
-      out %kdatrd = tmp_char1 // tmp_char2
-
-      read(lu,rec=157,err=901)tmp_char1
-      read(lu,rec=158,err=901)tmp_char2
-      out %kinst = tmp_char1 // tmp_char2
-!
-!  ** DONE WITH THE HEADER, READ THE TRACE ITSELF
-!
-
-!  ** check that the nvhdr header is sensible
-      if (out % nvhdr < 0 .or. out % nvhdr > 10 ) then
-         write(0,'(a)') &
-          'F90SAC_READTRACE: Error: NVHDR is not sensible, byteswap required?'
-         stop
-      endif
+!  ** Open file for reading and read header, leaving lu open
+      call f90sac_open_readheader(fname, lu, out)
 
 !  ** allocate memory for the trace
       call f90sac_malloc(out%trace,1)
 
-      out%trace(1) = SAC_rnull ;
+      out%trace(1) = SAC_rnull
 
       close(lu)
 
-      return
-900   write(0,'(a,a)') 'F90SAC_READTRACE: Error: File does not exist: ', &
-         trim(fname)
-      stop
-901   write(0,'(a,a)') 'F90SAC_READTRACE: Error: Bad read in file: ', &
-         trim(fname)
-      stop
    end subroutine f90sac_readheader
 !===============================================================================
 
@@ -3135,38 +2485,338 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
 !  read a SAC time-series object from a file
 !
       implicit none
-      integer :: lu
-      character (len=4) :: tmp_char1,tmp_char2,tmp_char3,tmp_char4
-      character (len=*) :: fname
-      integer :: i, istatus
+      character(len=*), intent(in) :: fname
+      type(SACtrace), intent(inout) :: out
+      integer, parameter :: lu = f90sac_iounit
+      integer :: iostat
 
-      real(real4) :: sacrh(70) ! SAC floating point header
-      integer(int4) :: sacih(40) ! SAC floating point header
+!  ** Read in the header and leave lu open for further reading
+      call f90sac_open_readheader(fname, lu, out)
 
-      type (SACtrace) :: out
-      logical UNITOK, UNITOP
+!  ** allocate memory for the trace and read it in
+      call f90sac_malloc(out%trace, out%npts)
+      read(lu,iostat=iostat) out%trace
+
+      close(lu)
+
+      if (iostat /= 0) then
+         write(0,'(a)') 'F90SAC_READTRACE: ERROR: Problem reading trace ' // &
+            'from file "' // trim(fname) // '"'
+         stop
+      endif
+
+   end subroutine f90sac_readtrace
+!===============================================================================
+
+!===============================================================================
+   function f90sac_get_file_endianness(fname) result(convert)
+!===============================================================================
+!
+!  Determine the endianness of a file.  The routine returns one of the following:
+!     'native'    : The file is the same endianness as the machine
+!     'swap'      : The file is the opposite endianness as the machine.
+!     'error'     : The file does not have a valid NVHDR header value
+!
+      implicit none
+      character(len=*), intent(in) :: fname
+      character(len=6) :: convert
+      integer, parameter :: lu = f90sac_iounit
+      integer, parameter :: irec_nvhdr = 77
+      integer :: nvhdr, iostat
+
+      ! Try opening with native endianness
+      open(lu, file=trim(fname), access='direct', form='unformatted', &
+            recl=f90sac_32bit_record_length, status='old', iostat=iostat)
+      if (iostat /= 0) then
+         write(0,'(a)') 'GET_FILE_ENDIANNESS: Error: Cannot open file "' &
+            // trim(fname) // '"'
+         stop
+      endif
+      read(lu, rec=irec_nvhdr, iostat=iostat) nvhdr
+      close(lu)
+      if (iostat /= 0) then
+         write(0,'(a)') 'GET_FILE_ENDIANNESS: Error: Cannot read value of ' &
+            // ' nvhdr from file "' // trim(fname) // '"'
+         stop
+      endif
+      if (nvhdr == f90sac_current_nvhdr) then
+         convert = 'native'
+         return
+      endif
+
+      ! Try opening with opposite endianness
+      open(lu, file=trim(fname), access='direct', form='unformatted', &
+            recl=f90sac_32bit_record_length, status='old', convert='swap', &
+            iostat=iostat)
+      if (iostat /= 0) then
+         write(0,'(a)') 'GET_FILE_ENDIANNESS: Error: Cannot open file "' &
+            // trim(fname) // '"'
+         stop
+      endif
+      read(lu, rec=irec_nvhdr, iostat=iostat) nvhdr
+      close(lu)
+      if (iostat /= 0) then
+         write(0,'(a)') 'GET_FILE_ENDIANNESS: Error: Cannot read value of ' &
+            // ' nvhdr from file "' // trim(fname) // '"'
+         stop
+      endif
+      if (nvhdr == f90sac_current_nvhdr) then
+         convert = 'swap'
+         return
+      endif
+
+      ! Can't find an endianness which gives us the expected header version
+      convert = 'error'
+   end function f90sac_get_file_endianness
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+   subroutine f90sac_open_writeheader(fname, lu, out)
+!===============================================================================
+!
+!  Write the header part of a SAC file from a logical unit and LEAVE THE UNIT OPEN
+!  for further output.
+!
+      implicit none
+      character(len=*), intent(in) :: fname
+      integer, intent(in) :: lu
+      type(SACtrace), intent(in) :: out
+      integer :: iostat
+      character(len=10) :: convert
+      real(real4) :: sacrh(70)
+      integer(int4) :: sacih(40)
+      character(192) :: sacch
 
       call f90sac_io_init()
 
-!  ** Open the file for reading
-      open (unit=f90sac_iounit, file=trim(fname),form='unformatted', &
-            access='direct',recl=f90sac_32bit_record_length, &
-            status='old',err=900)
+!  ** Decide on endianness for output
+      convert = 'native'
+      if (f90sac_force_byteswap) convert = 'swap'
 
-      lu = f90sac_iounit
-
-!
-!  ** READ IN THE SAC HEADER
-!
-      do i=1,70
-         read(lu,rec=i,err=901) sacrh(i)
-      enddo
-
-      if (f90sac_force_byteswap) then
-         call f90sac_real32_byteswap(sacrh,70)
+!  ** Open unit for writing
+      open(lu, file=trim(fname), form='unformatted', status='replace', &
+            access='stream', convert=trim(convert), iostat=iostat)
+      if (iostat /= 0) then
+         write(0,'(a)') 'F90SAC_OPEN_WRITEHEADER: Error: Cannot open file "' &
+            // trim(fname) // '" for writing'
+         stop
       endif
 
-!  ** populate the structure
+!  ** Fill in the array
+      sacrh(001) = out%delta
+      sacrh(002) = out%depmin
+      sacrh(003) = out%depmax
+      sacrh(004) = out%scale
+      sacrh(005) = out%odelta
+      sacrh(006) = out%b
+      sacrh(007) = out%e
+      sacrh(008) = out%o
+      sacrh(009) = out%a
+      sacrh(010) = out%internal0
+      sacrh(011) = out%t0
+      sacrh(012) = out%t1
+      sacrh(013) = out%t2
+      sacrh(014) = out%t3
+      sacrh(015) = out%t4
+      sacrh(016) = out%t5
+      sacrh(017) = out%t6
+      sacrh(018) = out%t7
+      sacrh(019) = out%t8
+      sacrh(020) = out%t9
+      sacrh(021) = out%f
+      sacrh(022) = out%resp0
+      sacrh(023) = out%resp1
+      sacrh(024) = out%resp2
+      sacrh(025) = out%resp3
+      sacrh(026) = out%resp4
+      sacrh(027) = out%resp5
+      sacrh(028) = out%resp6
+      sacrh(029) = out%resp7
+      sacrh(030) = out%resp8
+      sacrh(031) = out%resp9
+      sacrh(032) = out%stla
+      sacrh(033) = out%stlo
+      sacrh(034) = out%stel
+      sacrh(035) = out%stdp
+      sacrh(036) = out%evla
+      sacrh(037) = out%evlo
+      sacrh(038) = out%evel
+      sacrh(039) = out%evdp
+      sacrh(040) = out%mag
+      sacrh(041) = out%user0
+      sacrh(042) = out%user1
+      sacrh(043) = out%user2
+      sacrh(044) = out%user3
+      sacrh(045) = out%user4
+      sacrh(046) = out%user5
+      sacrh(047) = out%user6
+      sacrh(048) = out%user7
+      sacrh(049) = out%user8
+      sacrh(050) = out%user9
+      sacrh(051) = out%dist
+      sacrh(052) = out%az
+      sacrh(053) = out%baz
+      sacrh(054) = out%gcarc
+      sacrh(055) = out%internal1
+      sacrh(056) = out%internal2
+      sacrh(057) = out%depmen
+      sacrh(058) = out%cmpaz
+      sacrh(059) = out%cmpinc
+      sacrh(060) = out%xminimum
+      sacrh(061) = out%xmaximum
+      sacrh(062) = out%yminimum
+      sacrh(063) = out%ymaximum
+      sacrh(064) = out%unused1
+      sacrh(065) = out%unused2
+      sacrh(066) = out%unused3
+      sacrh(067) = out%unused4
+      sacrh(068) = out%unused5
+      sacrh(069) = out%unused6
+      sacrh(070) = out%unused7
+
+      write(lu, iostat=iostat) sacrh
+      if (iostat /= 0) then
+         write(0,'(a)') 'F90SAC_OPEN_READHEADER: Error: Problem writing real ' &
+            // 'part of header to file "' // trim(fname) // '"'
+         stop
+      endif
+
+!  ** Integer part of header
+      sacih(001) = out%nzyear
+      sacih(002) = out%nzjday
+      sacih(003) = out%nzhour
+      sacih(004) = out%nzmin
+      sacih(005) = out%nzsec
+      sacih(006) = out%nzmsec
+      sacih(007) = out%nvhdr
+      sacih(008) = out%norid
+      sacih(009) = out%nevid
+      sacih(010) = out%npts
+      sacih(011) = out%internal3
+      sacih(012) = out%nwfid
+      sacih(013) = out%nxsize
+      sacih(014) = out%nysize
+      sacih(015) = out%unused8
+      sacih(016) = out%iftype
+      sacih(017) = out%idep
+      sacih(018) = out%iztype
+      sacih(019) = out%unused9
+      sacih(020) = out%iinst
+      sacih(021) = out%istreg
+      sacih(022) = out%ievreg
+      sacih(023) = out%ievtyp
+      sacih(024) = out%iqual
+      sacih(025) = out%isynth
+      sacih(026) = out%imagtyp
+      sacih(027) = out%imagsrc
+      sacih(028) = out%unused10
+      sacih(029) = out%unused11
+      sacih(030) = out%unused12
+      sacih(031) = out%unused13
+      sacih(032) = out%unused14
+      sacih(033) = out%unused15
+      sacih(034) = out%unused16
+      sacih(035) = out%unused17
+      sacih(036) = out%leven
+      sacih(037) = out%lpspol
+      sacih(038) = out%lovrok
+      sacih(039) = out%lcalda
+      sacih(040) = out%unused18
+
+      write(lu, iostat=iostat) sacih
+      if (iostat /= 0) then
+         write(0,'(a)') 'F90SAC_OPEN_READHEADER: Error: Problem writing integer ' &
+            // 'part of header to file "' // trim(fname) // '"'
+         stop
+      endif
+
+!  ** Character part of header
+      sacch(1:8) = out%kstnm
+      sacch(9:24) = out%kevnm
+      sacch(25:32) = out%khole
+      sacch(33:40) = out%ko
+      sacch(41:48) = out%ka
+      sacch(49:56) = out%kt0
+      sacch(57:64) = out%kt1
+      sacch(65:72) = out%kt2
+      sacch(73:80) = out%kt3
+      sacch(81:88) = out%kt4
+      sacch(89:96) = out%kt5
+      sacch(97:104) = out%kt6
+      sacch(105:112) = out%kt7
+      sacch(113:120) = out%kt8
+      sacch(121:128) = out%kt9
+      sacch(129:136) = out%kf
+      sacch(137:144) = out%kuser0
+      sacch(145:152) = out%kuser1
+      sacch(153:160) = out%kuser2
+      sacch(161:168) = out%kcmpnm
+      sacch(169:176) = out%knetwk
+      sacch(177:184) = out%kdatrd
+      sacch(185:192) = out%kinst
+
+      write(lu, iostat=iostat) sacch
+      if (iostat /= 0) then
+         write(0,'(a)') 'F90SAC_OPEN_READHEADER: Error: Problem writing character ' &
+            // 'part of header to file "' // trim(fname) // '"'
+         stop
+      endif
+
+!  ** NB: LOGICAL UNIT lu IS NOT CLOSED!!!
+   end subroutine f90sac_open_writeheader
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+   subroutine f90sac_open_readheader(fname, lu, out)
+!===============================================================================
+!
+!  Read the header part of a SAC file from a logical unit and LEAVE THE UNIT OPEN
+!  for further input.
+!
+      implicit none
+      character(len=*), intent(in) :: fname
+      integer, intent(in) :: lu
+      type(SACtrace), intent(inout) :: out
+      integer :: iostat
+      character(len=6) :: convert
+      real(real4) :: sacrh(70) ! SAC floating point header
+      integer(int4) :: sacih(40) ! SAC floating point header
+      character(192) :: sacch ! SAC character header
+
+      call f90sac_io_init()
+
+!  ** Determine endianness and warn if we're automatically reading in a different
+!     endianness to that expected.
+      convert = f90sac_get_file_endianness(fname)
+      if (convert == 'error') then
+         write(0,'(a)') 'F90SAC_OPEN_READHEADER: Error: File "' // trim(fname) // &
+               '" does not appear to be a valid SAC file'
+         stop
+      endif
+      if ((convert == 'swap' .and. .not.f90sac_force_byteswap) .or. &
+          (convert == 'native' .and. f90sac_force_byteswap)) then
+         write(0,'(a)') 'F90SAC_OPEN_READHEADER: Warning: ' // &
+            'Auto-byteswapping file "' // trim(fname) // '"'
+      endif
+
+!  ** Open the file for reading
+      open(unit=lu, file=trim(fname),form='unformatted', &
+            access='stream', status='old', convert=trim(convert), iostat=iostat)
+      if (iostat /= 0) then
+         write(0,'(a)') 'F90SAC_OPEN_READHEADER: Error: Cannot open file "' &
+            // trim(fname) // '" for reading'
+         stop
+      endif
+
+!  ** Read in the sac header
+      read(lu, iostat=iostat) sacrh
+      if (iostat /= 0) then
+         write(0,'(a)') 'F90SAC_OPEN_READHEADER: Error: Cannot read real part ' &
+            // 'of header for file "' // trim(fname) // '"'
+         stop
+      endif
+
+!  ** Populate the structure
       out%delta     = sacrh(001)
       out%depmin    = sacrh(002)
       out%depmax    = sacrh(003)
@@ -3238,12 +2888,11 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
       out%unused6   = sacrh(069)
       out%unused7   = sacrh(070)
 
-      do i=1,40
-         read(lu,rec=i+70,err=901) sacih(i)
-      enddo
-
-      if (f90sac_force_byteswap) then
-         call f90sac_int32_byteswap(sacih,40)
+      read(lu, iostat=iostat) sacih
+      if (iostat /= 0) then
+         write(0,'(a)') 'F90SAC_OPEN_READHEADER: Error: Cannot read integer part ' &
+            // 'of header for file "' // trim(fname) // '"'
+         stop
       endif
 
       out%nzyear    = sacih(001)
@@ -3287,614 +2936,47 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
       out%lcalda    = sacih(039)
       out%unused18  = sacih(040)
 
-      read(lu,rec=111,err=901)tmp_char1
-      read(lu,rec=112,err=901)tmp_char2
-      out%kstnm = tmp_char1 // tmp_char2
+      read(lu, iostat=iostat) sacch
+      if (iostat /= 0) then
+         write(0,'(a)') 'F90SAC_OPEN_READHEADER: Error: Cannot read character part ' &
+            // 'of header for file "' // trim(fname) // '"'
+         stop
+      endif
 
-      read(lu,rec=113,err=901)tmp_char1
-      read(lu,rec=114,err=901)tmp_char2
-      read(lu,rec=115,err=901)tmp_char3
-      read(lu,rec=116,err=901)tmp_char4
-      out%kevnm = tmp_char1//tmp_char2//tmp_char3//tmp_char4
+      out%kstnm = sacch(1:8)
+      out%kevnm = sacch(9:24)
+      out%khole = sacch(25:32)
+      out%ko = sacch(33:40)
+      out%ka = sacch(41:48)
+      out%kt0 = sacch(49:56)
+      out%kt1 = sacch(57:64)
+      out%kt2 = sacch(65:72)
+      out%kt3 = sacch(73:80)
+      out%kt4 = sacch(81:88)
+      out%kt5 = sacch(89:96)
+      out%kt6 = sacch(97:104)
+      out%kt7 = sacch(105:112)
+      out%kt8 = sacch(113:120)
+      out%kt9 = sacch(121:128)
+      out%kf = sacch(129:136)
+      out%kuser0 = sacch(137:144)
+      out%kuser1 = sacch(145:152)
+      out%kuser2 = sacch(153:160)
+      out%kcmpnm = sacch(161:168)
+      out%knetwk = sacch(169:176)
+      out%kdatrd = sacch(177:184)
+      out%kinst = sacch(185:192)
 
-      read(lu,rec=117,err=901)tmp_char1
-      read(lu,rec=118,err=901)tmp_char2
-      out%khole = tmp_char1 // tmp_char2
-
-      read(lu,rec=119,err=901)tmp_char1
-      read(lu,rec=120,err=901)tmp_char2
-      out %ko = tmp_char1 // tmp_char2
-
-      read(lu,rec=121,err=901)tmp_char1
-      read(lu,rec=122,err=901)tmp_char2
-      out %ka = tmp_char1 // tmp_char2
-
-      read(lu,rec=123,err=901)tmp_char1
-      read(lu,rec=124,err=901)tmp_char2
-      out %kt0 = tmp_char1 // tmp_char2
-
-      read(lu,rec=125,err=901)tmp_char1
-      read(lu,rec=126,err=901)tmp_char2
-      out %kt1 = tmp_char1 // tmp_char2
-
-      read(lu,rec=127,err=901)tmp_char1
-      read(lu,rec=128,err=901)tmp_char2
-      out %kt2 = tmp_char1 // tmp_char2
-
-      read(lu,rec=129,err=901)tmp_char1
-      read(lu,rec=130,err=901)tmp_char2
-      out %kt3 = tmp_char1 // tmp_char2
-
-      read(lu,rec=131,err=901)tmp_char1
-      read(lu,rec=132,err=901)tmp_char2
-      out %kt4 = tmp_char1 // tmp_char2
-
-      read(lu,rec=133,err=901)tmp_char1
-      read(lu,rec=134,err=901)tmp_char2
-      out %kt5 = tmp_char1 // tmp_char2
-
-      read(lu,rec=135,err=901)tmp_char1
-      read(lu,rec=136,err=901)tmp_char2
-      out %kt6 = tmp_char1 // tmp_char2
-
-      read(lu,rec=137,err=901)tmp_char1
-      read(lu,rec=138,err=901)tmp_char2
-      out %kt7 = tmp_char1 // tmp_char2
-
-      read(lu,rec=139,err=901)tmp_char1
-      read(lu,rec=140,err=901)tmp_char2
-      out %kt8 = tmp_char1 // tmp_char2
-
-      read(lu,rec=141,err=901)tmp_char1
-      read(lu,rec=142,err=901)tmp_char2
-      out %kt9 = tmp_char1 // tmp_char2
-
-      read(lu,rec=143,err=901)tmp_char1
-      read(lu,rec=144,err=901)tmp_char2
-      out %kf = tmp_char1 // tmp_char2
-
-      read(lu,rec=145,err=901)tmp_char1
-      read(lu,rec=146,err=901)tmp_char2
-      out %kuser0 = tmp_char1 // tmp_char2
-
-      read(lu,rec=147,err=901)tmp_char1
-      read(lu,rec=148,err=901)tmp_char2
-      out %kuser1 = tmp_char1 // tmp_char2
-
-      read(lu,rec=149,err=901)tmp_char1
-      read(lu,rec=150,err=901)tmp_char2
-      out %kuser2 = tmp_char1 // tmp_char2
-
-      read(lu,rec=151,err=901)tmp_char1
-      read(lu,rec=152,err=901)tmp_char2
-      out %kcmpnm = tmp_char1 // tmp_char2
-
-      read(lu,rec=153,err=901)tmp_char1
-      read(lu,rec=154,err=901)tmp_char2
-      out %knetwk = tmp_char1 // tmp_char2
-
-      read(lu,rec=155,err=901)tmp_char1
-      read(lu,rec=156,err=901)tmp_char2
-      out %kdatrd = tmp_char1 // tmp_char2
-
-      read(lu,rec=157,err=901)tmp_char1
-      read(lu,rec=158,err=901)tmp_char2
-      out %kinst = tmp_char1 // tmp_char2
-!
-!  ** DONE WITH THE HEADER, READ THE TRACE ITSELF
-!
-
-!  ** check that the nvhdr header is sensible
-      if (out % nvhdr < 0 .or. out % nvhdr > 10 ) then
+!  ** Double check that the nvhdr header is sensible
+      if (out%nvhdr < 0 .or. out%nvhdr > 10) then
          write(0,'(a)') &
-          'F90SAC_READTRACE: Error: NVHDR is not sensible, check f90sac_force_byteswap?'
+            'F90SAC_OPEN_READHEADER: Error: NVHDR is not sensible, byteswap required?'
          stop
       endif
 
-!  ** allocate memory for the trace
-      call f90sac_malloc(out%trace,out%npts)
-
-      do i=1,out % npts
-            read(lu,rec=158+i) out%trace(i)
-      enddo
-      close(lu)
-
-!  ** if required, byteswap the trace
-      if (f90sac_force_byteswap) then
-         call f90sac_real32_byteswap(out%trace,out%npts)
-      endif
-
-      return
-900   write(0,'(a,a)') 'F90SAC_READTRACE: Error: File does not exist: ', &
-         trim(fname)
-      stop
-901   write(0,'(a,a)') 'F90SAC_READTRACE: Error: Bad read in file: ', &
-         trim(fname)
-      stop
-   end subroutine f90sac_readtrace
-!===============================================================================
-
-#else
-
-!===============================================================================
-   subroutine f90sac_writeheader(fname,out)
-!===============================================================================
-!
-!  read a SAC TS file. This version uses the C-routines for extra speed.
-!
-      implicit none
-      character (len=4) :: tmp_char1,tmp_char2,tmp_char3,tmp_char4
-      integer :: i, istatus
-      type (SACtrace) :: out
-
-      real(real4) :: sacrh(70) ! SAC floating point header
-      integer(int4) :: sacih(40) ! SAC floating point header
-      character :: sacch*192     ! SAC character header
-
-      real(real4),allocatable :: trace(:) ! temporary storage
-!  ** filename handling (C-compatibility)
-      character (len=*) :: fname
-      character (len=f90sac_fnlength) :: fn ! internal name
-      call f90sac_fnfix(fname,fn)
-
-      call f90sac_io_init()
-
-!  ** populate the arrays (enter ugly block mode)
-sacrh(001) = out%delta     ; sacrh(026) = out%resp4 ; sacrh(051)  = out%dist      ;
-sacrh(002) = out%depmin    ; sacrh(027) = out%resp5 ; sacrh(052)  = out%az        ;
-sacrh(003) = out%depmax    ; sacrh(028) = out%resp6 ; sacrh(053)  = out%baz       ;
-sacrh(004) = out%scale     ; sacrh(029) = out%resp7 ; sacrh(054)  = out%gcarc     ;
-sacrh(005) = out%odelta    ; sacrh(030) = out%resp8 ; sacrh(055)  = out%internal1 ;
-sacrh(006) = out%b         ; sacrh(031) = out%resp9 ; sacrh(056)  = out%internal2 ;
-sacrh(007) = out%e         ; sacrh(032) = out%stla  ; sacrh(057)  = out%depmen    ;
-sacrh(008) = out%o         ; sacrh(033) = out%stlo  ; sacrh(058)  = out%cmpaz     ;
-sacrh(009) = out%a         ; sacrh(034) = out%stel  ; sacrh(059)  = out%cmpinc    ;
-sacrh(010) = out%internal0 ; sacrh(035) = out%stdp  ; sacrh(060)  = out%xminimum  ;
-sacrh(011) = out%t0        ; sacrh(036) = out%evla  ; sacrh(061)  = out%xmaximum  ;
-sacrh(012) = out%t1        ; sacrh(037) = out%evlo  ; sacrh(062)  = out%yminimum  ;
-sacrh(013) = out%t2        ; sacrh(038) = out%evel  ; sacrh(063)  = out%ymaximum  ;
-sacrh(014) = out%t3        ; sacrh(039) = out%evdp  ; sacrh(064)  = out%unused1   ;
-sacrh(015) = out%t4        ; sacrh(040) = out%mag   ; sacrh(065)  = out%unused2   ;
-sacrh(016) = out%t5        ; sacrh(041) = out%user0 ; sacrh(066)  = out%unused3   ;
-sacrh(017) = out%t6        ; sacrh(042) = out%user1 ; sacrh(067)  = out%unused4   ;
-sacrh(018) = out%t7        ; sacrh(043) = out%user2 ; sacrh(068)  = out%unused5   ;
-sacrh(019) = out%t8        ; sacrh(044) = out%user3 ; sacrh(069)  = out%unused6   ;
-sacrh(020) = out%t9        ; sacrh(045) = out%user4 ; sacrh(070)  = out%unused7   ;
-sacrh(021) = out%f         ; sacrh(046) = out%user5 ;
-sacrh(022) = out%resp0     ; sacrh(047) = out%user6 ;
-sacrh(023) = out%resp1     ; sacrh(048) = out%user7 ;
-sacrh(024) = out%resp2     ; sacrh(049) = out%user8 ;
-sacrh(025) = out%resp3     ; sacrh(050) = out%user9 ;
-
-!  ** INTEGER PART
-sacih(001) = out%nzyear    ; sacih(016) = out%iftype   ; sacih(031) = out%unused13 ;
-sacih(002) = out%nzjday    ; sacih(017) = out%idep     ; sacih(032) = out%unused14 ;
-sacih(003) = out%nzhour    ; sacih(018) = out%iztype   ; sacih(033) = out%unused15 ;
-sacih(004) = out%nzmin     ; sacih(019) = out%unused9  ; sacih(034) = out%unused16 ;
-sacih(005) = out%nzsec     ; sacih(020) = out%iinst    ; sacih(035) = out%unused17 ;
-sacih(006) = out%nzmsec    ; sacih(021) = out%istreg   ; sacih(036) = out%leven    ;
-sacih(007) = out%nvhdr     ; sacih(022) = out%ievreg   ; sacih(037) = out%lpspol   ;
-sacih(008) = out%norid     ; sacih(023) = out%ievtyp   ; sacih(038) = out%lovrok   ;
-sacih(009) = out%nevid     ; sacih(024) = out%iqual    ; sacih(039) = out%lcalda   ;
-sacih(010) = out%npts      ; sacih(025) = out%isynth   ; sacih(040) = out%unused18 ;
-sacih(011) = out%internal3 ; sacih(026) = out%imagtyp  ;
-sacih(012) = out%nwfid     ; sacih(027) = out%imagsrc  ;
-sacih(013) = out%nxsize    ; sacih(028) = out%unused10 ;
-sacih(014) = out%nysize    ; sacih(029) = out%unused11 ;
-sacih(015) = out%unused8   ; sacih(030) = out%unused12 ;
-
-!  ** Character part
-sacch(001:008) = out%kstnm(1:8)  ; sacch(105:112) = out%kt7(1:8)    ;
-sacch(009:024) = out%kevnm(1:16) ; sacch(113:120) = out%kt8(1:8)    ;
-sacch(025:032) = out%khole(1:8)  ; sacch(121:128) = out%kt9(1:8)    ;
-sacch(033:040) = out%ko(1:8)     ; sacch(129:136) = out%kf(1:8)     ;
-sacch(041:048) = out%ka(1:8)     ; sacch(137:144) = out%kuser0(1:8) ;
-sacch(049:056) = out%kt0(1:8)    ; sacch(145:152) = out%kuser1(1:8) ;
-sacch(057:064) = out%kt1(1:8)    ; sacch(153:160) = out%kuser2(1:8) ;
-sacch(065:072) = out%kt2(1:8)    ; sacch(161:168) = out%kcmpnm(1:8) ;
-sacch(073:080) = out%kt3(1:8)    ; sacch(169:176) = out%knetwk(1:8) ;
-sacch(081:088) = out%kt4(1:8)    ; sacch(177:184) = out%kdatrd(1:8) ;
-sacch(089:096) = out%kt5(1:8)    ; sacch(185:192) = out%kinst(1:8)  ;
-sacch(097:104) = out%kt6(1:8)    ;
-
-!  ** byteswap if required
-      if (f90sac_force_byteswap) then
-         call f90sac_real32_byteswap(sacrh,70)
-         call f90sac_int32_byteswap(sacih,40)
-      endif
-
-!  ** open the file
-      call f90sac_c_openrw(fn)
-
-!  ** write the header
-      call f90sac_c_whd(sacrh,sacih,sacch)
-
-!  ** close the file
-      call f90sac_c_close() ;
-
-      return
-   end subroutine f90sac_writeheader
-!===============================================================================
-
-
-!===============================================================================
-   subroutine f90sac_readheader(fname,out)
-!===============================================================================
-!
-!  read a SAC header from a file. This is a trace object but with a single null
-!  value as the trace. This version uses the C-routines for extra speed.
-!
-      implicit none
-      character (len=4) :: tmp_char1,tmp_char2,tmp_char3,tmp_char4
-      integer :: i, istatus
-      type (SACtrace) :: out
-
-      real(real4) :: sacrh(70) ! SAC floating point header
-      integer(int4) :: sacih(40) ! SAC floating point header
-      character :: sacch*192     ! SAC character header
-
-!  ** filename handling (C-compatibility)
-      character (len=*) :: fname
-      character (len=f90sac_fnlength) :: fn ! internal name
-      call f90sac_fnfix(fname,fn)
-
-      call f90sac_io_init()
-
-!  ** open the file
-      call f90sac_c_openr(fn)
-
-      sacch = ' '
-
-!  ** read the header
-      call f90sac_c_rhd(sacrh,sacih,sacch)
-
-      if (f90sac_force_byteswap) then
-         call f90sac_real32_byteswap(sacrh,70)
-         call f90sac_int32_byteswap(sacih,40)
-      endif
-
-!  ** populate the structure
-out%delta     = sacrh(001) ; out%resp4 = sacrh(026) ; out%dist      = sacrh(051) ;
-out%depmin    = sacrh(002) ; out%resp5 = sacrh(027) ; out%az        = sacrh(052) ;
-out%depmax    = sacrh(003) ; out%resp6 = sacrh(028) ; out%baz       = sacrh(053) ;
-out%scale     = sacrh(004) ; out%resp7 = sacrh(029) ; out%gcarc     = sacrh(054) ;
-out%odelta    = sacrh(005) ; out%resp8 = sacrh(030) ; out%internal1 = sacrh(055) ;
-out%b         = sacrh(006) ; out%resp9 = sacrh(031) ; out%internal2 = sacrh(056) ;
-out%e         = sacrh(007) ; out%stla  = sacrh(032) ; out%depmen    = sacrh(057) ;
-out%o         = sacrh(008) ; out%stlo  = sacrh(033) ; out%cmpaz     = sacrh(058) ;
-out%a         = sacrh(009) ; out%stel  = sacrh(034) ; out%cmpinc    = sacrh(059) ;
-out%internal0 = sacrh(010) ; out%stdp  = sacrh(035) ; out%xminimum  = sacrh(060) ;
-out%t0        = sacrh(011) ; out%evla  = sacrh(036) ; out%xmaximum  = sacrh(061) ;
-out%t1        = sacrh(012) ; out%evlo  = sacrh(037) ; out%yminimum  = sacrh(062) ;
-out%t2        = sacrh(013) ; out%evel  = sacrh(038) ; out%ymaximum  = sacrh(063) ;
-out%t3        = sacrh(014) ; out%evdp  = sacrh(039) ; out%unused1   = sacrh(064) ;
-out%t4        = sacrh(015) ; out%mag   = sacrh(040) ; out%unused2   = sacrh(065) ;
-out%t5        = sacrh(016) ; out%user0 = sacrh(041) ; out%unused3   = sacrh(066) ;
-out%t6        = sacrh(017) ; out%user1 = sacrh(042) ; out%unused4   = sacrh(067) ;
-out%t7        = sacrh(018) ; out%user2 = sacrh(043) ; out%unused5   = sacrh(068) ;
-out%t8        = sacrh(019) ; out%user3 = sacrh(044) ; out%unused6   = sacrh(069) ;
-out%t9        = sacrh(020) ; out%user4 = sacrh(045) ; out%unused7   = sacrh(070) ;
-out%f         = sacrh(021) ; out%user5 = sacrh(046) ;
-out%resp0     = sacrh(022) ; out%user6 = sacrh(047) ;
-out%resp1     = sacrh(023) ; out%user7 = sacrh(048) ;
-out%resp2     = sacrh(024) ; out%user8 = sacrh(049) ;
-out%resp3     = sacrh(025) ; out%user9 = sacrh(050) ;
-
-!  ** INTEGER PART
-out%nzyear    = sacih(001) ; out%iftype   = sacih(016) ; out%unused13 = sacih(031) ;
-out%nzjday    = sacih(002) ; out%idep     = sacih(017) ; out%unused14 = sacih(032) ;
-out%nzhour    = sacih(003) ; out%iztype   = sacih(018) ; out%unused15 = sacih(033) ;
-out%nzmin     = sacih(004) ; out%unused9  = sacih(019) ; out%unused16 = sacih(034) ;
-out%nzsec     = sacih(005) ; out%iinst    = sacih(020) ; out%unused17 = sacih(035) ;
-out%nzmsec    = sacih(006) ; out%istreg   = sacih(021) ; out%leven    = sacih(036) ;
-out%nvhdr     = sacih(007) ; out%ievreg   = sacih(022) ; out%lpspol   = sacih(037) ;
-out%norid     = sacih(008) ; out%ievtyp   = sacih(023) ; out%lovrok   = sacih(038) ;
-out%nevid     = sacih(009) ; out%iqual    = sacih(024) ; out%lcalda   = sacih(039) ;
-out%npts      = sacih(010) ; out%isynth   = sacih(025) ; out%unused18 = sacih(040) ;
-out%internal3 = sacih(011) ; out%imagtyp  = sacih(026) ;
-out%nwfid     = sacih(012) ; out%imagsrc  = sacih(027) ;
-out%nxsize    = sacih(013) ; out%unused10 = sacih(028) ;
-out%nysize    = sacih(014) ; out%unused11 = sacih(029) ;
-out%unused8   = sacih(015) ; out%unused12 = sacih(030) ;
-
-!  ** Character part
-out%kstnm  = sacch(001:008) ; out%kt7    = sacch(105:112) ;
-out%kevnm  = sacch(009:024) ; out%kt8    = sacch(113:120) ;
-out%khole  = sacch(025:032) ; out%kt9    = sacch(121:128) ;
-out%ko     = sacch(033:040) ; out%kf     = sacch(129:136) ;
-out%ka     = sacch(041:048) ; out%kuser0 = sacch(137:144) ;
-out%kt0    = sacch(049:056) ; out%kuser1 = sacch(145:152) ;
-out%kt1    = sacch(057:064) ; out%kuser2 = sacch(153:160) ;
-out%kt2    = sacch(065:072) ; out%kcmpnm = sacch(161:168) ;
-out%kt3    = sacch(073:080) ; out%knetwk = sacch(169:176) ;
-out%kt4    = sacch(081:088) ; out%kdatrd = sacch(177:184) ;
-out%kt5    = sacch(089:096) ; out%kinst  = sacch(185:192) ;
-out%kt6    = sacch(097:104) ;
-
-!  ** check that the nvhdr header is sensible
-!      if (out % nvhdr < 0 .or. out % nvhdr > 10 ) then
-!         write(0,'(a)') &
-!          'F90SAC_READTRACE: Error: NVHDR is not sensible, byteswap required?'
-!         stop
-!      endif
-
-!  ** allocate memory for the null trace
-      call f90sac_malloc(out%trace,1)
-      out%trace(1) = SAC_rnull
-
-!  ** close the file
-      call f90sac_c_close() ;
-
-      return
-   end subroutine f90sac_readheader
-!===============================================================================
-
-!===============================================================================
-   subroutine f90sac_readtrace(fname,out)
-!===============================================================================
-!
-!  read a SAC TS file. This version uses the C-routines for extra speed.
-!
-      implicit none
-      character (len=4) :: tmp_char1,tmp_char2,tmp_char3,tmp_char4
-      integer :: i, istatus
-      type (SACtrace) :: out
-
-      real(real4) :: sacrh(70) ! SAC floating point header
-      integer(int4) :: sacih(40) ! SAC floating point header
-      character :: sacch*192     ! SAC character header
-!  ** filename handling (C-compatibility)
-      character (len=*) :: fname
-      character (len=f90sac_fnlength) :: fn ! internal name
-      call f90sac_fnfix(fname,fn)
-
-      call f90sac_io_init()
-
-!  ** open the file
-      call f90sac_c_openr(fn)
-
-      sacch = ' '
-
-!  ** read the header
-      call f90sac_c_rhd(sacrh,sacih,sacch)
-
-!  ** byteswap if required
-      if (f90sac_force_byteswap) then
-         call f90sac_real32_byteswap(sacrh,70)
-         call f90sac_int32_byteswap(sacih,40)
-      endif
-
-!  ** populate the structure (enter ugly block mode)
-out%delta     = sacrh(001) ; out%resp4 = sacrh(026) ; out%dist      = sacrh(051) ;
-out%depmin    = sacrh(002) ; out%resp5 = sacrh(027) ; out%az        = sacrh(052) ;
-out%depmax    = sacrh(003) ; out%resp6 = sacrh(028) ; out%baz       = sacrh(053) ;
-out%scale     = sacrh(004) ; out%resp7 = sacrh(029) ; out%gcarc     = sacrh(054) ;
-out%odelta    = sacrh(005) ; out%resp8 = sacrh(030) ; out%internal1 = sacrh(055) ;
-out%b         = sacrh(006) ; out%resp9 = sacrh(031) ; out%internal2 = sacrh(056) ;
-out%e         = sacrh(007) ; out%stla  = sacrh(032) ; out%depmen    = sacrh(057) ;
-out%o         = sacrh(008) ; out%stlo  = sacrh(033) ; out%cmpaz     = sacrh(058) ;
-out%a         = sacrh(009) ; out%stel  = sacrh(034) ; out%cmpinc    = sacrh(059) ;
-out%internal0 = sacrh(010) ; out%stdp  = sacrh(035) ; out%xminimum  = sacrh(060) ;
-out%t0        = sacrh(011) ; out%evla  = sacrh(036) ; out%xmaximum  = sacrh(061) ;
-out%t1        = sacrh(012) ; out%evlo  = sacrh(037) ; out%yminimum  = sacrh(062) ;
-out%t2        = sacrh(013) ; out%evel  = sacrh(038) ; out%ymaximum  = sacrh(063) ;
-out%t3        = sacrh(014) ; out%evdp  = sacrh(039) ; out%unused1   = sacrh(064) ;
-out%t4        = sacrh(015) ; out%mag   = sacrh(040) ; out%unused2   = sacrh(065) ;
-out%t5        = sacrh(016) ; out%user0 = sacrh(041) ; out%unused3   = sacrh(066) ;
-out%t6        = sacrh(017) ; out%user1 = sacrh(042) ; out%unused4   = sacrh(067) ;
-out%t7        = sacrh(018) ; out%user2 = sacrh(043) ; out%unused5   = sacrh(068) ;
-out%t8        = sacrh(019) ; out%user3 = sacrh(044) ; out%unused6   = sacrh(069) ;
-out%t9        = sacrh(020) ; out%user4 = sacrh(045) ; out%unused7   = sacrh(070) ;
-out%f         = sacrh(021) ; out%user5 = sacrh(046) ;
-out%resp0     = sacrh(022) ; out%user6 = sacrh(047) ;
-out%resp1     = sacrh(023) ; out%user7 = sacrh(048) ;
-out%resp2     = sacrh(024) ; out%user8 = sacrh(049) ;
-out%resp3     = sacrh(025) ; out%user9 = sacrh(050) ;
-
-!  ** INTEGER PART
-out%nzyear    = sacih(001) ; out%iftype   = sacih(016) ; out%unused13 = sacih(031) ;
-out%nzjday    = sacih(002) ; out%idep     = sacih(017) ; out%unused14 = sacih(032) ;
-out%nzhour    = sacih(003) ; out%iztype   = sacih(018) ; out%unused15 = sacih(033) ;
-out%nzmin     = sacih(004) ; out%unused9  = sacih(019) ; out%unused16 = sacih(034) ;
-out%nzsec     = sacih(005) ; out%iinst    = sacih(020) ; out%unused17 = sacih(035) ;
-out%nzmsec    = sacih(006) ; out%istreg   = sacih(021) ; out%leven    = sacih(036) ;
-out%nvhdr     = sacih(007) ; out%ievreg   = sacih(022) ; out%lpspol   = sacih(037) ;
-out%norid     = sacih(008) ; out%ievtyp   = sacih(023) ; out%lovrok   = sacih(038) ;
-out%nevid     = sacih(009) ; out%iqual    = sacih(024) ; out%lcalda   = sacih(039) ;
-out%npts      = sacih(010) ; out%isynth   = sacih(025) ; out%unused18 = sacih(040) ;
-out%internal3 = sacih(011) ; out%imagtyp  = sacih(026) ;
-out%nwfid     = sacih(012) ; out%imagsrc  = sacih(027) ;
-out%nxsize    = sacih(013) ; out%unused10 = sacih(028) ;
-out%nysize    = sacih(014) ; out%unused11 = sacih(029) ;
-out%unused8   = sacih(015) ; out%unused12 = sacih(030) ;
-
-!  ** Character part
-out%kstnm  = sacch(001:008) ; out%kt7    = sacch(105:112) ;
-out%kevnm  = sacch(009:024) ; out%kt8    = sacch(113:120) ;
-out%khole  = sacch(025:032) ; out%kt9    = sacch(121:128) ;
-out%ko     = sacch(033:040) ; out%kf     = sacch(129:136) ;
-out%ka     = sacch(041:048) ; out%kuser0 = sacch(137:144) ;
-out%kt0    = sacch(049:056) ; out%kuser1 = sacch(145:152) ;
-out%kt1    = sacch(057:064) ; out%kuser2 = sacch(153:160) ;
-out%kt2    = sacch(065:072) ; out%kcmpnm = sacch(161:168) ;
-out%kt3    = sacch(073:080) ; out%knetwk = sacch(169:176) ;
-out%kt4    = sacch(081:088) ; out%kdatrd = sacch(177:184) ;
-out%kt5    = sacch(089:096) ; out%kinst  = sacch(185:192) ;
-out%kt6    = sacch(097:104) ;
-
-!  ** check that the nvhdr header is sensible
-      if (out % nvhdr < 0 .or. out % nvhdr > 10 ) then
-         write(0,'(a)') &
-          'F90SAC_READTRACE: Error: NVHDR is not sensible, byteswap required?'
-         stop
-      endif
-
-!  ** allocate memory for the trace
-      call f90sac_malloc(out%trace,out%npts)
-
-!  ** call C code to read trace
-      call f90sac_c_rtr(out%npts,out%trace)
-
-!  ** if required, byteswap the trace
-      if (f90sac_force_byteswap) then
-         call f90sac_real32_byteswap(out%trace,out%npts)
-      endif
-
-!  ** close the file
-      call f90sac_c_close() ;
-
-      return
-   end subroutine f90sac_readtrace
-!===============================================================================
-
-!===============================================================================
-   subroutine f90sac_writetrace(fname,out)
-!===============================================================================
-!
-!  read a SAC TS file. This version uses the C-routines for extra speed.
-!
-      implicit none
-      character (len=4) :: tmp_char1,tmp_char2,tmp_char3,tmp_char4
-
-      integer :: i, istatus
-      type (SACtrace) :: out
-      real(real4) :: sacrh(70) ! SAC floating point header
-      integer(int4) :: sacih(40) ! SAC floating point header
-      character :: sacch*192     ! SAC character header
-
-      real(real4),allocatable :: trace(:) ! temporary storage
-
-!  ** filename handling (C-compatibility)
-      character (len=*) :: fname
-      character (len=f90sac_fnlength) :: fn ! internal name
-      call f90sac_fnfix(fname,fn)
-
-      call f90sac_io_init()
-
-!  ** populate the arrays (enter ugly block mode)
-sacrh(001) = out%delta     ; sacrh(026) = out%resp4 ; sacrh(051)  = out%dist      ;
-sacrh(002) = out%depmin    ; sacrh(027) = out%resp5 ; sacrh(052)  = out%az        ;
-sacrh(003) = out%depmax    ; sacrh(028) = out%resp6 ; sacrh(053)  = out%baz       ;
-sacrh(004) = out%scale     ; sacrh(029) = out%resp7 ; sacrh(054)  = out%gcarc     ;
-sacrh(005) = out%odelta    ; sacrh(030) = out%resp8 ; sacrh(055)  = out%internal1 ;
-sacrh(006) = out%b         ; sacrh(031) = out%resp9 ; sacrh(056)  = out%internal2 ;
-sacrh(007) = out%e         ; sacrh(032) = out%stla  ; sacrh(057)  = out%depmen    ;
-sacrh(008) = out%o         ; sacrh(033) = out%stlo  ; sacrh(058)  = out%cmpaz     ;
-sacrh(009) = out%a         ; sacrh(034) = out%stel  ; sacrh(059)  = out%cmpinc    ;
-sacrh(010) = out%internal0 ; sacrh(035) = out%stdp  ; sacrh(060)  = out%xminimum  ;
-sacrh(011) = out%t0        ; sacrh(036) = out%evla  ; sacrh(061)  = out%xmaximum  ;
-sacrh(012) = out%t1        ; sacrh(037) = out%evlo  ; sacrh(062)  = out%yminimum  ;
-sacrh(013) = out%t2        ; sacrh(038) = out%evel  ; sacrh(063)  = out%ymaximum  ;
-sacrh(014) = out%t3        ; sacrh(039) = out%evdp  ; sacrh(064)  = out%unused1   ;
-sacrh(015) = out%t4        ; sacrh(040) = out%mag   ; sacrh(065)  = out%unused2   ;
-sacrh(016) = out%t5        ; sacrh(041) = out%user0 ; sacrh(066)  = out%unused3   ;
-sacrh(017) = out%t6        ; sacrh(042) = out%user1 ; sacrh(067)  = out%unused4   ;
-sacrh(018) = out%t7        ; sacrh(043) = out%user2 ; sacrh(068)  = out%unused5   ;
-sacrh(019) = out%t8        ; sacrh(044) = out%user3 ; sacrh(069)  = out%unused6   ;
-sacrh(020) = out%t9        ; sacrh(045) = out%user4 ; sacrh(070)  = out%unused7   ;
-sacrh(021) = out%f         ; sacrh(046) = out%user5 ;
-sacrh(022) = out%resp0     ; sacrh(047) = out%user6 ;
-sacrh(023) = out%resp1     ; sacrh(048) = out%user7 ;
-sacrh(024) = out%resp2     ; sacrh(049) = out%user8 ;
-sacrh(025) = out%resp3     ; sacrh(050) = out%user9 ;
-
-!  ** INTEGER PART
-sacih(001) = out%nzyear    ; sacih(016) = out%iftype   ; sacih(031) = out%unused13 ;
-sacih(002) = out%nzjday    ; sacih(017) = out%idep     ; sacih(032) = out%unused14 ;
-sacih(003) = out%nzhour    ; sacih(018) = out%iztype   ; sacih(033) = out%unused15 ;
-sacih(004) = out%nzmin     ; sacih(019) = out%unused9  ; sacih(034) = out%unused16 ;
-sacih(005) = out%nzsec     ; sacih(020) = out%iinst    ; sacih(035) = out%unused17 ;
-sacih(006) = out%nzmsec    ; sacih(021) = out%istreg   ; sacih(036) = out%leven    ;
-sacih(007) = out%nvhdr     ; sacih(022) = out%ievreg   ; sacih(037) = out%lpspol   ;
-sacih(008) = out%norid     ; sacih(023) = out%ievtyp   ; sacih(038) = out%lovrok   ;
-sacih(009) = out%nevid     ; sacih(024) = out%iqual    ; sacih(039) = out%lcalda   ;
-sacih(010) = out%npts      ; sacih(025) = out%isynth   ; sacih(040) = out%unused18 ;
-sacih(011) = out%internal3 ; sacih(026) = out%imagtyp  ;
-sacih(012) = out%nwfid     ; sacih(027) = out%imagsrc  ;
-sacih(013) = out%nxsize    ; sacih(028) = out%unused10 ;
-sacih(014) = out%nysize    ; sacih(029) = out%unused11 ;
-sacih(015) = out%unused8   ; sacih(030) = out%unused12 ;
-
-!  ** Character part
-sacch(001:008) = out%kstnm(1:8)  ; sacch(105:112) = out%kt7(1:8)    ;
-sacch(009:024) = out%kevnm(1:16) ; sacch(113:120) = out%kt8(1:8)    ;
-sacch(025:032) = out%khole(1:8)  ; sacch(121:128) = out%kt9(1:8)    ;
-sacch(033:040) = out%ko(1:8)     ; sacch(129:136) = out%kf(1:8)     ;
-sacch(041:048) = out%ka(1:8)     ; sacch(137:144) = out%kuser0(1:8) ;
-sacch(049:056) = out%kt0(1:8)    ; sacch(145:152) = out%kuser1(1:8) ;
-sacch(057:064) = out%kt1(1:8)    ; sacch(153:160) = out%kuser2(1:8) ;
-sacch(065:072) = out%kt2(1:8)    ; sacch(161:168) = out%kcmpnm(1:8) ;
-sacch(073:080) = out%kt3(1:8)    ; sacch(169:176) = out%knetwk(1:8) ;
-sacch(081:088) = out%kt4(1:8)    ; sacch(177:184) = out%kdatrd(1:8) ;
-sacch(089:096) = out%kt5(1:8)    ; sacch(185:192) = out%kinst(1:8)  ;
-sacch(097:104) = out%kt6(1:8)    ;
-
-!  ** byteswap if required
-      if (f90sac_force_byteswap) then
-         call f90sac_real32_byteswap(sacrh,70)
-         call f90sac_int32_byteswap(sacih,40)
-      endif
-
-!  ** open the file
-      call f90sac_c_openw(fn)
-
-!  ** write the header
-      call f90sac_c_whd(sacrh,sacih,sacch)
-
-!  ** allocate a temporary array to store the trace
-
-      allocate(trace(out%npts)) ;
-      trace(1:out%npts) = out%trace(1:out%npts)
-
-!  ** if required, byteswap the trace
-      if (f90sac_force_byteswap) then
-         call f90sac_real32_byteswap(trace,out%npts)
-      endif
-
-!  ** call C code to write trace
-      call f90sac_c_wtr(out%npts,trace)
-      deallocate(trace)
-
-!  ** close the file
-      call f90sac_c_close() ;
-
-      return
-   end subroutine f90sac_writetrace
-!===============================================================================
-
-!===============================================================================
-   subroutine f90sac_fnfix(fn,fnfixed)
-!===============================================================================
-!
-!  Transfer a free length filename to fixed, abort if too long
-!
-   implicit none
-
-!  ** filename handling (C-compatibility)
-      character (len=*) :: fn
-      character (len=f90sac_fnlength) :: fnfixed ! internal name
-
-!  ** check the string
-      if (len(fn)>f90sac_fnlength) then
-         write(0,'(a,i5,a)') &
-          'F90SAC_FNFIX: Error: Filename string is too long (>',&
-            f90sac_fnlength,') chars.'
-         stop
-      endif
-
-!  ** transfer
-      fnfixed(1:f90sac_fnlength) = ''
-      fnfixed(1:len(fn)) = fn(1:len(fn))
-      fnfixed = trim(fnfixed)
-
-      return
-   end subroutine f90sac_fnfix
-!===============================================================================
-
-
-#endif
-! of DISABLE_C_IO
-
+!  ** NB: LOGICAL UNIT lu IS NOT CLOSED!!!
+   end subroutine f90sac_open_readheader
+!-------------------------------------------------------------------------------
 
 
 !===============================================================================
