@@ -15,7 +15,7 @@
 !  Wills Memorial Building, Queen's Road, Bristol, BR8 1RJ, UK
 !  j.wookey@bristol.ac.uk
 !
-!  (C) Andy Noawcki
+!  (C) Andy Nowacki
 !  School of Earth and Environment, University of Leeds, Leeds, LS2 9JT, UK
 !  a.nowacki@leeds.ac.uk
 !
