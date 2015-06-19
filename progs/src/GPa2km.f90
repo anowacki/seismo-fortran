@@ -16,7 +16,7 @@ implicit none
 
 real(8) :: P,P0,P1,P2,depth,depth0,depth1,depth2,dPdz
 character(10) :: model
-real(8),parameter :: tol=5.  !  Accuracy of the solution / GPa
+real(8) :: tol=5.  !  Accuracy of the solution / GPa
 real(8),parameter :: dz=100.
 
 if (command_argument_count() /= 1 .and. command_argument_count() /= 2) then
@@ -25,9 +25,9 @@ if (command_argument_count() /= 1 .and. command_argument_count() /= 2) then
 endif
 
 call get_command_argument(1,model); read(model,*) P
-model = 'AK135'
+model = 'PREM'
 if (command_argument_count() == 2) call get_command_argument(2,model)
-
+if (model == 'PREM') tol = 1.
 !  Search for the depth which gives the correct pressure using Newton-Raphson
 !  f(x)=0: x_n+1 = x_n - f(x_n) / f'(x_n)
 !  f'(x) approx. by (f(x_n)-f(x_n+dx))/dx
@@ -44,7 +44,9 @@ if (command_argument_count() == 2) call get_command_argument(2,model)
 !enddo
 
 !  Actually, use the method of halves to get the correct depth:
-write(0,'(a)',advance='no') 'GPa2km is thinking'
+!  This is fine for PREM which has an analytical answer, but layered models
+!  will required some thought.
+if (model /= 'PREM') write(0,'(a)',advance='no') 'GPa2km is thinking'
 !  starting guesses
 depth0 = 0.      ;  P0 = 0.    ! Top
 depth2 = 6371.   ;  P2 = 365.  ! Bottom
@@ -63,10 +65,10 @@ do while (abs(P2 - P0) > tol)
    endif
    P0 = pressure(depth0,model=trim(model))
    P1 = pressure(depth1,model=trim(model))
-   write(0,'(a)',advance='no') '.'
+   if (model /= 'PREM') write(0,'(a)',advance='no') '.'
 enddo
-write(0,'(a)') ''
-write(*,'(i4)') int(depth1)
+if (model /= 'PREM') write(0,'(a)') ''
+write(*,'(i0.1)') int(depth1)
 
 end program GPa2km
 !-------------------------------------------------------------------------------
