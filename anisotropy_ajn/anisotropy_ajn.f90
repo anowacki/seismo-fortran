@@ -1274,6 +1274,15 @@ end function CIJ_thom_st
       real(rs), intent(in) :: C(6,6),M(3,3)
       real(rs) :: CT(6,6),K(6,6),K1(3,3),K2(3,3),K3(3,3),K4(3,3)
       integer :: i,j
+      real(rs), parameter :: eye(3,3) = reshape((/1._rs, 0._rs, 0._rs, &
+                                                  0._rs, 1._rs, 0._rs, &
+                                                  0._rs, 0._rs, 1._rs/), (/3,3/))
+
+      ! Do nothing if we're given the identity matrix
+      if (all(abs(m - eye) <= tiny(1._rs))) then
+         CT = C
+         return
+      endif
 
       do i=1,3
          do j=1,3
@@ -1405,7 +1414,7 @@ end function CIJ_thom_st
 !===============================================================================
 ! Calculate the Voigt-Reuss-Hill average of two tensors and densities.
 !  INPUT:
-!     VF1, VF2         : Volume fraction of two tensors.  Need not sum to 1. 
+!     VF1, VF2         : Volume fraction of two tensors.  Need not sum to 1.
 !                        [unitless]
 !     C1(6,6), C2(6,6) : Voigt elasticity matrices of two tensors, density-
 !                        normalised. [m^2/s^2]
@@ -2112,6 +2121,171 @@ end function CIJ_thom_st
 !      endif
 
    end subroutine CIJ_brow_chev
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+   subroutine CIJ_brow_chev_symm(C, Cr, R, symm)
+!===============================================================================
+!  Determine the symmetry type and directions for a given tensor, as described in
+!  section 3.2 of Browaeys & Chevrot, GJI, 2004.
+!  INPUT:
+!     C    : 6x Voigt matrix
+!  OUTPUT (OPTIONAL):
+!     Cr   : 6x6 Voigt matrix rotated into symmetry orientation, suitable for
+!            subsequent decomposition with CIJ_brow_chev()
+!     R    : Rotation matrix to turn C into CR, suitable for use with
+!            CIJ_transform_M().  Note that the columns of the matrix give you the
+!            directions of each axis, so R(:,3) is equal to x3.
+!     symm : Character string containing one of:
+!              isotropic    : No rotation applied
+!              hexagonal    : Rotated so x3 is parallel to hexad
+!              tetragonal   : Rotated so x3 is parallel to tetrad
+!              orthorhombic : Rotated so minimum Vp is // X1 and maximum Vp // x3
+!              monoclinic   : Rotated so x3 is normal to unique symmetry plane;
+!                             see note
+!              triclinic    : No unique rotation, but see note
+!
+!  Note: For symmetries lower than orthorhombic, no unique axes exist, so here we
+!        do as B&C and take the bisectrix between the d and v eigenvectors that are
+!        closest.
+      real(rs), intent(in) :: C(6,6)
+      real(rs), intent(out), optional :: Cr(6,6), R(3,3)
+      character(len=*), intent(out), optional :: symm
+      real(rs) :: tol, C_tol
+      real(rs), parameter :: I(3,3) = reshape((/1._rs, 0._rs, 0._rs, &
+                                                0._rs, 1._rs, 0._rs, &
+                                                0._rs, 0._rs, 1._rs/), (/3,3/))
+      real(rs), dimension(3,3) :: rot, d, v, dvec, vvec
+      real(rs), dimension(3) :: dval, vval, x1, x2, x3
+      real(rs) :: Crot(6,6), vp, vs1, vs2
+      integer :: nd, nv, ii, jj
+
+      ! Tolerance on symmetries is 0.1% of norm of tensor, following Walker & Wookey
+      C_tol = sqrt(sum(C**2))/1000._rs
+
+      ! Create dilatational stiffness tensor d and Voigt stiffness tensor v
+      d = transpose(reshape((/ &
+         C(1,1)+C(1,2)+C(1,3), C(1,6)+C(2,6)+C(3,6), C(1,5)+C(2,5)+C(3,5), &
+         C(1,6)+C(2,6)+C(3,6), C(1,2)+C(2,2)+C(3,2), C(1,4)+C(2,4)+C(3,4), &
+         C(1,5)+C(2,5)+C(3,5), C(1,4)+C(2,4)+C(3,4), C(1,3)+C(2,3)+C(3,3) /), (/3,3/)))
+      v = transpose(reshape((/ &
+         C(1,1)+C(6,6)+C(5,5), C(1,6)+C(2,6)+C(4,5), C(1,5)+C(3,5)+C(4,6), &
+         C(1,6)+C(2,6)+C(4,5), C(6,6)+C(2,2)+C(4,4), C(2,4)+C(3,4)+C(5,6), &
+         C(1,5)+C(3,5)+C(4,6), C(2,4)+C(3,4)+C(5,6), C(5,5)+C(4,4)+C(3,3) /), (/3,3/)))
+
+      ! Find distinct orientations
+      call eig_jacobi(d, 3, dval, dvec)
+      call eig_jacobi(v, 3, vval, vvec)
+      tol = sqrt(sum(dvec**2))/1000._rs
+      if (abs(dval(1) - dval(2)) <= tol .and. abs(dval(2) - dval(3)) <= tol) then
+         nd = 1
+      else if (all((/abs(dval(1) - dval(2)) > tol, abs(dval(2) - dval(3)) > tol, &
+                     abs(dval(3) - dval(1)) > tol/))) then
+         nd = 3
+      else
+         nd = 2
+      endif
+
+      ! One distinct orientation means isotropic
+      if (nd == 1) then
+         if (present(symm)) symm ='isotropic'
+         if (present(Cr)) Cr = C
+         if (present(R)) R = I
+         return
+
+      ! Two distinct orientations means hexagonal or tetragonal, and the distinct
+      ! axis is the hexad/tetrad
+      else if (nd == 2) then
+         ! Old x3 is unique
+         if (abs(dval(1) - dval(2)) <= tol) then
+            x3 = dvec(:,3)
+         ! Old x1 is unique
+         else if (abs(dval(2) - dval(3)) <= tol) then
+            x3 = dvec(:,1)
+         ! Old x2 is unique
+         else
+            x3 = dvec(:,2)
+         endif
+         ! If the new x3 axis is the same as the old, then no need to rotate
+         if (all(abs(x3(1:2)) <= tol)) then
+            rot = I
+            Crot = C
+         else
+            ! Define one arbitrary vector in x1-x2 plane
+            x2 = cross_prod(x3, (/x3(1), x3(2), 0._rs/))
+            x2 = x2/sqrt(sum(x2**2))
+            ! And the other is therefore also in the plane and mutually orthogonal
+            x1 = cross_prod(x3, x2)
+            x1 = x1/sqrt(sum(x1**2))
+            rot = transpose(reshape((/x1, x2, x3/), (/3,3/)))
+            Crot = CIJ_transform_M(C, rot)
+         endif
+         if (present(R)) R = rot
+         if (present(CR)) CR = Crot
+         ! Now decide if it's hexagonal (5) or tetragonal (6/7): this is just counting
+         ! the number of different constants in the new frame which are different
+         if (present(symm)) then
+            if (abs(Crot(1,6)) > C_tol) then
+               symm = 'tetragonal'
+            else
+               symm = 'hexagonal'
+            endif
+         endif
+         return
+
+   ! Three distinct orientations means orthorhombic or lower
+   else
+      ! Determine number of coincident eigenvectors
+      nd = 0
+      do ii = 1, 3
+         do jj = 1, 3
+            if (all(abs(dvec(:,ii) - vvec(:,jj)) <= tol)) nd = nd + 1
+         enddo
+      enddo
+
+      ! Three coincident eigenvectors means orthorhombic.  We use x1 is aligned with
+      ! the smallest dilatational stiffness eigenvector, and x3 the largest, which
+      ! normally means Vp//x1 is slowest and Vp//x3 is fastest
+      if (nd == 3) then
+         ii = minloc(dval, 1)
+         jj = maxloc(dval, 1)
+         x1 = dvec(:,ii)
+         x3 = dvec(:,jj)
+         x2 = dvec(:,6-ii-jj)
+         rot = transpose(reshape((/x1, x2, x3/), (/3,3/)))
+         if (present(symm)) symm = 'orthorhombic'
+         if (present(CR)) CR = CIJ_transform_M(C, rot)
+         if (present(R)) R = rot
+         return
+
+      ! One coincident eigenvector means monoclinic, zero means triclinic.  In
+      ! these cases, take the bisectrices between the closest pairs of d and v
+      ! eigenvectors
+      else
+         do ii = 1, 3
+            ! Find nearest v eigenvector, which has largest dot product
+            jj = maxloc(abs(dvec(1,ii)*vvec(1,:) + dvec(2,ii)*vvec(2,:) + &
+                            dvec(3,ii)*vvec(3,:)), 1)
+            ! Bisectrix
+            rot(ii,:) = dvec(:,ii) + vvec(:,jj)
+            if (dot_product(dvec(:,ii), vvec(:,jj)) < 0._rs) &
+               rot(ii,:) = dvec(:,ii) - vvec(:,jj)
+            rot(ii,:) = rot(ii,:)/sqrt(sum(rot(ii,:)**2))
+         enddo
+         if (present(symm)) then
+            if (nd == 1) then
+               symm = 'monoclinic'
+            else
+               symm = 'triclinic'
+            endif
+         endif
+         if (present(CR)) CR = CIJ_transform_M(C, rot)
+         if (present(R)) R = rot
+         return
+      endif
+   endif
+
+   end subroutine CIJ_brow_chev_symm
 !-------------------------------------------------------------------------------
 
 !===============================================================================

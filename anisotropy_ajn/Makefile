@@ -1,7 +1,7 @@
 # Makefile for anisotropy_ajn module and test programs
 
 FC = gfortran
-FFLAGS = -O3 -g -ggdb -fbounds-check -frange-check
+FFLAGS = -O0 -g -ggdb -fbounds-check -frange-check -ffpe-trap=zero,overflow,invalid
 
 all: anisotropy_ajn.o
 
