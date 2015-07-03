@@ -2109,11 +2109,8 @@ end function CIJ_thom_st
 !      if (present(pM)) pM = sum(XH**2)/sum(Xin**2)
       C = C - CH
 
-!  Triclinc part(?)
-      if (present(CR)) then
-         write(0,'(a)') 'anisotropy_ajn: CIJ_brow_chev: WARNING: triclinic part not verified.'
-         CR = C
-      endif
+!  Triclinc part
+      if (present(CR)) CR = C
 !      if (present(PR)) then
 !         write(0,'(a)') 'anisotropy_ajn: CIJ_brow_chev: WARNING: triclinic part not verified.'
 !         XH = CIJ2X(C)
@@ -2124,7 +2121,7 @@ end function CIJ_thom_st
 !-------------------------------------------------------------------------------
 
 !===============================================================================
-   subroutine CIJ_brow_chev_symm(C, Cr, R, symm)
+   subroutine CIJ_brow_chev_symm(Cin, Cr, R, symm)
 !===============================================================================
 !  Determine the symmetry type and directions for a given tensor, as described in
 !  section 3.2 of Browaeys & Chevrot, GJI, 2004.
@@ -2148,10 +2145,10 @@ end function CIJ_thom_st
 !  Note: For symmetries lower than orthorhombic, no unique axes exist, so here we
 !        do as B&C and take the bisectrix between the d and v eigenvectors that are
 !        closest.
-      real(rs), intent(in) :: C(6,6)
+      real(rs), intent(in) :: Cin(6,6)
       real(rs), intent(out), optional :: Cr(6,6), R(3,3)
       character(len=*), intent(out), optional :: symm
-      real(rs) :: tol, C_tol
+      real(rs) :: C(6,6), tol, C_tol, scale
       real(rs), parameter :: I(3,3) = reshape((/1._rs, 0._rs, 0._rs, &
                                                 0._rs, 1._rs, 0._rs, &
                                                 0._rs, 0._rs, 1._rs/), (/3,3/))
@@ -2159,6 +2156,17 @@ end function CIJ_thom_st
       real(rs), dimension(3) :: dval, vval, x1, x2, x3
       real(rs) :: Crot(6,6), vp, vs1, vs2
       integer :: nd, nv, ii, jj
+
+      C = Cin
+
+      ! If constants are in Pa, convert to GPa to avoid roundoff errors in
+      ! eigenvalue search
+      if (abs(maxval(C)) > 5000._rs) then
+         scale = 1.e9_rs
+         C = C/scale
+      else
+         scale = 1._rs
+      endif
 
       ! Tolerance on symmetries is 0.1% of norm of tensor, following Walker & Wookey
       C_tol = sqrt(sum(C**2))/1000._rs
@@ -2189,7 +2197,7 @@ end function CIJ_thom_st
       ! One distinct orientation means isotropic
       if (nd == 1) then
          if (present(symm)) symm ='isotropic'
-         if (present(Cr)) Cr = C
+         if (present(Cr)) Cr = C*scale
          if (present(R)) R = I
          return
 
@@ -2221,7 +2229,7 @@ end function CIJ_thom_st
             Crot = CIJ_transform_M(C, rot)
          endif
          if (present(R)) R = rot
-         if (present(CR)) CR = Crot
+         if (present(CR)) CR = Crot*scale
          ! Now decide if it's hexagonal (5) or tetragonal (6/7): this is just counting
          ! the number of different constants in the new frame which are different
          if (present(symm)) then
@@ -2254,7 +2262,7 @@ end function CIJ_thom_st
          x2 = dvec(:,6-ii-jj)
          rot = transpose(reshape((/x1, x2, x3/), (/3,3/)))
          if (present(symm)) symm = 'orthorhombic'
-         if (present(CR)) CR = CIJ_transform_M(C, rot)
+         if (present(CR)) CR = CIJ_transform_M(C, rot)*scale
          if (present(R)) R = rot
          return
 
@@ -2279,7 +2287,7 @@ end function CIJ_thom_st
                symm = 'triclinic'
             endif
          endif
-         if (present(CR)) CR = CIJ_transform_M(C, rot)
+         if (present(CR)) CR = CIJ_transform_M(C, rot)*scale
          if (present(R)) R = rot
          return
       endif
