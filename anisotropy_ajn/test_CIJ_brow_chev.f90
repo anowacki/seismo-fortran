@@ -3,6 +3,8 @@ program test
 
 use anisotropy_ajn
 
+implicit none
+
 real(8),dimension(6,6) :: C,CI,CX,CT,CO,CM,CR
 real(8) :: pI,pX,pT,pO,pM,pR
 real(8) :: rho
