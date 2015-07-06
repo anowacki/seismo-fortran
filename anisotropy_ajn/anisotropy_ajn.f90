@@ -1993,25 +1993,23 @@ end function CIJ_thom_st
 !------------------------------------------------------------------------------
 
 !===============================================================================
-   subroutine CIJ_brow_chev(Cin,CI,CX,CT,CO,CM,CR) !,pI,pX,pT,pO,pM,pR)
+   subroutine CIJ_brow_chev(Cin,CI,CX,CT,CO,CM,CR,pIso,pX,pT,pO,pM,pR)
 !===============================================================================
 !  Returns parts of the input elasticity tensor, decomposed a la Browaeys and
 !  Chevrot, GJI, 2004
 !  Input is 6x6 Voigt Cij matrix
 !  Output is a selection of one or more the decomposed matrices:
-!     CI = isotropic part,    pS is proportion of tensor described by CS
-!     CX = hexagonal part,    pX  "    "        "   "        "      " CX
-!     CT = tetragonal part,   pT  "    "        "   "        "      " CT
-!     CO = orthorhombic part, pO  "    "        "   "        "      " CO
-!     CM = monoclinic part,   pM  "    "        "   "        "      " CM
-!     CR = triclinic part,    pR  "    "        "   "        "      " CR
-!-------------------------------------------------------------------------------
-!  2011/08: values of pI, pX, etc., do not seem to be correct at the moment...
-!           This needs to be fixed.  Is this because pI == pi???
+!     CI = isotropic part,    pIso is proportion of tensor described by CI
+!     CX = hexagonal part,    pX    "    "        "   "        "      " CX
+!     CT = tetragonal part,   pT    "    "        "   "        "      " CT
+!     CO = orthorhombic part, pO    "    "        "   "        "      " CO
+!     CM = monoclinic part,   pM    "    "        "   "        "      " CM
+!     CR = triclinic part,    pR    "    "        "   "        "      " CR
 
       real(rs),intent(in)  :: Cin(6,6)
       real(rs),intent(out),dimension(6,6),optional :: CI,CX,CT,CO,CM,CR
-!      real(rs),intent(out),optional :: pI,pX,pT,pO,pM,pR
+      real(rs),intent(out),optional :: pIso,pX,pT,pO,pM,pR
+      real(rs) :: pIso_in,pX_in,pT_in,pO_in,pM_in,pR_in
       real(rs) :: M(21,21)    ! Projector
       real(rs) :: C(6,6)
       real(rs) :: X(21),XH(21),Xin(21),CH(6,6)
@@ -2043,7 +2041,8 @@ end function CIJ_thom_st
       XH = matmul(M,X)
       CH = X2CIJ(XH)
       if (present(CI)) CI = CH
-!      if (present(pI)) pI = sum(XH**2)/sum(Xin**2)
+      pIso_in = 1._8 - sqrt(sum(CIJ2X(C-CH)**2)/sum(Xin**2))
+      if (present(pIso)) pIso = pIso_in
       C = C - CH
 
 !  Hexagonal part
@@ -2066,7 +2065,8 @@ end function CIJ_thom_st
       XH = matmul(M,X)
       CH = X2CIJ(XH)
       if (present(CX)) CX = CH
-!      if (present(pX)) pX = sum(XH**2)/sum(Xin**2)
+      pX_in = 1._8 - sqrt(sum(CIJ2X(C-CH)**2)/sum(Xin**2)) - pIso_in
+      if (present(pX)) pX = pX_in
       C = C - CH
 
 !  Tetragonal part
@@ -2082,7 +2082,8 @@ end function CIJ_thom_st
       XH = matmul(M,X)
       CH = X2CIJ(XH)
       if (present(CT)) CT = CH
-!      if (present(pT)) pT = sum(XH**2)/sum(Xin**2)
+      pT_in = 1._8 - sqrt(sum(CIJ2X(C-CH)**2)/sum(Xin**2)) - pX_in - pIso_in
+      if (present(pT)) pT = pT_in
       C = C - CH
 
 !  Orthorhombic part
@@ -2093,7 +2094,8 @@ end function CIJ_thom_st
       XH = matmul(M,X)
       CH = X2CIJ(XH)
       if (present(CO)) CO = CH
-!      if (present(pO)) pO = sum(XH**2)/sum(Xin**2)
+      pO_in = 1._8 - sqrt(sum(CIJ2X(C-CH)**2)/sum(Xin**2)) - pT_in - pX_in - pIso_in
+      if (present(pO)) pO = pO_in
       C = C - CH
 
 !  Monoclinic part
@@ -2106,16 +2108,14 @@ end function CIJ_thom_st
       XH = matmul(M,X)
       CH = X2CIJ(XH)
       if (present(CM)) CM = CH
-!      if (present(pM)) pM = sum(XH**2)/sum(Xin**2)
+      pM_in = 1._8 - sqrt(sum(CIJ2X(C-CH)**2)/sum(Xin**2)) - pO_in - pT_in - pX_in - pIso_in
+      if (present(pM)) pM = pM_in
       C = C - CH
 
 !  Triclinc part
       if (present(CR)) CR = C
-!      if (present(PR)) then
-!         write(0,'(a)') 'anisotropy_ajn: CIJ_brow_chev: WARNING: triclinic part not verified.'
-!         XH = CIJ2X(C)
-!         pR = sum(XH**2)/sum(Xin**2)
-!      endif
+      pR_in = 1._8 - sqrt(sum(CIJ2X(C)**2)/sum(Xin**2)) - pM_in - pO_in - pT_in - pX_in - pIso_in
+      if (present(PR)) pR = pR_in
 
    end subroutine CIJ_brow_chev
 !-------------------------------------------------------------------------------
