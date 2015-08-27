@@ -154,6 +154,7 @@
       public :: f90sac_covar2
       public :: f90sac_covar3
       public :: f90sac_dateseed
+      public :: f90sac_deletetrace
       public :: f90sac_enumhdr
       public :: f90sac_filename
       public :: f90sac_get_file_endianness
