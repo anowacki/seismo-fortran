@@ -6,7 +6,7 @@ a.nowacki@leeds.ac.uk
 
 About
 -----
-http://github.com/anowacki/modules
+http://github.com/anowacki/seismo-fortran
 
 This repo contains Fortran modules which I have adapted or written for use in
 my geophysics work, primarily dealing with seismic anisotropy.
@@ -26,6 +26,22 @@ The modules can be statically compiled directly into your own code like this:
 Typing `make' in the root directory builds the modules as shared and static
 libraries.  Edit the Makefile to reflect the compiler and options you need.
 
+I use these modules on various flavours of Linux and OS X without trouble,
+but portability issues are always possible.  Any reports of how to make them
+work on unusual distributions are welcome.
+
+
+Requirements
+------------
+The codes rely on a some freely-available libraries:
+    - FFTW (http://www.fftw.org/), including the single-precision version.
+      This can be installed, e.g., using MacPorts.  (If using this, make
+      sure to install the variant relevant for the compilers you are using.)
+      Edit the Makefile to reflect where the libraries are installed.
+    - LAPACK.  This often comes supplied as a vendor-optimised library; by
+      default these codes use the Accelerate framework provided by OS X, but
+      update the Makefile if this is not available.
+
 
 Site specific notices
 ---------------------
@@ -36,7 +52,7 @@ portable as possible.  Current portability issues are as follows:
 . plate_motion.f90:  This won't compile with the Cray compilers, complaining about
         the declaration of type parameters.  I don't know if this is a bug in
         the compiler, or a violation of the standard.  A workaround is to simply
-        not build this module if you don't need it.
+        to not build this module if you don't need it.
 . On ARCHER, when running any programs on the head node, you will see when using
         the Cray compilers:
             LIBDMAPP WARNING: Unable to open kgni version file 
