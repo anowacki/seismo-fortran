@@ -183,6 +183,13 @@
       public :: f90sac_writetrace
       public :: f90sac_ymd2jd
 
+! Filtering reoutines relying on libxapiir
+#ifdef USE_XAPIIR
+      public :: f90sac_bandpass_bu, &
+                f90sac_highpass_bu, &
+                f90sac_lowpass_bu
+#endif
+
 !!!BEG_NONDIST
 !  ** The f90sac_addwnoise subroutine requires the Numerical Recipes function
 !  ** ran1. If this is not available, either comment the function
@@ -2980,6 +2987,111 @@ tr%kt2   = SAC_cnull ; tr%kf  = SAC_cnull ;
    end subroutine f90sac_open_readheader
 !-------------------------------------------------------------------------------
 
+#ifdef USE_XAPIIR
+! Functions below here require the SAC library libxapiir, the infinite impulse
+! reponse filtering library.  Define USE_XAPIIR and link to libxapiir to use these
+!===============================================================================
+   subroutine f90sac_lowpass_bu(t, corner, npoles, npasses)
+!===============================================================================
+! Apply a Butterworth low-pass filter.
+      type(SACtrace), intent(inout) :: t
+      real, intent(in) :: corner
+      integer, intent(in), optional :: npoles, npasses
+      integer :: npoles_in, npasses_in
+
+      ! Defaults
+      npoles_in = 2
+      npasses_in = 1
+      ! Checks
+      if (present(npoles)) npoles_in = npoles
+      if (npoles_in < 1 .or. npoles_in > 10) then
+         write(0,'(a)') 'F90SAC_LOWPASS_BU: Error: npoles must be 1 - 10.'
+         stop
+      endif
+      if (present(npasses)) npasses_in = npasses
+      if (npasses < 1 .or. npasses > 2) then
+         write(0,'(a)') 'F90SAC_LOWPASS_BU: Error: npasses can be 1 or 2'
+         stop
+      endif
+      if (.not.allocated(t%trace)) then
+         write(0,'(a)') 'F90SAC_LOWPASS_BU: Error: Trace is not allocated'
+         stop
+      endif
+      ! Apply the filter
+      call xapiir(t%trace, t%npts, 'BUTTERWORTH', SAC_rnull, SAC_rnull, npoles_in, &
+         'LP', SAC_rnull, corner, t%delta, npasses_in)
+
+   end subroutine f90sac_lowpass_bu
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+   subroutine f90sac_highpass_bu(t, corner, npoles, npasses)
+!===============================================================================
+! Apply a Butterworth high-pass filter.
+      type(SACtrace), intent(inout) :: t
+      real, intent(in) :: corner
+      integer, intent(in), optional :: npoles, npasses
+      integer :: npoles_in, npasses_in
+
+      ! Defaults
+      npoles_in = 2
+      npasses_in = 1
+      ! Checks
+      if (present(npoles)) npoles_in = npoles
+      if (npoles_in < 1 .or. npoles_in > 10) then
+         write(0,'(a)') 'F90SAC_HIGHPASS_BU: Error: npoles must be 1 - 10.'
+         stop
+      endif
+      if (present(npasses)) npasses_in = npasses
+      if (npasses < 1 .or. npasses > 2) then
+         write(0,'(a)') 'F90SAC_HIGHPASS_BU: Error: npasses can be 1 or 2'
+         stop
+      endif
+      if (.not.allocated(t%trace)) then
+         write(0,'(a)') 'F90SAC_HIGHPASS_BU: Error: Trace is not allocated'
+         stop
+      endif
+      ! Apply the filter
+      call xapiir(t%trace, t%npts, 'BUTTERWORTH', SAC_rnull, SAC_rnull, npoles_in, &
+         'HP', corner, SAC_rnull, t%delta, npasses_in)
+
+   end subroutine f90sac_highpass_bu
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+   subroutine f90sac_bandpass_bu(t, c1, c2, npoles, npasses)
+!===============================================================================
+! Apply a Butterworth band-pass filter.
+      type(SACtrace), intent(inout) :: t
+      real, intent(in) :: c1, c2
+      integer, intent(in), optional :: npoles, npasses
+      integer :: npoles_in, npasses_in
+
+      ! Defaults
+      npoles_in = 2
+      npasses_in = 1
+      ! Checks
+      if (present(npoles)) npoles_in = npoles
+      if (npoles_in < 1 .or. npoles_in > 10) then
+         write(0,'(a)') 'F90SAC_BANDPASS_BU: Error: npoles must be 1 - 10.'
+         stop
+      endif
+      if (present(npasses)) npasses_in = npasses
+      if (npasses < 1 .or. npasses > 2) then
+         write(0,'(a)') 'F90SAC_BANDPASS_BU: Error: npasses can be 1 or 2'
+         stop
+      endif
+      if (.not.allocated(t%trace)) then
+         write(0,'(a)') 'F90SAC_BANDPASS_BU: Error: Trace is not allocated'
+         stop
+      endif
+      ! Apply the filter
+      call xapiir(t%trace, t%npts, 'BUTTERWORTH',SAC_rnull, SAC_rnull, npoles_in, &
+         'BP', c1, c2, t%delta, npasses_in)
+
+   end subroutine f90sac_bandpass_bu
+!-------------------------------------------------------------------------------
+#endif
 
 !===============================================================================
    end module f90sac

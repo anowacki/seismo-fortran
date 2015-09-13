@@ -23,11 +23,12 @@ SPLINEOPTS = -framework Accelerate -llapack
 #SPLINEOPTS = -L/share/apps/local/lib -llapack
 SPLITWAVEOPTS = -L${L} -lFFFTW -lf90sac -lanisotropy_ajn
 F90SACOPTS = -DFORCE_BIGENDIAN_SACFILES
-
+F90SACLIBS = 
+# Options if using the f90sac filtering routines: edit these to point to libxapiir
+XAPIIR_DEFS = -DUSE_XAPIIR
+XAPIIR_LIBS = -L/usr/local/lib -lxapiir
+# Options for sphere_tesselate
 TESSOPTS = -L$(L) -lspherical_geometry
-
-# Defines for preprocessed source
-DEFINES += $(F90SACOPTS)
 
 MODS = $(O)/constants.o \
        $(O)/density_1d.o \
@@ -58,6 +59,19 @@ installprogs:
 
 # Automatic macro which defines the name of the module from the object file
 nm = $(patsubst $(O)/%,%,$(patsubst %.o,%,$@))
+
+# Add rules to build filtering routines into f90sac if we select the target 'xapiir'
+xapiir filt: F90SACOPTS += $(XAPIIR_DEFS)
+xapiir filt: F90SACLIBS += $(XAPIIR_LIBS)
+xapiir filt: all
+
+$(O)/f90sac.o: f90sac.F90
+	$(FC) $(FCOPTS) $(F90SACOPTS) -c -J$(M) -o $(O)/$(nm).o $^
+	$(FC) -I$(M) $(F90SACLIBS) -o $(L)/lib$(nm).so.1 -shared $(O)/$(nm).o
+	ln -sf $(L)/lib$(nm).so.1 $(L)/lib$(nm).so
+	rm -f $(O)/lib$(nm).a
+	$(AR) $(AROPTS) $(L)/lib$(nm).a $(O)/$(nm).o
+	$(RANLIB) $(L)/lib$(nm).a
 
 $(O)/anisotropy_ajn.o: anisotropy_ajn/anisotropy_ajn.f90
 	$(FC) ${FCOPTS} ${LOPTS} -c -J$(M) -o $(O)/$(nm).o $^
