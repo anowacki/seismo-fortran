@@ -99,7 +99,7 @@ subroutine FFFTW_fwd_r2c_1d_real4(real_array, complex_fft, plan_type)
 !  FFFTW_fwd_*() computes the FT for a 1d array.  This is done out-of-place, so
 !  the input array is preserved.  complex_fft
    implicit none
-   real(r4), intent(in), dimension(:) :: real_array
+   real(r4), intent(inout), dimension(:) :: real_array
    complex(c4), intent(inout), allocatable, dimension(:) :: complex_fft
    integer(C_INT), intent(in), optional :: plan_type
    integer(C_INT) :: fftw_plan_type
@@ -118,13 +118,12 @@ subroutine FFFTW_fwd_r2c_1d_real4(real_array, complex_fft, plan_type)
    fftw_plan_type = FFTW_ESTIMATE
    if (present(plan_type)) fftw_plan_type = int(plan_type, kind=C_INT)
 
-   call sfftw_plan_dft_r2c_1d(plan, &
-                              int(nr, kind=C_INT), &
-                              real(real_array, kind=r4), &
+   plan = fftwf_plan_dft_r2c_1d(int(nr, kind=C_INT), &
+                              real_array, &
                               complex_fft, &
                               fftw_plan_type)
-   call sfftw_execute_dft_r2c(plan, real_array, complex_fft)
-   call sfftw_destroy_plan(plan)
+   call fftwf_execute_dft_r2c(plan, real_array, complex_fft)
+   call fftwf_destroy_plan(plan)
 
 end subroutine FFFTW_fwd_r2c_1d_real4
 !-------------------------------------------------------------------------------
@@ -133,7 +132,7 @@ end subroutine FFFTW_fwd_r2c_1d_real4
 subroutine FFFTW_fwd_r2c_1d_real8(real_array, complex_fft, plan_type)
 !===============================================================================
    implicit none
-   real(r8), intent(in), dimension(:) :: real_array
+   real(r8), intent(inout), dimension(:) :: real_array
    complex(c8), intent(inout), allocatable, dimension(:) :: complex_fft
    integer(C_INT), intent(in), optional :: plan_type
    integer(C_INT) :: fftw_plan_type
@@ -152,13 +151,12 @@ subroutine FFFTW_fwd_r2c_1d_real8(real_array, complex_fft, plan_type)
    fftw_plan_type = FFTW_ESTIMATE
    if (present(plan_type)) fftw_plan_type = int(plan_type, kind=C_INT)
 
-   call dfftw_plan_dft_r2c_1d(plan, &
-                              int(nr, kind=C_INT), &
-                              real(real_array, kind=r8), &
+   plan = fftw_plan_dft_r2c_1d(int(nr, kind=C_INT), &
+                              real_array, &
                               complex_fft, &
                               fftw_plan_type)
-   call dfftw_execute_dft_r2c(plan, real_array, complex_fft)
-   call dfftw_destroy_plan(plan)
+   call fftw_execute_dft_r2c(plan, real_array, complex_fft)
+   call fftw_destroy_plan(plan)
 
 end subroutine FFFTW_fwd_r2c_1d_real8
 !-------------------------------------------------------------------------------
@@ -167,7 +165,7 @@ end subroutine FFFTW_fwd_r2c_1d_real8
 subroutine FFFTW_fwd_c2c_1d_complex4(complex_array, complex_fft, plan_type)
 !===============================================================================
    implicit none
-   complex(c4), intent(in), dimension(:) :: complex_array
+   complex(c4), intent(inout), dimension(:) :: complex_array
    complex(c4), intent(inout), allocatable, dimension(:) :: complex_fft
    integer(C_INT), intent(in), optional :: plan_type
    integer(C_INT) :: fftw_plan_type
@@ -186,14 +184,13 @@ subroutine FFFTW_fwd_c2c_1d_complex4(complex_array, complex_fft, plan_type)
    fftw_plan_type = FFTW_ESTIMATE
    if (present(plan_type)) fftw_plan_type = int(plan_type, kind=C_INT)
 
-   call sfftw_plan_dft_1d(plan, &
-                          int(nr, kind=C_INT), &
+   plan = fftwf_plan_dft_1d(int(nr, kind=C_INT), &
                           complex_array, &
                           complex_fft, &
                           FFTW_FORWARD, &
                           fftw_plan_type)
-   call sfftw_execute_dft(plan, complex_array, complex_fft)
-   call sfftw_destroy_plan(plan)
+   call fftwf_execute_dft(plan, complex_array, complex_fft)
+   call fftwf_destroy_plan(plan)
 
 end subroutine FFFTW_fwd_c2c_1d_complex4
 !-------------------------------------------------------------------------------
@@ -202,7 +199,7 @@ end subroutine FFFTW_fwd_c2c_1d_complex4
 subroutine FFFTW_fwd_c2c_1d_complex8(complex_array, complex_fft, plan_type)
 !===============================================================================
    implicit none
-   complex(c8), intent(in), dimension(:) :: complex_array
+   complex(c8), intent(inout), dimension(:) :: complex_array
    complex(c8), intent(inout), allocatable, dimension(:) :: complex_fft
    integer(C_INT), intent(in), optional :: plan_type
    integer(C_INT) :: fftw_plan_type
@@ -221,14 +218,13 @@ subroutine FFFTW_fwd_c2c_1d_complex8(complex_array, complex_fft, plan_type)
    fftw_plan_type = FFTW_ESTIMATE
    if (present(plan_type)) fftw_plan_type = int(plan_type, kind=C_INT)
 
-   call dfftw_plan_dft_1d(plan, &
-                          int(nr, kind=C_INT), &
+   plan = fftw_plan_dft_1d(int(nr, kind=C_INT), &
                           complex_array, &
                           complex_fft, &
                           FFTW_FORWARD, &
                           fftw_plan_type)
-   call dfftw_execute_dft(plan, complex_array, complex_fft)
-   call dfftw_destroy_plan(plan)
+   call fftw_execute_dft(plan, complex_array, complex_fft)
+   call fftw_destroy_plan(plan)
 
 end subroutine FFFTW_fwd_c2c_1d_complex8
 !-------------------------------------------------------------------------------
@@ -256,13 +252,12 @@ subroutine FFFTW_rev_c2r_1d_real4(complex_fft, real_array, plan_type)
    fftw_plan_type = FFTW_ESTIMATE
    if (present(plan_type)) fftw_plan_type = int(plan_type, kind=C_INT)
 
-   call sfftw_plan_dft_c2r_1d(plan, &
-                              int(nr, kind=C_INT), &
+   plan = fftwf_plan_dft_c2r_1d(int(nr, kind=C_INT), &
                               complex_fft, &
                               real_array, &
                               fftw_plan_type)
-   call sfftw_execute_dft_c2r(plan, complex_fft, real_array)
-   call sfftw_destroy_plan(plan)
+   call fftwf_execute_dft_c2r(plan, complex_fft, real_array)
+   call fftwf_destroy_plan(plan)
 
    ! Normalise values
    real_array = real_array/real(nr, kind=r4)
@@ -293,13 +288,12 @@ subroutine FFFTW_rev_c2r_1d_real8(complex_fft, real_array, plan_type)
    fftw_plan_type = FFTW_ESTIMATE
    if (present(plan_type)) fftw_plan_type = int(plan_type, kind=C_INT)
 
-   call dfftw_plan_dft_c2r_1d(plan, &
-                              int(nr, kind=C_INT), &
+   plan = fftw_plan_dft_c2r_1d(int(nr, kind=C_INT), &
                               complex_fft, &
                               real_array, &
                               fftw_plan_type)
-   call dfftw_execute_dft_c2r(plan, complex_fft, real_array)
-   call dfftw_destroy_plan(plan)
+   call fftw_execute_dft_c2r(plan, complex_fft, real_array)
+   call fftw_destroy_plan(plan)
 
    ! Normalise values
    real_array = real_array/real(nr, kind=r4)
@@ -331,14 +325,13 @@ subroutine FFFTW_rev_c2c_1d_complex4(complex_fft, complex_array, plan_type)
    fftw_plan_type = FFTW_ESTIMATE
    if (present(plan_type)) fftw_plan_type = int(plan_type, kind=C_INT)
 
-   call sfftw_plan_dft_1d(plan, &
-                          int(nr, kind=C_INT), &
+   plan = fftwf_plan_dft_1d(int(nr, kind=C_INT), &
                           complex_fft, &
                           complex_array, &
                           FFTW_BACKWARD, &
                           fftw_plan_type)
-   call sfftw_execute_dft(plan, complex_fft, complex_array)
-   call sfftw_destroy_plan(plan)
+   call fftwf_execute_dft(plan, complex_fft, complex_array)
+   call fftwf_destroy_plan(plan)
 
    ! Normalise values
    norm = real(nr, kind=r4)
@@ -371,14 +364,13 @@ subroutine FFFTW_rev_c2c_1d_complex8(complex_fft, complex_array, plan_type)
    fftw_plan_type = FFTW_ESTIMATE
    if (present(plan_type)) fftw_plan_type = int(plan_type, kind=C_INT)
 
-   call dfftw_plan_dft_1d(plan, &
-                          int(nr, kind=C_INT), &
+   plan = fftw_plan_dft_1d(int(nr, kind=C_INT), &
                           complex_fft, &
                           complex_array, &
                           FFTW_BACKWARD, &
                           fftw_plan_type)
-   call dfftw_execute_dft(plan, complex_fft, complex_array)
-   call dfftw_destroy_plan(plan)
+   call fftw_execute_dft(plan, complex_fft, complex_array)
+   call fftw_destroy_plan(plan)
 
    ! Normalise values
    norm = real(nr, kind=r8)
