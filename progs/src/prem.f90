@@ -13,12 +13,13 @@ use global_1d_models
 implicit none
 
 character(len=50) :: arg
-character(len=:), parameter :: fmt_iso = '(3f7.3, 2f6.1)', &
-                               fmt_iso_depth = '(3f7.3, 2f6.1, f7.1)', &
-                               fmt_ani = '(4f7.3, f7.4, f7.3, 2f6.1)', &
-                               fmt_ani_depth = '(4f7.3, f7.4, f7.3, 2f6.1, f7.1)'
+character(len=:), parameter :: fmt_iso = '(3f7.3, f6.1, f6.2)', &
+                               fmt_iso_depth = '(3f7.3, f6.1, f6.2, f9.3)', &
+                               fmt_ani = '(4f7.3, f7.4, f7.3, f6.1, f6.2)', &
+                               fmt_ani_depth = '(4f7.3, f7.4, f7.3, f6.1, f6.2, f9.3)'
 character(len=:), parameter :: hdr_iso = '#    vp     vs    rho     P     g'
 character(len=:), parameter :: hdr_ani = '#   vph    vpv    vsh    vsv    eta    rho     P     g'
+character(len=6) :: label = ' depth'
 real(8) :: depth, vp, vs, rho, P, g, vph, vpv, vsh, vsv, eta
 integer :: iostatus
 logical :: aniso = .false., header = .true., radius = .false., read_stdin = .true.
@@ -27,6 +28,7 @@ call get_args
 
 !  Use the argument on the command line
 if (.not. read_stdin) then
+   if (radius) depth = PREM_radius_km - depth
    if (aniso) then
       if (header) write(*,'(a)') hdr_ani
       call prem(depth, vph=vph, vpv=vpv, vsh=vsh, vsv=vsv, eta=eta, rho=rho, g=g)
@@ -44,9 +46,9 @@ if (.not. read_stdin) then
 else
 
    if (aniso) then
-      if (header) write(*,'(2a)') hdr_ani,'  depth'
+      if (header) write(*,'(a," ",a)') hdr_ani, trim(label)
    else
-      if (header) write(*,'(2a)') hdr_iso, '  depth'
+      if (header) write(*,'(a," ",a)') hdr_iso, trim(label)
    endif
    iostatus = 0
    do while (iostatus == 0)
@@ -56,6 +58,7 @@ else
          write(0,'(a)') 'prem: Error: Problem reading value of depth on stdin'
          error stop
       endif
+      if (radius) depth = PREM_radius_km - depth
       if (aniso) then
          call prem(depth, vph=vph, vpv=vpv, vsh=vsh, vsv=vsv, eta=eta, rho=rho, g=g)
       else
@@ -108,6 +111,7 @@ contains
                iarg = iarg + 1
             case ('-r')
                radius = .true.
+               label = 'radius'
                iarg = iarg + 1
             case default
                if (iarg /= narg) call usage
