@@ -34,6 +34,10 @@ module global_1d_models
 !  ** Available models:
       character(len=32),parameter,private :: available_models(2) = (/ 'AK135', &
                                                                       'PREM ' /)
+
+!  ** Public model constants
+      real(rs), parameter, public :: AK135_radius_km = 6371._rs, &
+                                     PREM_radius_km = 6371._rs
    contains
 
 !===============================================================================
@@ -532,7 +536,11 @@ subroutine prem(depth,vp,vs,rho,Qmu,Qkappa,vpv,vph,vsv,vsh,eta,g)
          M = M + rho0SI(j)*(r1**3 - r0**3)/3._rs + rho1SI(j)*(r1**4 - r0**4)/4._rs + &
                  rho2SI(j)*(r1**5 - r0**5)/5._rs + rho3SI(j)*(r1**6 - r0**6)/6._rs
       enddo
-      g = bigG*(4._rs*pi*M)/r1**2
+      if (r1 < epsilon(r1)) then
+         g = 0._rs
+      else
+         g = bigG*(4._rs*pi*M)/r1**2
+      endif
    endif
 
 end subroutine prem
