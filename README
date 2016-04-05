@@ -26,6 +26,15 @@ The modules can be statically compiled directly into your own code like this:
 Typing `make' in the root directory builds the modules as shared and static
 libraries.  Edit the Makefile to reflect the compiler and options you need.
 
+On OS X, nothing more is needed to use the dynamic libraries; just link to them
+as normal with -L and -l options.  The absolute path to the shared libraries is
+written into the programs on linking.
+
+On Linux, you will need to export LD_LIBRARY_PATH to include the `lib` directory
+like so:
+
+    $ export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${path_to_seismo-fortran}/lib"
+
 I use these modules on various flavours of Linux and OS X without trouble,
 but portability issues are always possible.  Any reports of how to make them
 work on unusual distributions are welcome.
