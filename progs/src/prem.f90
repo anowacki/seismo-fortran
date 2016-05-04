@@ -65,6 +65,7 @@ else
          call prem(depth, vp=vp, vs=vs, rho=rho, g=g)
       endif
       P = pressure(depth,model='PREM')
+      if (radius) depth = PREM_radius_km - depth
       if (aniso) then
          write(*,fmt_ani_depth) vph, vpv, vsh, vsv, eta, rho, P, g, depth
       else
