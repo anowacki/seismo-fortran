@@ -72,6 +72,18 @@ type, public :: tesselation
    type(point), allocatable, dimension(:) :: b
 end type tesselation
 
+! Neighbours
+! A simple list of integers specifying the indices of neighbouring points
+! Dimension will normally be 6 but for special points will be 5
+type, public :: neighbours
+  integer, allocatable, dimension(:) :: idxs
+end type neighbours
+
+! List of neighbours
+type, public :: list_neighbours
+  integer :: level, np, nt
+  type(neighbours), allocatable, dimension(:) :: list
+end type list_neighbours
 
 ! Declare the public-facing routines
 interface st_norm_p
@@ -92,7 +104,12 @@ public :: &
    st_norm_p, &
    st_save_cache, &
    st_save_tesselation, &
-   st_rotate
+   st_rotate, &
+   st_generate_list_neighbours, &
+   st_save_neighbours_cache, &
+   st_save_neighbours, &
+   st_load_neighbours_cache, &
+   st_load_neighbours
 
 
 contains
@@ -899,6 +916,311 @@ function tolower(a) result(b)
          b(i:i) = achar(iachar(a(i:i)) + 32)
    enddo
 end function tolower
+
+
+!===============================================================================
+subroutine st_generate_list_neighbours(tess,lnbrs)
+!===============================================================================
+!  Read in a tesselation and generate an array containing indices 
+!  of all neighbours.  The index in the neighbours array corresponds to
+!  the index of the point of interest in the tess%p array.
+	type(tesselation), intent(in) :: tess
+	type(list_neighbours), intent(out) :: lnbrs 
+	integer, dimension(3) :: tri
+	integer :: ii, jj, kk
+	integer :: ta, tb, tc
+	integer, allocatable, dimension(:) :: counter ! to keep count of how many elements
+
+	! copy over level, np, and nt from the tessealation
+	lnbrs%level = tess%level
+	lnbrs%np = tess%np
+	lnbrs%nt = tess%nt
+
+	! allocate the neighbours array with a row for each point
+	allocate(lnbrs%list(tess%np))
+
+	! start keeping count -- initialise with zeros 
+	allocate(counter(tess%np))
+	do ii = 1, tess%np
+	  counter(ii) = 0
+	end do
+
+	! loop through all triangles and fill up the neighbours array as we go
+	do ii = 1, tess%nt
+	  ! for each point in triangle check neighbours list exists
+	  tri(1) = tess%t(ii)%a
+	  tri(2) = tess%t(ii)%b
+	  tri(3) = tess%t(ii)%c
+	  do jj = 1, 3
+	    ! if not yet allocated then allocate it
+	    if (.not. allocated(lnbrs%list(tri(jj))%idxs)) then
+	      ! if "special" point size is 5, else it is 6
+	      if (tri(jj) <= 12) then ! special points have indices 1 to 12
+	        allocate(lnbrs%list(tri(jj))%idxs(5))
+	      else
+	        allocate(lnbrs%list(tri(jj))%idxs(6))
+	      end if
+	    end if    
+	    ! put neighbours in the neighbours array if not yet present
+	    do kk = 1, 3
+	      ! don't want to put self in neighbours list
+	      ! nor do we want duplicates
+	      if (jj /= kk .and. (.not. st_idx_in_array(tri(kk), lnbrs%list(tri(jj))%idxs))) then 
+	          counter(tri(jj)) = counter(tri(jj)) + 1
+	          lnbrs%list(tri(jj))%idxs(counter(tri(jj))) = tri(kk)
+	      end if
+	    end do ! loop through other points in triangle    
+	  end do  ! loop through points in triangle
+	end do ! loop through each triangle
+
+end subroutine st_generate_list_neighbours
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+function st_idx_in_array(idx, array) result(exists)
+!===============================================================================
+!  Return .true. if ids is in array
+   integer, intent(in)               :: idx
+   integer, intent(in), dimension(:) :: array
+   logical :: exists
+   integer :: ii
+   
+   exists = .false.
+   do ii = 1, size(array)
+     if (idx == array(ii)) then
+       exists = .true.
+       return
+     end if
+   end do 
+end function st_idx_in_array
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+subroutine st_save_neighbours_cache(lnbrs)
+!===============================================================================
+!  Save a "neighbours" file to the default cache location.  This is read from the
+!  environment variable $SEISMO_FORTRAN_DATA, or defaults to st_cache_dir
+!  if that is not available.
+   type(list_neighbours), intent(inout) :: lnbrs
+   character(len=250) :: dir, file
+   logical :: dir_exists
+
+   call get_environment_variable(st_cache_env_var, dir)
+   if (dir == '') dir = st_cache_dir
+   ! Check that the directory exists
+   inquire(file=dir, exist=dir_exists)
+   if (.not.dir_exists) then
+      write(0,'(a)') 'st_save_neighbours_cache: Error: Directory "' // trim(dir) // &
+         '" does not exist'
+      error stop
+   endif
+   write(file,'("ico_pole_",i0.1,".nbrs")') lnbrs%level
+   file = trim(dir) // '/' // trim(file)
+   call st_save_neighbours(lnbrs, file)
+end subroutine st_save_neighbours_cache
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+subroutine st_load_neighbours_cache(level, lnbrs, exists)
+!===============================================================================
+!  Load a tesselation from the default cache location.  The level value must
+!  be filled with the desired tesselation level.  At the moment, only polar,
+!  icosahedral tesselations are supported.
+!  Optionally, the exists argument specified whether the cache file exists.
+!  If this is supplied, the routine will not exit with an error when the file
+!  does not exist.
+   integer, intent(in) :: level
+   type(list_neighbours), intent(out) :: lnbrs
+   logical, optional, intent(out) :: exists
+   logical :: file_exists
+   character(len=250) :: dir, file
+
+   call get_environment_variable(st_cache_env_var, dir)
+   if (dir == '') dir = st_cache_dir
+   if (level < 0 .or. level > 15) then
+      write(0,'(a,i0.1)') 'st_load_neighbours_cache: Error: tesselation level is ', level
+      error stop
+   endif
+   write(file,'("ico_pole_",i0.1,".nbrs")') level
+   file = trim(dir) // '/' // trim(file)
+   inquire(file=file, exist=file_exists)
+   if (present(exists)) then
+      exists = file_exists
+      if (.not.file_exists) return
+   else
+      if (.not.file_exists) then
+         write(0,'(a)') 'st_load_neighbours_cache: Error: Cache file "' // trim(file) &
+            // '" does not exist'
+         error stop
+      endif
+   endif
+   call st_load_neighbours(file, lnbrs)
+end subroutine st_load_neighbours_cache
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+subroutine st_save_neighbours(lnbrs, file, ascii)
+!===============================================================================
+!  Save neighbours to an output file.  This can be ASCII or Fortran binary;
+!  use ascii=.true. for the former.  These can then be re-read in later.
+!  Binary format is the default
+   type(list_neighbours), intent(in)        :: lnbrs 
+   character(len=*), intent(in) :: file
+   logical, optional, intent(in) :: ascii
+   logical :: ascii_in
+   integer :: i, iostat
+   character(len=30) :: string
+
+   ascii_in = .false.
+   if (present(ascii)) ascii_in = ascii
+
+
+   ! ASCII file
+   if (ascii_in) then
+      open(lu, file=file, iostat=iostat)
+      call check_open
+      write(lu,'(a,i0.1)') '# sphere_tesselate version ', st_version
+      write(lu,'(i0.1," ",i0.1," ",i0.1)') lnbrs%level, lnbrs%np,lnbrs%nt ! Check on level and num points
+      do i = 1, lnbrs%np
+         write(lu,*) lnbrs%list(i)%idxs
+      enddo
+      close(lu)
+
+   ! Fortran binary
+   else
+      open(lu, file=file, form='unformatted', iostat=iostat)
+      call check_open
+      write(string,'(a,i0.1)') '# sphere_tesselate version ', st_version
+      write(lu) string
+      write(lu) st_version
+      write(lu) lnbrs%level
+      write(lu) lnbrs%np
+      write(lu) lnbrs%nt
+      do i = 1, lnbrs%np
+        write(lu) lnbrs%list(i)%idxs
+      end do
+      close(lu)
+   endif
+
+   contains
+      subroutine check_open
+         if (iostat /= 0) then
+            write(0,'(a)') 'st_save_neighbours: Error: Cannot open file "', &
+               trim(file), '" for reading'
+            error stop
+         endif
+      end subroutine check_open
+end subroutine st_save_neighbours
+!-------------------------------------------------------------------------------
+
+!===============================================================================
+subroutine st_load_neighbours(file, lnbrs, ascii)
+!===============================================================================
+!  Read a previously-saved tesselation.  This can be ASCII or Fortran, the latter
+!  being the default.
+   character(len=*), intent(in) :: file
+   type(list_neighbours), intent(out) :: lnbrs
+   logical, intent(in), optional :: ascii
+   logical :: ascii_in
+   character(len=250) :: dummy1, dummy2, dummy3
+   character(len=30) :: version_string
+   integer :: ii, iostat, version
+   integer :: nnbrs
+
+   ascii_in = .false.
+   if (present(ascii)) ascii_in = ascii
+   ! ASCII file
+   if (ascii_in) then
+      open(lu, file=file, iostat=iostat)
+      call check_open
+      read(lu,*) dummy1, dummy2, dummy3, version
+      call check_version
+      read(lu,*) lnbrs%level, lnbrs%np, lnbrs%nt
+      call check_num_points
+      call reallocate_arrays
+      do ii = 1, lnbrs%np
+         read(lu,*) lnbrs%list(ii)%idxs
+      enddo
+      close(lu)
+
+   ! Fortran binary
+   else
+      open(lu, file=file, form='unformatted', iostat=iostat)
+      call check_open
+      read(lu) version_string
+      read(lu) version
+      call check_version
+      read(lu) lnbrs%level
+      read(lu) lnbrs%np
+      read(lu) lnbrs%nt
+      call check_num_points
+      call reallocate_arrays
+      do ii = 1, lnbrs%np
+        read(lu) lnbrs%list(ii)%idxs
+      end do
+      close(lu)
+   endif
+
+   contains
+      subroutine reallocate_arrays
+         if ( allocated(lnbrs%list) ) then
+            if ( size(lnbrs%list) /= lnbrs%np ) then
+               deallocate(lnbrs%list)
+               allocate(lnbrs%list(lnbrs%np))
+            endif
+         else
+            allocate(lnbrs%list(lnbrs%np))
+         endif
+         
+         do ii = 1, lnbrs%np
+            if (ii <= 12) then
+               nnbrs = 5
+            else
+               nnbrs = 6
+            end if
+            
+            if ( allocated(lnbrs%list(ii)%idxs) ) then
+                if ( size(lnbrs%list) /= nnbrs ) then
+                     deallocate(lnbrs%list(ii)%idxs)
+                     allocate(lnbrs%list(ii)%idxs(nnbrs))
+                end if
+             else
+                allocate(lnbrs%list(ii)%idxs(nnbrs))
+             end if
+
+         end do
+         
+      end subroutine reallocate_arrays
+
+      subroutine check_open
+         if (iostat /= 0) then
+            write(0,'(a)') 'st_load_tesselation: Error: Cannot open file "', &
+               trim(file), '" for reading'
+            error stop
+         endif
+      end subroutine check_open
+
+      subroutine check_version
+         if (version /= st_version) then
+            write(0,'(2(a,i0.1),a)') 'st_load_tesselation: Error: Input file "' // &
+               trim(file) // '" has a different version (', version, &
+               ') to that expected (', st_version ,')'
+            error stop
+         endif
+      end subroutine check_version
+
+      subroutine check_num_points
+         if (lnbrs%np /= st_num_points(lnbrs%level) .or. lnbrs%nt /= st_num_faces(lnbrs%level)) then
+            write(0,'(5(a,i0.1),a)') 'st_load_tesselation: Error: Input file "' // &
+               trim(file) // '" has (np, nt) = (', lnbrs%np, ', ', lnbrs%nt, '), which is not ' &
+               // 'as expected for level ', lnbrs%level, '(', st_num_points(lnbrs%level), &
+               ', ', st_num_faces(lnbrs%level), ')'
+            error stop
+         endif
+      end subroutine check_num_points
+end subroutine st_load_neighbours
+!-------------------------------------------------------------------------------
+
 !-------------------------------------------------------------------------------
 end module sphere_tesselate
 !-------------------------------------------------------------------------------
