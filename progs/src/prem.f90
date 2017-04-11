@@ -13,12 +13,12 @@ use global_1d_models
 implicit none
 
 character(len=50) :: arg
-character(len=:), parameter :: fmt_iso = '(3f7.3, f6.1, f6.2)', &
-                               fmt_iso_depth = '(3f7.3, f6.1, f6.2, f9.3)', &
-                               fmt_ani = '(4f7.3, f7.4, f7.3, f6.1, f6.2)', &
-                               fmt_ani_depth = '(4f7.3, f7.4, f7.3, f6.1, f6.2, f9.3)'
-character(len=:), parameter :: hdr_iso = '#    vp     vs    rho     P     g'
-character(len=:), parameter :: hdr_ani = '#   vph    vpv    vsh    vsv    eta    rho     P     g'
+character(len=19), parameter :: fmt_iso = '(3f7.3, f6.1, f6.2)'
+character(len=25), parameter :: fmt_iso_depth = '(3f7.3, f6.1, f6.2, f9.3)'
+character(len=31), parameter :: fmt_ani = '(4f7.3, f7.4, f7.3, f6.1, f6.2)'
+character(len=37), parameter :: fmt_ani_depth = '(4f7.3, f7.4, f7.3, f6.1, f6.2, f9.3)'
+character(len=33), parameter :: hdr_iso = '#    vp     vs    rho     P     g'
+character(len=54), parameter :: hdr_ani = '#   vph    vpv    vsh    vsv    eta    rho     P     g'
 character(len=6) :: label = ' depth'
 real(8) :: depth, vp, vs, rho, P, g, vph, vpv, vsh, vsv, eta
 integer :: iostatus
