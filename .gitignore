@@ -68,7 +68,12 @@ test_statistical/reg_beta
 test_statistical/small_bootstrap
 test_statistical/von_Mieses
 test_statistical/sph_mean
-
+test_sphere_tesselate/dump_ico
+test_sphere_tesselate/tesselation_around_point
+test_sphere_tesselate/generate_list_neighbours
+test_sphere_tesselate/save_and_load_list_neighbours
+test_sphere_tesselate/test_list_of_neighbours.*
+test_sphere_tesselate/load_neighbours_from_cache
 
 # Programs derived from module subroutines: ignore binaries but keep directories
 progs/bin/*

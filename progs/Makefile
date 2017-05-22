@@ -64,7 +64,8 @@ PROGS = $(B)/CIJ_phase_vels \
         $(B)/splitwaveN \
         $(B)/step \
         $(B)/triangle_area \
-        $(B)/xyz2lonlat
+        $(B)/xyz2lonlat \
+        $(B)/sph_tess_neighbours
 
 all: progs
 
