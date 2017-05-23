@@ -921,57 +921,57 @@ end function tolower
 !===============================================================================
 subroutine st_generate_list_neighbours(tess,lnbrs)
 !===============================================================================
-!  Read in a tesselation and generate an array containing indices 
+!  Read in a tesselation and generate an array containing indices
 !  of all neighbours.  The index in the neighbours array corresponds to
 !  the index of the point of interest in the tess%p array.
-	type(tesselation), intent(in) :: tess
-	type(list_neighbours), intent(out) :: lnbrs 
-	integer, dimension(3) :: tri
-	integer :: ii, jj, kk
-	integer :: ta, tb, tc
-	integer, allocatable, dimension(:) :: counter ! to keep count of how many elements
+   type(tesselation), intent(in) :: tess
+   type(list_neighbours), intent(out) :: lnbrs
+   integer, dimension(3) :: tri
+   integer :: ii, jj, kk
+   integer :: ta, tb, tc
+   integer, allocatable, dimension(:) :: counter ! to keep count of how many elements
 
-	! copy over level, np, and nt from the tessealation
-	lnbrs%level = tess%level
-	lnbrs%np = tess%np
-	lnbrs%nt = tess%nt
+   ! copy over level, np, and nt from the tessealation
+   lnbrs%level = tess%level
+   lnbrs%np = tess%np
+   lnbrs%nt = tess%nt
 
-	! allocate the neighbours array with a row for each point
-	allocate(lnbrs%list(tess%np))
+   ! allocate the neighbours array with a row for each point
+   allocate(lnbrs%list(tess%np))
 
-	! start keeping count -- initialise with zeros 
-	allocate(counter(tess%np))
-	do ii = 1, tess%np
-	  counter(ii) = 0
-	end do
+   ! start keeping count -- initialise with zeros
+   allocate(counter(tess%np))
+   do ii = 1, tess%np
+     counter(ii) = 0
+   end do
 
-	! loop through all triangles and fill up the neighbours array as we go
-	do ii = 1, tess%nt
-	  ! for each point in triangle check neighbours list exists
-	  tri(1) = tess%t(ii)%a
-	  tri(2) = tess%t(ii)%b
-	  tri(3) = tess%t(ii)%c
-	  do jj = 1, 3
-	    ! if not yet allocated then allocate it
-	    if (.not. allocated(lnbrs%list(tri(jj))%idxs)) then
-	      ! if "special" point size is 5, else it is 6
-	      if (tri(jj) <= 12) then ! special points have indices 1 to 12
-	        allocate(lnbrs%list(tri(jj))%idxs(5))
-	      else
-	        allocate(lnbrs%list(tri(jj))%idxs(6))
-	      end if
-	    end if    
-	    ! put neighbours in the neighbours array if not yet present
-	    do kk = 1, 3
-	      ! don't want to put self in neighbours list
-	      ! nor do we want duplicates
-	      if (jj /= kk .and. (.not. st_idx_in_array(tri(kk), lnbrs%list(tri(jj))%idxs))) then 
-	          counter(tri(jj)) = counter(tri(jj)) + 1
-	          lnbrs%list(tri(jj))%idxs(counter(tri(jj))) = tri(kk)
-	      end if
-	    end do ! loop through other points in triangle    
-	  end do  ! loop through points in triangle
-	end do ! loop through each triangle
+   ! loop through all triangles and fill up the neighbours array as we go
+   do ii = 1, tess%nt
+      ! for each point in triangle check neighbours list exists
+      tri(1) = tess%t(ii)%a
+      tri(2) = tess%t(ii)%b
+      tri(3) = tess%t(ii)%c
+      do jj = 1, 3
+         ! if not yet allocated then allocate it
+         if (.not. allocated(lnbrs%list(tri(jj))%idxs)) then
+            ! if "special" point size is 5, else it is 6
+            if (tri(jj) <= 12) then ! special points have indices 1 to 12
+               allocate(lnbrs%list(tri(jj))%idxs(5))
+            else
+               allocate(lnbrs%list(tri(jj))%idxs(6))
+            endif
+         endif
+         ! put neighbours in the neighbours array if not yet present
+         do kk = 1, 3
+            ! don't want to put self in neighbours list
+            ! nor do we want duplicates
+            if (jj /= kk .and. (.not. st_idx_in_array(tri(kk), lnbrs%list(tri(jj))%idxs))) then
+                counter(tri(jj)) = counter(tri(jj)) + 1
+                lnbrs%list(tri(jj))%idxs(counter(tri(jj))) = tri(kk)
+            endif
+         enddo ! loop through other points in triangle
+      enddo  ! loop through points in triangle
+   enddo ! loop through each triangle
 
 end subroutine st_generate_list_neighbours
 !-------------------------------------------------------------------------------
@@ -979,19 +979,19 @@ end subroutine st_generate_list_neighbours
 !===============================================================================
 function st_idx_in_array(idx, array) result(exists)
 !===============================================================================
-!  Return .true. if ids is in array
-   integer, intent(in)               :: idx
+!  Return .true. if idx is in array
+   integer, intent(in) :: idx
    integer, intent(in), dimension(:) :: array
    logical :: exists
    integer :: ii
-   
+
    exists = .false.
    do ii = 1, size(array)
-     if (idx == array(ii)) then
-       exists = .true.
-       return
-     end if
-   end do 
+      if (idx == array(ii)) then
+         exists = .true.
+         return
+      endif
+   enddo
 end function st_idx_in_array
 !-------------------------------------------------------------------------------
 
@@ -1064,7 +1064,7 @@ subroutine st_save_neighbours(lnbrs, file, ascii)
 !  Save neighbours to an output file.  This can be ASCII or Fortran binary;
 !  use ascii=.true. for the former.  These can then be re-read in later.
 !  Binary format is the default
-   type(list_neighbours), intent(in)        :: lnbrs 
+   type(list_neighbours), intent(in) :: lnbrs
    character(len=*), intent(in) :: file
    logical, optional, intent(in) :: ascii
    logical :: ascii_in
@@ -1098,7 +1098,7 @@ subroutine st_save_neighbours(lnbrs, file, ascii)
       write(lu) lnbrs%nt
       do i = 1, lnbrs%np
         write(lu) lnbrs%list(i)%idxs
-      end do
+      enddo
       close(lu)
    endif
 
@@ -1171,14 +1171,14 @@ subroutine st_load_neighbours(file, lnbrs, ascii)
          else
             allocate(lnbrs%list(lnbrs%np))
          endif
-         
+
          do ii = 1, lnbrs%np
             if (ii <= 12) then
                nnbrs = 5
             else
                nnbrs = 6
             end if
-            
+
             if ( allocated(lnbrs%list(ii)%idxs) ) then
                 if ( size(lnbrs%list) /= nnbrs ) then
                      deallocate(lnbrs%list(ii)%idxs)
@@ -1189,7 +1189,7 @@ subroutine st_load_neighbours(file, lnbrs, ascii)
              end if
 
          end do
-         
+
       end subroutine reallocate_arrays
 
       subroutine check_open
