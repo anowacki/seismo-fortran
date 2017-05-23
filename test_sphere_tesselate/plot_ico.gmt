@@ -1,8 +1,0 @@
-#!/bin/bash
-
-# GMT script to plot the icosahedron
-fig=ico.ps
-proj=G0/0/10c
-
-dump_ico | \
-psxy -m -J"$proj" -Rg -Wred -B0 > $fig

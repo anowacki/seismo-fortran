@@ -1,7 +1,6 @@
-# Makefile to make tests of module statistical
+# Makefile to make tests of module sphere_tesselate
 
-PROGS = dump_ico \
-        generate_list_neighbours \
+PROGS = generate_list_neighbours \
         save_and_load_list_neighbours \
         load_neighbours_from_cache
 FC = gfortran
@@ -13,9 +12,6 @@ LIBS = -lspherical_geometry
 
 all: ${PROGS}
 
-
-dump_ico: $(O)/sphere_tesselate.o dump_ico.o 
-	$(FC) ${FCOPTS} -o $@ -L$(LIBDIR) ${LIBS} $(O)/sphere_tesselate.o $@.o 
 
 generate_list_neighbours: $(O)/sphere_tesselate.o generate_list_neighbours.o
 	$(FC) ${FCOPTS} -o $@ -L$(LIBDIR) ${LIBS} $(O)/sphere_tesselate.o $@.o 
