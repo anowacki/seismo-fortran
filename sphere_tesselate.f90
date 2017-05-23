@@ -33,6 +33,7 @@ logical, parameter, private :: debug = .false.
 integer, parameter, private :: lu = 10
 ! File format version descriptor
 integer, parameter, private :: st_version = 1
+integer, parameter, private :: st_neighbours_version = 100
 
 ! Tolerance for duplicate point searching; this must be less than the closest
 ! expected point spacing.  It is the 3D distance between the points
@@ -1079,7 +1080,7 @@ subroutine st_save_neighbours(lnbrs, file, ascii)
    if (ascii_in) then
       open(lu, file=file, iostat=iostat)
       call check_open
-      write(lu,'(a,i0.1)') '# sphere_tesselate version ', st_version
+      write(lu,'(a,i0.1)') '# sphere_tesselate version ', st_neighbours_version
       write(lu,'(i0.1," ",i0.1," ",i0.1)') lnbrs%level, lnbrs%np,lnbrs%nt ! Check on level and num points
       do i = 1, lnbrs%np
          write(lu,*) lnbrs%list(i)%idxs
@@ -1090,9 +1091,9 @@ subroutine st_save_neighbours(lnbrs, file, ascii)
    else
       open(lu, file=file, form='unformatted', iostat=iostat)
       call check_open
-      write(string,'(a,i0.1)') '# sphere_tesselate version ', st_version
+      write(string,'(a,i0.1)') '# sphere_tesselate version ', st_neighbours_version
       write(lu) string
-      write(lu) st_version
+      write(lu) st_neighbours_version
       write(lu) lnbrs%level
       write(lu) lnbrs%np
       write(lu) lnbrs%nt
@@ -1201,10 +1202,10 @@ subroutine st_load_neighbours(file, lnbrs, ascii)
       end subroutine check_open
 
       subroutine check_version
-         if (version /= st_version) then
+         if (version /= st_neighbours_version) then
             write(0,'(2(a,i0.1),a)') 'st_load_tesselation: Error: Input file "' // &
                trim(file) // '" has a different version (', version, &
-               ') to that expected (', st_version ,')'
+               ') to that expected (', st_neighbours_version ,')'
             error stop
          endif
       end subroutine check_version
