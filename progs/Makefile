@@ -57,6 +57,7 @@ PROGS = $(B)/CIJ_phase_vels \
         $(B)/sph \
         $(B)/sph_rand \
         $(B)/sph_tess \
+        $(B)/sph_tess_neighbours_save \
         $(B)/sph_tess_save \
         $(B)/split_misfit \
         $(B)/split_misfit_ecs \
@@ -64,8 +65,7 @@ PROGS = $(B)/CIJ_phase_vels \
         $(B)/splitwaveN \
         $(B)/step \
         $(B)/triangle_area \
-        $(B)/xyz2lonlat \
-        $(B)/sph_tess_neighbours
+        $(B)/xyz2lonlat
 
 all: progs
 
