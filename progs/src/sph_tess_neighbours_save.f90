@@ -19,15 +19,21 @@ program sph_tess_neighbours_save
    type(tesselation) :: t
    type(list_neighbours) :: lnbrs
    integer :: i, n
+   logical :: tess_cache_exists
 
    call get_args
 
    ! Create the tesselation and save the cache file for later use
-   write(0,'(a)') 'Generating tesselation...'
-   t = st_icosahedron(pole=.true.)
-   do i = 1, n
-     call st_iterate_level(t)
-   enddo
+   call st_load_cache(t, exists=tess_cache_exists)
+   if (.not. tess_cache_exists) then
+      write(0,'(a)') 'No cache exists: generating tesselation...'
+      t = st_icosahedron(pole=.true.)
+      do i = 1, n
+        call st_iterate_level(t)
+      enddo
+   else
+      write(0,'(a)') 'Read tesselation cache'
+   endif
    write(0,'(a)') 'Generating neighbours cache...'
    call st_generate_list_neighbours(t, lnbrs)
    call st_save_neighbours_cache(lnbrs)
