@@ -19,6 +19,7 @@ RANLIB = ranlib
 # Get host for machine-specific build instructions
 host = $(shell hostname | awk '{if     (/typhon/)  print "typhon"; \
                                else if (/eslogin/) print "archer"; \
+			       else if (/uan/)     print "archer2"; \
                                else                print "other"}')
 
 # Need to link FFFTW against FFTW3
@@ -34,6 +35,9 @@ ifeq ($(host),typhon)
 endif
 # Flags which work on ARCHER (must `module load fftw`)
 ifeq ($(host),archer)
+    FFFTWOPTS = -I${FFTW_INC} -L${FFTW_DIR} -lfftw3 -lfftw3f
+endif
+ifeq ($(host),archer2)
     FFFTWOPTS = -I${FFTW_INC} -L${FFTW_DIR} -lfftw3 -lfftw3f
 endif
 
