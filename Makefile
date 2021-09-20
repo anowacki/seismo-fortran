@@ -19,7 +19,7 @@ RANLIB = ranlib
 # Get host for machine-specific build instructions
 host = $(shell hostname | awk '{if     (/typhon/)  print "typhon"; \
                                else if (/eslogin/) print "archer"; \
-			       else if (/uan/)     print "archer2"; \
+                               else if (/uan/)     print "archer2"; \
                                else                print "other"}')
 
 # Need to link FFFTW against FFTW3
