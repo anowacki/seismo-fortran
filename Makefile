@@ -71,10 +71,10 @@ all: ${MODS} \
      $(O)/plate_motion.o \
      $(O)/spherical_splines.o
 
-progs:
+progs: all
 	$(MAKE) -C progs
 
-installprogs:
+installprogs: all
 	$(MAKE) -C progs install
 
 # Automatic macro which defines the name of the module from the object file
