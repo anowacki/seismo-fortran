@@ -801,6 +801,85 @@ end function CIJ_thom_st
 !===============================================================================
 
 !===============================================================================
+  subroutine CIJ_read_string(string, C, rho, found_rho)
+!===============================================================================
+!  Read a set of elastic constants from a string, where the constants
+!  are ordered the same way as in CIJ_load_list and optionally with
+!  density at the end.
+!  INPUT:
+!     string : String containing space-separated elastic constants (21 or 36)
+!              and maybe density
+!  OUTPUT:
+!     C(6,6) : Voigt elasticity matrix, density-normalised. [m^2/s^2]
+!     rho    : Density. [kg/m-3]
+!              If no density was supplied in the string, then rho will be 0.
+!  OUTPUT (OPTIONAL):
+!     found_rho : If density was found, this is .true., and .false. otherwise.
+
+     character(len=*), intent(in) :: string
+     real(rs), intent(out) :: C(6,6), rho
+     logical, optional, intent(out) :: found_rho
+     real(rs) :: temp(37)
+     integer :: iostat, i, j, k
+
+     ! Try reading 36 ECs plus density
+     read(string, *, iostat=iostat) temp
+     if (iostat == 0) then
+        C(:,:) = reshape(temp(1:36), (/6,6/))
+        rho = temp(37)
+        if (present(found_rho)) found_rho = .true.
+        return
+     endif
+
+     ! Just 36 ECs
+     read(string, *, iostat=iostat) temp(1:36)
+     if (iostat == 0) then
+        C(:,:) = reshape(temp(1:36), (/6,6/))
+        rho = 0._rs
+        if (present(found_rho)) found_rho = .false.
+        return
+     endif
+
+     ! 21 ECs plus density
+     read(string, *, iostat=iostat) temp(1:22)
+     if (iostat == 0) then
+        k = 0
+        do i = 1,6
+           do j = i,6
+              k = k + 1
+              C(i,j) = temp(k)
+              if (i /= j) C(j,i) = C(i,j)
+           enddo
+        enddo
+        rho = temp(22)
+        if (present(found_rho)) found_rho = .true.
+        return
+     endif
+
+     ! 21 ECs
+     read(string, *, iostat=iostat) temp(1:21)
+     if (iostat == 0) then
+        k = 0
+        do i = 1,6
+           do j = i,6
+              k = k + 1
+              C(i,j) = temp(k)
+              if (i /= j) C(j,i) = C(i,j)
+           enddo
+        enddo
+        rho = 0._rs
+        if (present(found_rho)) found_rho = .false.
+        return
+     endif
+
+     write(0,'(a)') 'anisotropy_ajn: CIJ_read_string: Error: Cannot read ' // &
+        'elastic constants from string "' // trim(string) // '"'
+     stop
+
+  end subroutine CIJ_read_string
+!===============================================================================
+
+!===============================================================================
   subroutine CIJ_save(fname,C,rho)
 !===============================================================================
 !  Save a set of elastic constants to a file using the following format:
@@ -2454,7 +2533,7 @@ end function CIJ_thom_st
          ! If necessary, work out max for matrix
          if (autopower) ipower = int(log10(maxval(abs(C))))
          write(fmt,'(a,i0.0,a,i0.0,a)') '(6(f',indp+3,'.',indp,',1x))'
-         write(iunit,'(a,i0.0)') 'x 10^',ipower
+         write(iunit,'(a,i0.1)') 'x 10^',ipower
          write(iunit,fmt) C/(10.**ipower)
 
       ! Exponential display: all values are in scientific notation
