@@ -319,7 +319,7 @@ function CIJ_thom_st(vp,vs,rho,eps,gam,delst) result(CC)
 
    a = 2._rs
    b = 4._rs*CC(4,4)
-   c = CC(4,4)**2 - 2._rs*delst*CC(3,3)**2 &
+   c = 2._rs*CC(4,4)**2 - 2._rs*delst*CC(3,3)**2 &
       - (CC(3,3) - CC(4,4))*(CC(1,1) + CC(3,3) - 2._rs*CC(4,4))
    if (b**2 - 4._rs*a*c < 0._rs) then
       write(0,'(a)') 'anisotropy_ajn: CIJ_thom_st: Error: S velocity too high' &
